@@ -56,11 +56,44 @@ install(
 ## Detector ##
 ##############
 
+#############
+## Concept ##
+#############
+
+add_library(concept src/concept.cpp)
+target_include_directories(concept PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>)
+
+ament_target_dependencies(
+  concept
+  # "rclcpp"
+  # "rclpy"
+  # "std_msgs"
+  # "sensor_msgs"
+)
+
+# Causes the visibility macros to use dllexport rather than dllimport,
+# which is appropriate when building the dll but not consuming it.
+target_compile_definitions(concept PRIVATE "SEMANTIC_MAPPING_BUILDING_LIBRARY")
+
+install(
+  TARGETS concept
+  EXPORT export_${PROJECT_NAME}
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION bin
+)
+
+#############
+## Concept ##
+#############
+
 ####################
 ## Conceptual_Map ##
 ####################
 
-add_library(conceptual_map src/conceptual_map.cpp)
+add_library(conceptual_map src/conceptual_map.cpp src/concept.cpp)
 target_include_directories(conceptual_map PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
@@ -98,7 +131,7 @@ add_executable(semantic_mapping_node src/semantic_mapping_node.cpp)
 target_include_directories(semantic_mapping_node PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
-target_link_libraries(semantic_mapping_node detector conceptual_map)
+target_link_libraries(semantic_mapping_node detector concept conceptual_map)
 
 install(TARGETS semantic_mapping_node
   DESTINATION lib/${PROJECT_NAME})
@@ -120,6 +153,7 @@ ament_export_include_directories(
 
 ament_export_libraries(
   detector
+  concept
   conceptual_map
 )
 

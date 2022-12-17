@@ -10,7 +10,7 @@
   <buildtool_depend>ament_cmake_ros</buildtool_depend>
 
   <depend>rclcpp</depend>
-  <depend>rclpy</depend>
+  <!-- <depend>rclpy</depend> -->
   <depend>std_msgs</depend>
   <depend>sensor_msgs</depend>
 

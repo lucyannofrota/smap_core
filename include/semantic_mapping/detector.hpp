@@ -8,6 +8,8 @@
 namespace semantic_mapping
 {
 
+// Can be a scene or object detector
+
 class Detector
 {
 public:
