@@ -27,6 +27,8 @@ public:
 
   std::string get_label();
 
+  std::pair<std::string,std::string> get_vertex_representation();
+
 };
 
 }  // namespace semantic_mapping
