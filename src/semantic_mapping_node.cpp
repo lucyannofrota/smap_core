@@ -12,15 +12,14 @@
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/archive/text_iarchive.hpp>
 
-
-
+// geometry_msgs::msg::Point
 // Node responsible to manage all the services
 
 
 #include <fstream>
 #include <iostream>
 
-
+#include "../include/semantic_mapping/macros.hpp"
 
 
 
@@ -36,19 +35,10 @@ int main(int argc, char ** argv)
 
   a.export_TopoGraph("TopoGraph_bA");
   b.export_TopoGraph("TopoGraph_bB");
-  std::ofstream ofs(OUTPUT_PATH+"filename");
-  boost::archive::text_oarchive oa(ofs);
-  oa << a;
+  semantic_mapping::Conceptual_Map::save_map(a);
 
+  semantic_mapping::Conceptual_Map::load_map(b);
 
-  ofs.close();
-
-  std::ifstream ifs(OUTPUT_PATH+"filename");
-  boost::archive::text_iarchive ia(ifs);
-
-  ia >> b;
-
-  ifs.close();
   
 
   a.export_TopoGraph("TopoGraph_aA");

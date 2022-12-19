@@ -22,7 +22,10 @@
 #include <boost/graph/adj_list_serialize.hpp>
 #include <boost/serialization/version.hpp>
 
-// #include <boost/archive/
+#include <geometry_msgs/msg/pose_stamped.hpp>
+
+#include <boost/archive/text_oarchive.hpp>
+#include <boost/archive/text_iarchive.hpp>
 
 /* XXX current_vertex and previous_vertex can be a problem in the future! 
        Check based on the location of the robot when loading
@@ -35,6 +38,7 @@ struct VertexData
 {
   long index = 0;
   Concept this_thing;
+  geometry_msgs::msg::Point pos;
   // boost::container::list<Concept> related_things;
   std::list<Concept> related_things;
 
@@ -44,9 +48,12 @@ struct VertexData
   {
     (void) version;
     ar & index;
+    ar & pos.x; ar & pos.y; ar & pos.z;
     ar & this_thing;
     ar & related_things;
   }
+
+  
 };
 
 struct EdgeData
@@ -63,7 +70,7 @@ struct EdgeData
 
   friend class boost::serialization::access;
   template<class Archive>
-  void serialize(Archive & ar, const unsigned int version)
+  inline void serialize(Archive & ar, const unsigned int version)
   {
     (void) version;
     ar & distance;
@@ -85,15 +92,25 @@ public:
 
   TopoMap Semantic_Graph;
 
-  Conceptual_Map();
+  Conceptual_Map(void);
 
-  virtual ~Conceptual_Map();
+  virtual ~Conceptual_Map(void);
 
-  void add_vertex();
+  void add_vertex(void);
+
+  void add_vertex(geometry_msgs::msg::Point & pos);
 
   void export_ThingsGraph(const std::string & f_name);
 
   void export_TopoGraph(const std::string & f_name);
+
+  static void save_map(Conceptual_Map &obj);
+
+  static void save_map(Conceptual_Map &obj,std::string file_name);
+
+  static void load_map(Conceptual_Map &obj);
+
+  static void load_map(Conceptual_Map &obj,std::string file_name);
 
 private:
   friend class boost::serialization::access;
@@ -106,9 +123,9 @@ private:
     ar & Semantic_Graph;
   }
 
-  inline size_t _get_boost_index(VertexData * ptr);
+  inline size_t _get_TopoMap_index(VertexData * ptr);
 
-  inline size_t _get_boost_index(long idx);
+  inline size_t _get_TopoMap_index(long idx);
 };
 
 
