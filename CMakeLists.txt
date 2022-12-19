@@ -22,6 +22,7 @@ find_package(rclcpp REQUIRED)
 find_package(rclpy REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
+find_package(Boost REQUIRED system serialization)
 
 ##############
 ## Detector ##
@@ -128,10 +129,12 @@ install(
 )
 
 add_executable(semantic_mapping_node src/semantic_mapping_node.cpp)
+# include_directories(${Boost_INCLUDE_DIR})
 target_include_directories(semantic_mapping_node PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-  $<INSTALL_INTERFACE:include>)
-target_link_libraries(semantic_mapping_node detector concept conceptual_map)
+  $<INSTALL_INTERFACE:include>
+  ${Boost_INCLUDE_DIR})
+target_link_libraries(semantic_mapping_node detector concept conceptual_map ${Boost_LIBRARIES})
 
 install(TARGETS semantic_mapping_node
   DESTINATION lib/${PROJECT_NAME})

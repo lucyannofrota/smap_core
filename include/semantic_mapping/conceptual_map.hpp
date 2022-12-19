@@ -7,46 +7,81 @@
 #include <iostream>
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/graphviz.hpp>
-#include <boost/container/list.hpp>
 #include <string>
 
 #include "../include/semantic_mapping/concept.hpp"
 #include "../include/semantic_mapping/label_writers.hpp"
 
 
+#include "../include/semantic_mapping/macros.hpp"
+
+
+#include <list>
+#include <boost/serialization/serialization.hpp>
+#include <boost/serialization/list.hpp>
+#include <boost/graph/adj_list_serialize.hpp>
+#include <boost/serialization/version.hpp>
+
+// #include <boost/archive/
+
+/* XXX current_vertex and previous_vertex can be a problem in the future! 
+       Check based on the location of the robot when loading
+*/
+
 namespace semantic_mapping
 {
 
 struct VertexData
 {
-  const long index = 0;
+  long index = 0;
   Concept this_thing;
-  boost::container::list<Concept> related_things;
+  // boost::container::list<Concept> related_things;
+  std::list<Concept> related_things;
+
+  friend class boost::serialization::access;
+  template<class Archive>
+  void serialize(Archive & ar, const unsigned int version)
+  {
+    (void) version;
+    ar & index;
+    ar & this_thing;
+    ar & related_things;
+  }
 };
 
 struct EdgeData
 {
   // The cost of the edge will be distance*modifier
-  // 
-  const double distance = 0; 
+  //
+  double distance = 0;
   double modifier = 1;
 
-  double get_cost(void){
-    return round(distance*modifier*100)/100.0;
+  double get_cost(void)
+  {
+    return round(distance * modifier * 100) / 100.0;
+  }
+
+  friend class boost::serialization::access;
+  template<class Archive>
+  void serialize(Archive & ar, const unsigned int version)
+  {
+    (void) version;
+    ar & distance;
+    ar & modifier;
   }
 };
 
-typedef boost::adjacency_list<boost::vecS, boost::vecS, 
-                              boost::undirectedS,
-                              VertexData,
-                              EdgeData
-                              > TopoMap;
+typedef boost::adjacency_list<boost::vecS, boost::vecS,
+    boost::undirectedS,
+    VertexData,
+    EdgeData
+> TopoMap;
 
 class Conceptual_Map
 {
 public:
-  VertexData *current_vertex = NULL;
-  VertexData *previous_vertex = NULL;
+  VertexData * current_vertex = NULL;
+  VertexData * previous_vertex = NULL;
 
   TopoMap Semantic_Graph;
 
@@ -56,22 +91,38 @@ public:
 
   void add_vertex();
 
-  void export_ThingsGraph(const std::string &f_name);
+  void export_ThingsGraph(const std::string & f_name);
 
-  void export_TopoGraph(const std::string &f_name);
+  void export_TopoGraph(const std::string & f_name);
 
 private:
-  inline size_t _get_boost_index(VertexData* ptr);
+  friend class boost::serialization::access;
+  template<class Archive>
+  void serialize(Archive & ar, const unsigned int version)
+  {
+    (void) version;
+    // ar & current_vertex;
+    // ar & previous_vertex;
+    ar & Semantic_Graph;
+  }
+
+  inline size_t _get_boost_index(VertexData * ptr);
+
+  inline size_t _get_boost_index(long idx);
 };
 
 
-
-
-
-
-
-
+double random_double_in_range(double min, double max) // temp
+{
+  return min +
+         (double)rand() / RAND_MAX *
+         (max - min);
+}
 
 }  // namespace semantic_mapping
+
+BOOST_CLASS_VERSION(semantic_mapping::VertexData, 0)
+BOOST_CLASS_VERSION(semantic_mapping::EdgeData, 0)
+BOOST_CLASS_VERSION(semantic_mapping::Conceptual_Map, 0)
 
 #endif  // SEMANTIC_MAPPING__CONCEPTUAL_MAP_HPP_
