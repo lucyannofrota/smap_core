@@ -5,6 +5,8 @@
 
 #include "stdio.h"
 
+#include "rclcpp/rclcpp.hpp"
+
 namespace semantic_mapping
 {
 
@@ -12,6 +14,8 @@ namespace semantic_mapping
 
 class Detector
 {
+private:
+  rclcpp::Logger logger = rclcpp::get_logger("Concept");
 public:
   Detector();
 

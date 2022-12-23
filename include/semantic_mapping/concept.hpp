@@ -6,13 +6,10 @@
 #include "stdio.h"
 #include <iostream>
 
-// #include <boost/serialization/serialization.hpp>
-// #include <boost/container/list.hpp>
-// #include <boost/serialization/list.hpp>
-// #include <boost/serialization/
-// #include <boost/graph/adj_list_serialize.hpp>
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/version.hpp>
+
+#include "rclcpp/rclcpp.hpp"
 
 namespace semantic_mapping
 {
@@ -39,6 +36,7 @@ public:
 
 private:
   friend class boost::serialization::access;
+  rclcpp::Logger logger = rclcpp::get_logger("Concept");
   template<class Archive>
   void serialize(Archive & ar, const unsigned int version)
   {

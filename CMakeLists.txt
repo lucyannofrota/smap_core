@@ -19,11 +19,13 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(ament_cmake_ros REQUIRED)
 find_package(rclcpp REQUIRED)
-find_package(rclpy REQUIRED)
+# find_package(rclpy REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(Boost REQUIRED system serialization)
 find_package(geometry_msgs REQUIRED)
+find_package(tf2 REQUIRED)
+find_package(tf2_ros REQUIRED)
 
 ##############
 ## Detector ##
@@ -36,7 +38,7 @@ target_include_directories(detector PUBLIC
 
 ament_target_dependencies(
   detector
-  # "rclcpp"
+  rclcpp
   # "rclpy"
   # "std_msgs"
   # "sensor_msgs"
@@ -69,7 +71,7 @@ target_include_directories(concept PUBLIC
 
 ament_target_dependencies(
   concept
-  # "rclcpp"
+  rclcpp
   # "rclpy"
   # "std_msgs"
   # "sensor_msgs"
@@ -130,12 +132,29 @@ install(
   DESTINATION include
 )
 
+install(DIRECTORY
+  launch/
+  DESTINATION share/${PROJECT_NAME}/
+)
+
+install(DIRECTORY
+  config/
+  DESTINATION share/${PROJECT_NAME}/
+)
+
 add_executable(semantic_mapping_node src/semantic_mapping_node.cpp)
 # include_directories(${Boost_INCLUDE_DIR})
 target_include_directories(semantic_mapping_node PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>
   ${Boost_INCLUDE_DIR})
+
+ament_target_dependencies(
+  semantic_mapping_node
+  rclcpp
+  tf2
+  tf2_ros
+)
 target_link_libraries(semantic_mapping_node detector concept conceptual_map ${Boost_LIBRARIES})
 
 install(TARGETS semantic_mapping_node

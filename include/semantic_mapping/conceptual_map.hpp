@@ -27,8 +27,14 @@
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/archive/text_iarchive.hpp>
 
-/* XXX current_vertex and previous_vertex can be a problem in the future! 
+#include "rclcpp/rclcpp.hpp"
+
+/* XXX current_vertex and previous_vertex can be a problem in the future!
        Check based on the location of the robot when loading
+*/
+/* TODO Parameter D_START
+        Distance considered to be in the initialization. While in the range D_START from the first position
+        acquired, vertex creation will gonna be blocked
 */
 
 namespace semantic_mapping
@@ -53,7 +59,7 @@ struct VertexData
     ar & related_things;
   }
 
-  
+
 };
 
 struct EdgeData
@@ -86,34 +92,22 @@ typedef boost::adjacency_list<boost::vecS, boost::vecS,
 
 class Conceptual_Map
 {
-public:
+
+private:
+  // Variables
+  friend class boost::serialization::access;
   VertexData * current_vertex = NULL;
   VertexData * previous_vertex = NULL;
 
   TopoMap Semantic_Graph;
+  // rclcpp::Logger _logger = rclcpp::get_logger("Conceptual_Map");
+  rclcpp::Logger *logger;
 
-  Conceptual_Map(void);
-
-  virtual ~Conceptual_Map(void);
-
-  void add_vertex(void);
-
-  void add_vertex(geometry_msgs::msg::Point & pos);
-
-  void export_ThingsGraph(const std::string & f_name);
-
-  void export_TopoGraph(const std::string & f_name);
-
-  static void save_map(Conceptual_Map &obj);
-
-  static void save_map(Conceptual_Map &obj,std::string file_name);
-
-  static void load_map(Conceptual_Map &obj);
-
-  static void load_map(Conceptual_Map &obj,std::string file_name);
+  geometry_msgs::msg::Point *initial_point = NULL;
+  bool initialization = true;
 
 private:
-  friend class boost::serialization::access;
+  // Internal Functions
   template<class Archive>
   void serialize(Archive & ar, const unsigned int version)
   {
@@ -126,6 +120,29 @@ private:
   inline size_t _get_TopoMap_index(VertexData * ptr);
 
   inline size_t _get_TopoMap_index(long idx);
+
+public:
+  Conceptual_Map(void);
+
+  virtual ~Conceptual_Map(void);
+
+  void set_logger(rclcpp::Logger &logger);
+
+  void add_vertex(void);
+
+  void add_vertex(const geometry_msgs::msg::Point & pos);
+
+  void export_ThingsGraph(const std::string & f_name);
+
+  void export_TopoGraph(const std::string & f_name);
+
+  static void save_map(Conceptual_Map & obj);
+
+  static void save_map(Conceptual_Map & obj, std::string file_name);
+
+  static void load_map(Conceptual_Map & obj);
+
+  static void load_map(Conceptual_Map & obj, std::string file_name);
 };
 
 
