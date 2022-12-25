@@ -15,7 +15,7 @@ namespace semantic_mapping
 
   #define SAVE_LOAD_PATH std::string("src/semantic_mapping/SemMap/") // Save/Load path
 
-  #define VERTEX_DISTANCE 1.0 // Minimun distance to create a new vertece
+  #define VERTEX_DISTANCE 0.5 // Minimun distance to create a new vertece
 
   #define INIT_DISTANCE 0.4
 

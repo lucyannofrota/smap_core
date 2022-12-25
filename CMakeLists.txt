@@ -26,6 +26,7 @@ find_package(Boost REQUIRED system serialization)
 find_package(geometry_msgs REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(tf2_ros REQUIRED)
+find_package(visualization_msgs REQUIRED)
 
 ##############
 ## Detector ##
@@ -105,6 +106,7 @@ target_include_directories(conceptual_map PUBLIC
 ament_target_dependencies(
   conceptual_map
   geometry_msgs
+  visualization_msgs
   # "rclcpp"
   # "rclpy"
   # "std_msgs"
@@ -154,6 +156,7 @@ ament_target_dependencies(
   rclcpp
   tf2
   tf2_ros
+  visualization_msgs
 )
 target_link_libraries(semantic_mapping_node detector concept conceptual_map ${Boost_LIBRARIES})
 

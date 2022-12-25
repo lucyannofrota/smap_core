@@ -28,6 +28,7 @@
 #include <boost/archive/text_iarchive.hpp>
 
 #include "rclcpp/rclcpp.hpp"
+#include <visualization_msgs/msg/marker.hpp>
 
 /* XXX current_vertex and previous_vertex can be a problem in the future!
        Check based on the location of the robot when loading
@@ -37,15 +38,17 @@
         acquired, vertex creation will gonna be blocked
 */
 
+/* TODO add_vertex() Check distance beteween listed vertices with the new point
+*/
+
 namespace semantic_mapping
 {
 
 struct VertexData
 {
   long index = 0;
-  Concept this_thing;
   geometry_msgs::msg::Point pos;
-  // boost::container::list<Concept> related_things;
+  Concept this_thing;
   std::list<Concept> related_things;
 
   friend class boost::serialization::access;
@@ -90,7 +93,7 @@ typedef boost::adjacency_list<boost::vecS, boost::vecS,
     EdgeData
 > TopoMap;
 
-class Conceptual_Map
+class Conceptual_Map : public rclcpp::Node
 {
 
 private:
@@ -100,10 +103,19 @@ private:
   VertexData * previous_vertex = NULL;
 
   TopoMap Semantic_Graph;
-  // rclcpp::Logger _logger = rclcpp::get_logger("Conceptual_Map");
-  rclcpp::Logger *logger;
+  rclcpp::Logger * logger;
 
-  geometry_msgs::msg::Point *initial_point = NULL;
+  // rclcpp::TimerBase::SharedPtr timer{nullptr};
+
+  // Publishers
+  rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr publisher_marker;
+  visualization_msgs::msg::Marker vertex_marker;
+  visualization_msgs::msg::Marker edge_marker;
+
+  bool publish_vertex = false;
+  bool publish_edge = false;
+
+  geometry_msgs::msg::Point * initial_point = NULL;
   bool initialization = true;
 
 private:
@@ -112,21 +124,103 @@ private:
   void serialize(Archive & ar, const unsigned int version)
   {
     (void) version;
-    // ar & current_vertex;
-    // ar & previous_vertex;
     ar & Semantic_Graph;
   }
 
-  inline size_t _get_TopoMap_index(VertexData * ptr);
+  inline size_t _get_TopoMap_index(VertexData * ptr)
+  {
+    auto v_pair = boost::vertices(Semantic_Graph);
+    auto iter = v_pair.first;
+    for (; iter != v_pair.second; iter++) {
+      if (Semantic_Graph[*iter].index == ptr->index) {break;}
+    }
+    return *iter;
+  }
 
-  inline size_t _get_TopoMap_index(long idx);
+  inline size_t _get_TopoMap_index(long idx)
+  {
+    auto v_pair = boost::vertices(Semantic_Graph);
+    auto iter = v_pair.first;
+    for (; iter != v_pair.second; iter++) {
+      if (Semantic_Graph[*iter].index == idx) {break;}
+    }
+    return *iter;
+  }
+
+  inline void _append_vertex_marker(const geometry_msgs::msg::Point & pos){
+    static bool init_flag = true;
+    static int id = 0;
+    vertex_marker.header.stamp = this->get_clock().get()->now();
+    vertex_marker.id = id; id++;
+    vertex_marker.points.push_back(pos);
+    if(init_flag){
+      init_flag = false;
+      vertex_marker.action = visualization_msgs::msg::Marker::MODIFY;
+    }
+    publish_vertex = true;
+  }
+
+  inline void _append_edge_marker(const geometry_msgs::msg::Point & pos1, const geometry_msgs::msg::Point & pos2){
+    static bool init_flag = true;
+    static int id = 0;
+    edge_marker.header.stamp = this->get_clock().get()->now();
+    edge_marker.id = id; id++;
+    if(init_flag){
+      edge_marker.points.push_back(pos1);
+      edge_marker.points.push_back(pos2);
+      init_flag = false;
+      edge_marker.action = visualization_msgs::msg::Marker::MODIFY;
+    }
+    else edge_marker.points.push_back(pos2);
+    publish_edge = true;
+  }
+
+  // inline void timer_callback(void){
+  //   if(publish_vertex){
+  //     publisher_marker->publish(vertex_marker);
+  //     RCLCPP_DEBUG(this->get_logger(),"Vertex Marker Published");
+  //     publish_vertex = false;
+  //   }
+  //   if(publish_edge){
+  //     publisher_marker->publish(edge_marker);
+  //     RCLCPP_DEBUG(this->get_logger(),"Edge Marker Published");
+  //     publish_edge = false;
+  //   }
+  // }
+
+  inline size_t _add_vertex(long v_index, const geometry_msgs::msg::Point & pos, Concept this_thing, std::list<Concept> related_things){
+    size_t ret = boost::add_vertex(
+      {
+        v_index,
+        pos,
+        this_thing,
+        related_things
+      },
+      Semantic_Graph
+    );
+    publish_vertex = true;
+    _append_vertex_marker(pos);
+    return ret;
+  }
+
+  inline void _add_edge(size_t previous, size_t current, double distance){
+    boost::add_edge(
+    previous, current,
+    {
+      distance,
+      1
+    },
+    Semantic_Graph);
+    publish_edge = true;
+    _append_edge_marker(Semantic_Graph[previous].pos,Semantic_Graph[current].pos);
+  }
 
 public:
   Conceptual_Map(void);
 
   virtual ~Conceptual_Map(void);
 
-  void set_logger(rclcpp::Logger &logger);
+  void on_process(void);
 
   void add_vertex(void);
 

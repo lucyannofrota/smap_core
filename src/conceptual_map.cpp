@@ -5,49 +5,59 @@ namespace semantic_mapping
 
 
 Conceptual_Map::Conceptual_Map()
+: Node("conceptual_map")
 {
+  RCLCPP_INFO(this->get_logger(),"Initializing conceptual_map");
+   publisher_marker= this->create_publisher<visualization_msgs::msg::Marker>("semantic_mapper/conceptual_map/graph_nodes",10);
+
+  // Marker msg initialization
+  // Vertex
+  vertex_marker.header.frame_id = "/map";
+  vertex_marker.ns = "graph_map";
+  vertex_marker.type = visualization_msgs::msg::Marker::SPHERE_LIST;
+  vertex_marker.action = visualization_msgs::msg::Marker::ADD;
+  vertex_marker.scale.x = 0.075; vertex_marker.scale.y = 0.075; vertex_marker.scale.z = 0.075;
+  vertex_marker.color.r = 102.0/(102.0+51.0); vertex_marker.color.g = 51.0/(102.0+51.0); vertex_marker.color.b = 0.0;
+  vertex_marker.color.a = 1.0;
+
+  // Edge
+  edge_marker.header.frame_id = "/map";
+  edge_marker.ns = "graph_map";
+  edge_marker.type = visualization_msgs::msg::Marker::LINE_STRIP;
+  edge_marker.action = visualization_msgs::msg::Marker::ADD;
+  edge_marker.scale.x = 0.005; edge_marker.scale.y = 0.005; edge_marker.scale.z = 0.005;
+  edge_marker.color.r = 1.0; edge_marker.color.g = 0.0; edge_marker.color.b = 0.0;
+  edge_marker.pose.orientation.x = 0; edge_marker.pose.orientation.y = 0; edge_marker.pose.orientation.z = 0; edge_marker.pose.orientation.w = 1.0;
+  edge_marker.color.a = 1.0;
+
+
+  // timer = this->create_wall_timer(
+  //   std::chrono::seconds(1),
+  //   std::bind(
+  //     &Conceptual_Map::timer_callback,
+  //     this
+  //   )
+  // );
 }
 
 Conceptual_Map::~Conceptual_Map()
 {
   delete initial_point;
+  this->export_TopoGraph("TopoGraph");
 }
 
-
-void Conceptual_Map::set_logger(rclcpp::Logger & logger)
-{
-  this->logger = &logger;
-}
-
-void Conceptual_Map::add_vertex(void)  // TODO Remove
-{
-  long v_index;
-  if (current_vertex == NULL) {v_index = 0;} else {v_index = current_vertex->index + 1;}
-
-  size_t idx = boost::add_vertex(
-    {
-      v_index,
-      Concept(),
-      geometry_msgs::msg::Point(),
-      std::list<Concept>()
-    },
-    Semantic_Graph
-  );
-  previous_vertex = current_vertex;
-  current_vertex = &(Semantic_Graph[idx]);
-
-  if (previous_vertex == NULL) {return;}
-
-
-  //Add Edge
-  // Calculate distance
-  boost::add_edge(
-    _get_TopoMap_index(previous_vertex), idx,
-    {
-      random_double_in_range(0, 6),
-      random_double_in_range(1, 3)
-    },
-    Semantic_Graph);
+void Conceptual_Map::on_process(void){
+  if(publish_vertex){
+    publisher_marker->publish(vertex_marker);
+    RCLCPP_DEBUG(this->get_logger(),"Vertex Marker Published");
+    publish_vertex = false;
+  }
+  if(publish_edge){
+    publisher_marker->publish(edge_marker);
+    RCLCPP_DEBUG(this->get_logger(),"Edge Marker Published");
+    publish_edge = false;
+  }
+  // RCLCPP_DEBUG(this->get_logger(),"Process Conceptual_Map");
 }
 
 void Conceptual_Map::add_vertex(const geometry_msgs::msg::Point & pos)
@@ -57,16 +67,12 @@ void Conceptual_Map::add_vertex(const geometry_msgs::msg::Point & pos)
     initial_point->x = pos.x;
     initial_point->y = pos.y;
     initial_point->z = pos.z;
-    RCLCPP_DEBUG(*logger, "Init_point");
     return;
   }
 
 
   double distance;
   if (initialization) {
-    RCLCPP_DEBUG(
-      *logger, "Initialization ip(%4.1f,%4.1f,%4.1f) ap(%4.1f,%4.1f,%4.1f)",
-      initial_point->x, initial_point->y, initial_point->z, pos.x, pos.y, pos.z);
     distance = sqrt(
       pow(initial_point->x - pos.x, 2) +
       pow(initial_point->y - pos.y, 2) +
@@ -81,7 +87,6 @@ void Conceptual_Map::add_vertex(const geometry_msgs::msg::Point & pos)
   size_t idx;
   if (current_vertex == NULL) {
     auto v_pair = boost::vertices(Semantic_Graph);
-    RCLCPP_DEBUG(*logger, "current_vertex == NULL");
     for (auto iter = v_pair.first; iter != v_pair.second; iter++) {
       distance = sqrt(
         pow(Semantic_Graph[*iter].pos.x - pos.x, 2) +
@@ -95,22 +100,18 @@ void Conceptual_Map::add_vertex(const geometry_msgs::msg::Point & pos)
       }
       v_index++;
     }
-    idx = boost::add_vertex(
-      {
-        v_index,
-        Concept(),
-        pos,
-        std::list<Concept>()
-      },
-      Semantic_Graph
+    idx = this->_add_vertex(
+      v_index,
+      pos,
+      Concept(),
+      std::list<Concept>()
     );
 
-    RCLCPP_DEBUG(*logger, "First Vertex added");
+    RCLCPP_DEBUG(this->get_logger(), "First Vertex added");
     current_vertex = &(Semantic_Graph[idx]);
     return;
   }
 
-  RCLCPP_DEBUG(*logger, "current_vertex != NULL");
 
   v_index = current_vertex->index + 1;
 
@@ -121,18 +122,15 @@ void Conceptual_Map::add_vertex(const geometry_msgs::msg::Point & pos)
   );
 
 
-  if (distance < VERTEX_DISTANCE) return;
+  if (distance < VERTEX_DISTANCE) {return;}
 
-  idx = boost::add_vertex(
-    {
-      v_index,
-      Concept(),
-      pos,
-      std::list<Concept>()
-    },
-    Semantic_Graph
+  idx = this->_add_vertex(
+    v_index,
+    pos,
+    Concept(),
+    std::list<Concept>()
   );
-  RCLCPP_DEBUG(*logger, "Vertex added");
+  RCLCPP_DEBUG(this->get_logger(), "Vertex added");
   previous_vertex = current_vertex;
   current_vertex = &(Semantic_Graph[idx]);
 
@@ -143,13 +141,18 @@ void Conceptual_Map::add_vertex(const geometry_msgs::msg::Point & pos)
   );
 
   //Add Edge
-  boost::add_edge(
-    _get_TopoMap_index(previous_vertex), idx,
-    {
-      distance,
-      1
-    },
-    Semantic_Graph);
+  // boost::add_edge(
+  //   _get_TopoMap_index(previous_vertex), idx,
+  //   {
+  //     distance,
+  //     1
+  //   },
+  //   Semantic_Graph);
+  _add_edge(
+    _get_TopoMap_index(previous_vertex),
+    idx,
+    distance
+  );
 }
 
 void Conceptual_Map::export_TopoGraph(const std::string & f_name)
@@ -172,7 +175,7 @@ void Conceptual_Map::export_TopoGraph(const std::string & f_name)
     if (std::system(("rm " + OUTPUT_PATH + f_name + ".dot").c_str()) == 0) {
       // https://stackoverflow.com/questions/2616906/how-do-i-output-coloured-text-to-a-linux-terminal
       RCLCPP_INFO(
-        *logger,
+        this->get_logger(),
         "\033[42m[Export Complete]\033[0m png file successfully exported to: %s.png", std::string(
           OUTPUT_PATH + f_name).c_str());
     }
@@ -206,27 +209,6 @@ void Conceptual_Map::load_map(Conceptual_Map & obj, std::string file_name)
   obj.previous_vertex = NULL;
   obj.current_vertex = NULL;
   ifs.close();
-}
-
-
-inline size_t Conceptual_Map::_get_TopoMap_index(VertexData * ptr)
-{
-  auto v_pair = boost::vertices(Semantic_Graph);
-  auto iter = v_pair.first;
-  for (; iter != v_pair.second; iter++) {
-    if (Semantic_Graph[*iter].index == ptr->index) {break;}
-  }
-  return *iter;
-}
-
-inline size_t Conceptual_Map::_get_TopoMap_index(long idx)
-{
-  auto v_pair = boost::vertices(Semantic_Graph);
-  auto iter = v_pair.first;
-  for (; iter != v_pair.second; iter++) {
-    if (Semantic_Graph[*iter].index == idx) {break;}
-  }
-  return *iter;
 }
 
 }  // namespace semantic_mapping

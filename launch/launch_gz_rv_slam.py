@@ -53,36 +53,18 @@ def generate_launch_description():
                     FindPackageShare('semantic_mapping'),
                     'Debug.perspective'
              ])
-        ])
+             ])
 
-    # IncludeLaunchDescription(
-    #     PythonLaunchDescriptionSource([
-    #         PathJoinSubstitution([
-    #             FindPackageShare('slam_toolbox'),
-    #             'launch/online_async_launch.py'
-    #         ])
-    #     ]),
-    #     launch_arguments={
-    #         'use_sim_time': 'true'
-    #     }.items()
-    # )
+    launch_rviz = launch_ros.actions.Node(
+        package="rviz2",
+        executable="rviz2",
+        name="rviz2",
+        arguments=['-d' + "src/semantic_mapping/config/world.rviz"]
+    )
     return LaunchDescription([
-        # TimerAction(
-        #     period=5.0,
-        #     actions=[
-        #         launch_nav2
-        #     ]
-        # )
-        # launch_nav2
         rqt,
         launch_file_gazebo,
         launch_nav2,
-        launch_slam
+        launch_slam,
+        launch_rviz
     ])
-
-
-# launch_ros.actions.Node(
-#                     package="rviz2",
-#                     executable="rviz2",
-#                     name="rviz2",
-#                 )

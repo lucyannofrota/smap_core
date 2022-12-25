@@ -10,6 +10,8 @@
 #include "rclcpp/rclcpp.hpp"
 #include "tf2_ros/transform_listener.h"
 
+// #include <visualization_msgs/msg/marker.hpp>
+
 #include "../include/semantic_mapping/macros.hpp"
 #include "../include/semantic_mapping/detector.hpp"
 #include "../include/semantic_mapping/conceptual_map.hpp"
@@ -26,15 +28,15 @@
         Position acquisition rate
 */
 
-class SMAP_node : public rclcpp::Node
+class smap_node : public rclcpp::Node
 {
 private:
   //** Variables **//
   // TF
   std::unique_ptr<tf2_ros::Buffer> tf_buffer;
   std::shared_ptr<tf2_ros::TransformListener> tf_listener{nullptr};
-  // Map
-  semantic_mapping::Conceptual_Map concept_map;
+
+  // semantic_mapping::Conceptual_Map concept_map;
 
 
   // Timer
@@ -46,28 +48,30 @@ private:
 
 public:
   // Constructor/Destructor
-  SMAP_node()
-  : Node("Semantic_Mapper")
+  smap_node()
+  : Node("semantic_mapper")
   {
+    RCLCPP_INFO(this->get_logger(), "Initializing semantic_mapper");
     // tf buffer
     tf_buffer = std::make_unique<tf2_ros::Buffer>(this->get_clock());
     tf_listener = std::make_shared<tf2_ros::TransformListener>(*tf_buffer);
 
     // Callbacks
     timer = this->create_wall_timer(
-      std::chrono::seconds(1),
+      std::chrono::milliseconds(250),
+      // std::chrono::seconds(1),
       std::bind(
-        &SMAP_node::timer_callback,
+        &smap_node::timer_callback,
         this
       )
     );
 
-    // Initialization
-    concept_map.set_logger(logger);
-
   }
-  ~SMAP_node(){
-    concept_map.export_TopoGraph("TopoGraph");
+  ~smap_node(){
+  }
+
+  void on_process(void){
+    // RCLCPP_DEBUG(this->get_logger(),"Process smap_node");
   }
 
 private:
@@ -100,34 +104,27 @@ private:
     point.x = transform.transform.translation.x;
     point.y = transform.transform.translation.y;
     point.z = transform.transform.translation.z;
-    concept_map.add_vertex(point);
+    concept_map->add_vertex(point);
   }
+  public:
+  // Map
+    std::shared_ptr<semantic_mapping::Conceptual_Map> concept_map;
 };
 
 int main(int argc, char ** argv)
 {
-
-
-  // semantic_mapping::Conceptual_Map a, b;
-  // for (int i = 0; i < 5; i++) {
-  //   a.add_vertex();
-  // }
-
-  // a.export_TopoGraph("TopoGraph_bA");
-  // b.export_TopoGraph("TopoGraph_bB");
-
-  // semantic_mapping::Conceptual_Map::save_map(a);
-
-  // semantic_mapping::Conceptual_Map::load_map(b);
-
-
-  // a.export_TopoGraph("TopoGraph_aA");
-  // b.export_TopoGraph("TopoGraph_aB");
-
-
   rclcpp::init(argc, argv);
-
-  rclcpp::spin(std::make_shared<SMAP_node>());
+  std::shared_ptr<smap_node> _smap_node = std::make_shared<smap_node>();
+  std::shared_ptr<semantic_mapping::Conceptual_Map> _conceptual_map_node = std::make_shared<semantic_mapping::Conceptual_Map>();
+  _smap_node->concept_map = _conceptual_map_node;
+  rclcpp::executors::MultiThreadedExecutor executor;
+  executor.add_node(_smap_node);
+  executor.add_node(_conceptual_map_node);
+  while(rclcpp::ok()){
+    _smap_node->on_process();
+    _conceptual_map_node->on_process();
+    executor.spin_once();
+  }
   rclcpp::shutdown();
 
 

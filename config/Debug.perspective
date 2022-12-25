@@ -4,12 +4,12 @@
     "mainwindow": {
       "keys": {
         "geometry": {
-          "repr(QByteArray.hex)": "QtCore.QByteArray(b'01d9d0cb00030000000000bc00000171000004c3000003cd000000bc00000196000004c3000003cd00000000000000000780000000bc00000196000004c3000003cd')",
+          "repr(QByteArray.hex)": "QtCore.QByteArray(b'01d9d0cb00030000000000480000001b000003ba000002300000004800000040000003ba00000230000000000000000007800000004800000040000003ba00000230')",
           "type": "repr(QByteArray.hex)",
-          "pretty-print": "       q                         "
+          "pretty-print": "     H     0 H @   0      H @   0"
         },
         "state": {
-          "repr(QByteArray.hex)": "QtCore.QByteArray(b'000000ff00000000fd0000000100000003000004080000020efc0100000001fb0000004c007200710074005f0063006f006e0073006f006c0065005f005f0043006f006e0073006f006c0065005f005f0031005f005f0043006f006e0073006f006c00650057006900640067006500740100000000000004080000026a00ffffff000004080000000000000004000000040000000800000008fc00000001000000030000000100000036004d0069006e0069006d0069007a006500640044006f0063006b00570069006400670065007400730054006f006f006c0062006100720000000000ffffffff0000000000000000')",
+          "repr(QByteArray.hex)": "QtCore.QByteArray(b'000000ff00000000fd000000010000000300000373000001c7fc0100000001fb0000004c007200710074005f0063006f006e0073006f006c0065005f005f0043006f006e0073006f006c0065005f005f0031005f005f0043006f006e0073006f006c00650057006900640067006500740100000000000003730000026300ffffff000003730000000000000004000000040000000800000008fc00000001000000030000000100000036004d0069006e0069006d0069007a006500640044006f0063006b00570069006400670065007400730054006f006f006c0062006100720000000000ffffffff0000000000000000')",
           "type": "repr(QByteArray.hex)",
           "pretty-print": "                 Lrqt_console__Console__1__ConsoleWidget                            6MinimizedDockWidgetsToolbar        "
         }
@@ -61,9 +61,9 @@
                   "type": "repr"
                 },
                 "filter_splitter": {
-                  "repr(QByteArray.hex)": "QtCore.QByteArray(b'000000ff0000000100000002000000e9000000700100000009010000000200')",
+                  "repr(QByteArray.hex)": "QtCore.QByteArray(b'000000ff000000010000000200000070000000700100000009010000000200')",
                   "type": "repr(QByteArray.hex)",
-                  "pretty-print": "         p     "
+                  "pretty-print": "       p p     "
                 },
                 "highlight_filters": {
                   "repr": "'node'",
@@ -86,9 +86,9 @@
                   "type": "repr"
                 },
                 "table_splitter": {
-                  "repr(QByteArray.hex)": "QtCore.QByteArray(b'000000ff000000010000000200000046000000e90100000009010000000200')",
+                  "repr(QByteArray.hex)": "QtCore.QByteArray(b'000000ff00000001000000020000009c000000e90100000009010000000200')",
                   "type": "repr(QByteArray.hex)",
-                  "pretty-print": "       F       "
+                  "pretty-print": "               "
                 }
               },
               "groups": {
@@ -112,7 +112,7 @@
                       "type": "repr"
                     },
                     "itemlist": {
-                      "repr": "'Semantic_Mapper'",
+                      "repr": "['conceptual_map', 'semantic_mapper']",
                       "type": "repr"
                     },
                     "regex": {
