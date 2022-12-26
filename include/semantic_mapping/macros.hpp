@@ -17,7 +17,7 @@ namespace semantic_mapping
 
   #define VERTEX_DISTANCE 0.5 // Minimun distance to create a new vertece
 
-  #define INIT_DISTANCE 0.4
+  #define NEW_EDGE_FACTOR 1.0/2.0
 
 
 

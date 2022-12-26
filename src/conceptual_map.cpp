@@ -7,27 +7,35 @@ namespace semantic_mapping
 Conceptual_Map::Conceptual_Map()
 : Node("conceptual_map")
 {
-  RCLCPP_INFO(this->get_logger(),"Initializing conceptual_map");
-   publisher_marker= this->create_publisher<visualization_msgs::msg::Marker>("semantic_mapper/conceptual_map/graph_nodes",10);
+  RCLCPP_INFO(this->get_logger(), "Initializing conceptual_map");
+
+  if (NEW_EDGE_FACTOR > 1) {
+    RCLCPP_ERROR(this->get_logger(), "NEW_EDGE_FACTOR must be <= 1");
+  }
+
+  publisher_marker = this->create_publisher<visualization_msgs::msg::Marker>(
+    "semantic_mapper/conceptual_map/graph_nodes", 10);
 
   // Marker msg initialization
   // Vertex
   vertex_marker.header.frame_id = "/map";
-  vertex_marker.ns = "graph_map";
+  vertex_marker.ns = "graph_map_vertices";
   vertex_marker.type = visualization_msgs::msg::Marker::SPHERE_LIST;
   vertex_marker.action = visualization_msgs::msg::Marker::ADD;
   vertex_marker.scale.x = 0.075; vertex_marker.scale.y = 0.075; vertex_marker.scale.z = 0.075;
-  vertex_marker.color.r = 102.0/(102.0+51.0); vertex_marker.color.g = 51.0/(102.0+51.0); vertex_marker.color.b = 0.0;
+  vertex_marker.color.r = 102.0 / (102.0 + 51.0); vertex_marker.color.g = 51.0 / (102.0 + 51.0);
+  vertex_marker.color.b = 0.0;
   vertex_marker.color.a = 1.0;
 
   // Edge
   edge_marker.header.frame_id = "/map";
-  edge_marker.ns = "graph_map";
+  edge_marker.ns = "graph_map_edges";
   edge_marker.type = visualization_msgs::msg::Marker::LINE_STRIP;
   edge_marker.action = visualization_msgs::msg::Marker::ADD;
   edge_marker.scale.x = 0.005; edge_marker.scale.y = 0.005; edge_marker.scale.z = 0.005;
   edge_marker.color.r = 1.0; edge_marker.color.g = 0.0; edge_marker.color.b = 0.0;
-  edge_marker.pose.orientation.x = 0; edge_marker.pose.orientation.y = 0; edge_marker.pose.orientation.z = 0; edge_marker.pose.orientation.w = 1.0;
+  edge_marker.pose.orientation.x = 0; edge_marker.pose.orientation.y = 0;
+  edge_marker.pose.orientation.z = 0; edge_marker.pose.orientation.w = 1.0;
   edge_marker.color.a = 1.0;
 
 
@@ -42,26 +50,28 @@ Conceptual_Map::Conceptual_Map()
 
 Conceptual_Map::~Conceptual_Map()
 {
-  delete initial_point;
+  // delete initial_point;
   this->export_TopoGraph("TopoGraph");
 }
 
-void Conceptual_Map::on_process(void){
-  if(publish_vertex){
+void Conceptual_Map::on_process(void)
+{
+  if (publish_vertex) {
     publisher_marker->publish(vertex_marker);
-    RCLCPP_DEBUG(this->get_logger(),"Vertex Marker Published");
+    RCLCPP_DEBUG(this->get_logger(), "Vertex Marker Published");
     publish_vertex = false;
   }
-  if(publish_edge){
+  if (publish_edge) {
     publisher_marker->publish(edge_marker);
-    RCLCPP_DEBUG(this->get_logger(),"Edge Marker Published");
+    RCLCPP_DEBUG(this->get_logger(), "Edge Marker Published");
     publish_edge = false;
   }
-  // RCLCPP_DEBUG(this->get_logger(),"Process Conceptual_Map");
 }
-
+/*
 void Conceptual_Map::add_vertex(const geometry_msgs::msg::Point & pos)
 {
+  static geometry_msgs::msg::Point * initial_point = NULL;
+  static bool initialization = true;
   if (initial_point == NULL) {
     initial_point = new geometry_msgs::msg::Point;
     initial_point->x = pos.x;
@@ -85,9 +95,11 @@ void Conceptual_Map::add_vertex(const geometry_msgs::msg::Point & pos)
 
   long v_index = 0;
   size_t idx;
+  static bool loaded = false;
   if (current_vertex == NULL) {
     auto v_pair = boost::vertices(Semantic_Graph);
     for (auto iter = v_pair.first; iter != v_pair.second; iter++) {
+      loaded = true;
       distance = sqrt(
         pow(Semantic_Graph[*iter].pos.x - pos.x, 2) +
         pow(Semantic_Graph[*iter].pos.y - pos.y, 2) +
@@ -107,7 +119,7 @@ void Conceptual_Map::add_vertex(const geometry_msgs::msg::Point & pos)
       std::list<Concept>()
     );
 
-    RCLCPP_DEBUG(this->get_logger(), "First Vertex added");
+    // RCLCPP_DEBUG(this->get_logger(), "First Vertex added [%f,%f,%f]",pos.x,pos.y,pos.z);
     current_vertex = &(Semantic_Graph[idx]);
     return;
   }
@@ -122,36 +134,130 @@ void Conceptual_Map::add_vertex(const geometry_msgs::msg::Point & pos)
   );
 
 
-  if (distance < VERTEX_DISTANCE) {return;}
+  VertexData * closest = _get_edge_match(pos);
 
-  idx = this->_add_vertex(
-    v_index,
-    pos,
-    Concept(),
-    std::list<Concept>()
-  );
-  RCLCPP_DEBUG(this->get_logger(), "Vertex added");
-  previous_vertex = current_vertex;
-  current_vertex = &(Semantic_Graph[idx]);
+  if (closest == NULL) {
+    RCLCPP_DEBUG(this->get_logger(), "closest == NULL");
+    if (distance < VERTEX_DISTANCE) {return;} else {
+      idx = this->_add_vertex(
+        v_index,
+        pos,
+        Concept(),
+        std::list<Concept>()
+      );
+      previous_vertex = current_vertex;
+      current_vertex = &(Semantic_Graph[idx]);
+    }
+  } else { // closest != NULL
+    RCLCPP_DEBUG(this->get_logger(), "closest != NULL");
+    if (previous_vertex == NULL) {
+      RCLCPP_DEBUG(this->get_logger(), "previous_vertex == NULL");
+      if (loaded) {previous_vertex = closest;} else {
+        if (distance < VERTEX_DISTANCE) {return;} else {
+          idx = this->_add_vertex(
+            v_index,
+            pos,
+            Concept(),
+            std::list<Concept>()
+          );
+          previous_vertex = current_vertex;
+          current_vertex = &(Semantic_Graph[idx]);
+        }
+      }
+    } else {
+      RCLCPP_DEBUG(this->get_logger(), "previous_vertex != NULL");
+      if (closest->index == previous_vertex->index) {
+        if (distance < VERTEX_DISTANCE) {return;} else {
+          idx = this->_add_vertex(
+            v_index,
+            pos,
+            Concept(),
+            std::list<Concept>()
+          );
+          previous_vertex = current_vertex;
+          current_vertex = &(Semantic_Graph[idx]);
+        }
+      } else {
+        previous_vertex = current_vertex;
+        current_vertex = closest;
+      }
+
+    }
+  }
 
   distance = sqrt(
     pow(current_vertex->pos.x - previous_vertex->pos.x, 2) +
     pow(current_vertex->pos.y - previous_vertex->pos.y, 2) +
     pow(current_vertex->pos.z - previous_vertex->pos.z, 2)
   );
+  RCLCPP_DEBUG(
+    this->get_logger(), "Edge added %i->%i [%4.1f,%4.1f,%4.1f]->[%4.1f,%4.1f,%4.1f]", previous_vertex->index, current_vertex->index,
+    previous_vertex->pos.x, previous_vertex->pos.y, previous_vertex->pos.z,
+    current_vertex->pos.x, current_vertex->pos.y, current_vertex->pos.z
+  );
 
-  //Add Edge
-  // boost::add_edge(
-  //   _get_TopoMap_index(previous_vertex), idx,
-  //   {
-  //     distance,
-  //     1
-  //   },
-  //   Semantic_Graph);
+
+  RCLCPP_DEBUG(this->get_logger(), "try edge dist=%4.1f", distance);
+
   _add_edge(
     _get_TopoMap_index(previous_vertex),
-    idx,
-    distance
+    _get_TopoMap_index(current_vertex)
+  );
+}
+*/
+void Conceptual_Map::add_vertex_(const geometry_msgs::msg::Point & pos)
+{
+  RCLCPP_WARN(this->get_logger(), "Call");
+  // Initialization
+  // static geometry_msgs::msg::Point initial_point;
+  // static bool initialization = true;
+
+  static double dist_current;
+  VertexData * closest = _get_valid_close_vertex(pos, NEW_EDGE_FACTOR);
+  size_t idx;
+  static long v_index = 0;
+  if (current_vertex == NULL) {
+    RCLCPP_DEBUG(this->get_logger(), "current_vertex == NULL");
+    if (closest == NULL) {
+        idx = this->_add_vertex(v_index++, pos); 
+        current_vertex = &(Semantic_Graph[idx]);
+        return;
+      } else {
+      current_vertex = closest;
+    }
+  }
+
+  // current_vertex != NULL
+  RCLCPP_DEBUG(this->get_logger(), "current_vertex != NULL");
+  if ((closest != NULL) && (closest != current_vertex)/* && (closest != previous_vertex)*/) {
+    RCLCPP_DEBUG(this->get_logger(), "(closest != current_vertex) && (closest != previous_vertex)");
+    _add_edge(
+      _get_TopoMap_index(current_vertex),
+      _get_TopoMap_index(closest)
+    );
+    previous_vertex = current_vertex;
+    current_vertex = closest;
+    RCLCPP_DEBUG(this->get_logger(),"prev/cur [%i,%i]",previous_vertex->index,current_vertex->index);
+    return;
+  }
+
+  dist_current = sqrt(
+    pow(current_vertex->pos.x - pos.x, 2) +
+    pow(current_vertex->pos.y - pos.y, 2) +
+    pow(current_vertex->pos.z - pos.z, 2)
+  );
+
+  if (dist_current < VERTEX_DISTANCE) {return;}
+  RCLCPP_DEBUG(this->get_logger(), "dist_current >= VERTEX_DISTANCE");
+  // dist_current >= VERTEX_DISTANCE
+  idx = _add_vertex(v_index++, pos);
+  previous_vertex = current_vertex;
+  current_vertex = &(Semantic_Graph[idx]);
+  RCLCPP_DEBUG(this->get_logger(),"prev/cur [%i,%i]",previous_vertex->index,current_vertex->index);
+
+  _add_edge(
+    _get_TopoMap_index(previous_vertex),
+    _get_TopoMap_index(current_vertex)
   );
 }
 

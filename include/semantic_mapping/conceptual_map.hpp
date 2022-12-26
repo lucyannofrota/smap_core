@@ -38,9 +38,6 @@
         acquired, vertex creation will gonna be blocked
 */
 
-/* TODO add_vertex() Check distance beteween listed vertices with the new point
-*/
-
 namespace semantic_mapping
 {
 
@@ -115,8 +112,6 @@ private:
   bool publish_vertex = false;
   bool publish_edge = false;
 
-  geometry_msgs::msg::Point * initial_point = NULL;
-  bool initialization = true;
 
 private:
   // Internal Functions
@@ -147,31 +142,37 @@ private:
     return *iter;
   }
 
-  inline void _append_vertex_marker(const geometry_msgs::msg::Point & pos){
+  inline void _append_vertex_marker(const geometry_msgs::msg::Point & pos)
+  {
     static bool init_flag = true;
     static int id = 0;
+    // for(auto it = vertex_marker.points.begin(); it != vertex_marker.points.end(); it++){
+    //   if((it->x == pos.x) && (it->y == pos.y) && (it->z == pos.z)) return;
+    // }
     vertex_marker.header.stamp = this->get_clock().get()->now();
     vertex_marker.id = id; id++;
     vertex_marker.points.push_back(pos);
-    if(init_flag){
+    if (init_flag) {
       init_flag = false;
       vertex_marker.action = visualization_msgs::msg::Marker::MODIFY;
     }
     publish_vertex = true;
   }
 
-  inline void _append_edge_marker(const geometry_msgs::msg::Point & pos1, const geometry_msgs::msg::Point & pos2){
+  inline void _append_edge_marker(
+    const geometry_msgs::msg::Point & pos1,
+    const geometry_msgs::msg::Point & pos2)
+  {
     static bool init_flag = true;
     static int id = 0;
     edge_marker.header.stamp = this->get_clock().get()->now();
     edge_marker.id = id; id++;
-    if(init_flag){
+    if (init_flag) {
       edge_marker.points.push_back(pos1);
       edge_marker.points.push_back(pos2);
       init_flag = false;
       edge_marker.action = visualization_msgs::msg::Marker::MODIFY;
-    }
-    else edge_marker.points.push_back(pos2);
+    } else {edge_marker.points.push_back(pos2);}
     publish_edge = true;
   }
 
@@ -188,31 +189,64 @@ private:
   //   }
   // }
 
-  inline size_t _add_vertex(long v_index, const geometry_msgs::msg::Point & pos, Concept this_thing, std::list<Concept> related_things){
+  inline size_t _add_vertex(
+    long v_index, const geometry_msgs::msg::Point & pos)
+  {
     size_t ret = boost::add_vertex(
       {
         v_index,
         pos,
-        this_thing,
-        related_things
+        Concept(),
+        std::list<Concept>()
       },
       Semantic_Graph
     );
     publish_vertex = true;
     _append_vertex_marker(pos);
+    RCLCPP_INFO(this->get_logger(), "Vertex added [%4.1f,%4.1f,%4.1f]", pos.x, pos.y, pos.z);
     return ret;
   }
 
-  inline void _add_edge(size_t previous, size_t current, double distance){
+  inline void _add_edge(size_t previous, size_t current)
+  {
+    double distance = sqrt(
+      pow(Semantic_Graph[previous].pos.x - Semantic_Graph[current].pos.x, 2) +
+      pow(Semantic_Graph[previous].pos.y - Semantic_Graph[current].pos.y, 2) +
+      pow(Semantic_Graph[previous].pos.z - Semantic_Graph[current].pos.z, 2)
+    );
     boost::add_edge(
-    previous, current,
-    {
-      distance,
-      1
-    },
-    Semantic_Graph);
+      previous, current,
+      {
+        distance,
+        1
+      },
+      Semantic_Graph);
     publish_edge = true;
-    _append_edge_marker(Semantic_Graph[previous].pos,Semantic_Graph[current].pos);
+    _append_edge_marker(Semantic_Graph[previous].pos, Semantic_Graph[current].pos);
+    RCLCPP_DEBUG(
+      this->get_logger(), "Edge added %i->%i [%4.1f,%4.1f,%4.1f]->[%4.1f,%4.1f,%4.1f]", previous, current,
+      Semantic_Graph[previous].pos.x, Semantic_Graph[previous].pos.y, Semantic_Graph[previous].pos.z,
+      Semantic_Graph[current].pos.x, Semantic_Graph[current].pos.y,
+      Semantic_Graph[current].pos.z);
+  }
+
+  inline VertexData * _get_valid_close_vertex(const geometry_msgs::msg::Point & pos, double factor)
+  {
+    auto pair = boost::vertices(Semantic_Graph);
+    VertexData * ret = NULL;
+    double min = DBL_MAX;
+    for (auto it = pair.first; it != pair.second; it++) {
+      double distance = sqrt(
+        pow(pos.x - Semantic_Graph[*it].pos.x, 2) +
+        pow(pos.y - Semantic_Graph[*it].pos.y, 2) +
+        pow(pos.z - Semantic_Graph[*it].pos.z, 2)
+      );
+      if (distance < VERTEX_DISTANCE * factor && distance < min) {
+        min = distance;
+        ret = &(Semantic_Graph[*it]);
+      }
+    }
+    return ret;
   }
 
 public:
@@ -222,9 +256,9 @@ public:
 
   void on_process(void);
 
-  void add_vertex(void);
-
   void add_vertex(const geometry_msgs::msg::Point & pos);
+
+  void add_vertex_(const geometry_msgs::msg::Point & pos);
 
   void export_ThingsGraph(const std::string & f_name);
 

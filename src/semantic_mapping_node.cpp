@@ -104,7 +104,7 @@ private:
     point.x = transform.transform.translation.x;
     point.y = transform.transform.translation.y;
     point.z = transform.transform.translation.z;
-    concept_map->add_vertex(point);
+    concept_map->add_vertex_(point);
   }
   public:
   // Map
@@ -117,6 +117,62 @@ int main(int argc, char ** argv)
   std::shared_ptr<smap_node> _smap_node = std::make_shared<smap_node>();
   std::shared_ptr<semantic_mapping::Conceptual_Map> _conceptual_map_node = std::make_shared<semantic_mapping::Conceptual_Map>();
   _smap_node->concept_map = _conceptual_map_node;
+  // geometry_msgs::msg::Point pos;
+  // pos.x = 0;
+  // pos.y = 0;
+  // pos.z = 0;
+  // _conceptual_map_node->add_vertex_(pos); // 1
+
+
+  // pos.x = 1;
+  // pos.y = 0;
+  // pos.z = 0;
+  // _conceptual_map_node->add_vertex_(pos); // 2
+
+
+  // pos.x = 2;
+  // pos.y = 0;
+  // pos.z = 0;
+  // _conceptual_map_node->add_vertex_(pos); // 3
+
+
+  // pos.x = 2;
+  // pos.y = 1;
+  // pos.z = 0;
+  // _conceptual_map_node->add_vertex_(pos); // 4
+
+
+  // pos.x = 2;
+  // pos.y = 2;
+  // pos.z = 0;
+  // _conceptual_map_node->add_vertex_(pos); // 5
+
+
+  // pos.x = 2;
+  // pos.y = 0;
+  // pos.z = 0;
+  // _conceptual_map_node->add_vertex_(pos); // 5 -> 3
+
+
+  // pos.x = 0;
+  // pos.y = 0;
+  // pos.z = 0;
+  // _conceptual_map_node->add_vertex_(pos); // 3 -> 1
+
+
+  // pos.x = 0;
+  // pos.y = 1;
+  // pos.z = 0;
+  // _conceptual_map_node->add_vertex_(pos); // 6
+
+
+  // pos.x = 0;
+  // pos.y = 0;
+  // pos.z = 0;
+  // _conceptual_map_node->add_vertex_(pos); // 6 -> 1
+
+
+  // return 0;
   rclcpp::executors::MultiThreadedExecutor executor;
   executor.add_node(_smap_node);
   executor.add_node(_conceptual_map_node);
