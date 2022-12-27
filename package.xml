@@ -16,9 +16,17 @@
   <depend>tf2</depend>
   <depend>tf2_ros</depend>
   <depend>visualization_msgs</depend>
+  <depend>boost</depend>
+
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
+  <test_depend>ament_cppcheck</test_depend>
+  <test_depend>ament_uncrustify</test_depend>
+  <test_depend>ament_lint_cmake</test_depend>
+  <test_depend>ament_xmllint</test_depend>
+  <test_depend>ament_flake8</test_depend>
+  <test_depend>ament_pep257</test_depend>
 
   <export>
     <build_type>ament_cmake</build_type>

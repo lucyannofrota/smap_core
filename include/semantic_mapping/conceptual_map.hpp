@@ -112,7 +112,6 @@ private:
   bool publish_vertex = false;
   bool publish_edge = false;
 
-
 private:
   // Internal Functions
   template<class Archive>

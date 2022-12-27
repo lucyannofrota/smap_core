@@ -20,7 +20,7 @@
 #define FROM_FRAME std::string("map")
 #define TO_FRAME std::string("base_link")
 
-#define RAD2DEG(x) 180*x/M_PI
+#define RAD2DEG(x) 180 * x / M_PI
 
 // Node responsible to manage all the services
 
@@ -45,7 +45,6 @@ private:
   // Logger
   rclcpp::Logger logger = this->get_logger();
 
-
 public:
   // Constructor/Destructor
   smap_node()
@@ -67,10 +66,12 @@ public:
     );
 
   }
-  ~smap_node(){
+  ~smap_node()
+  {
   }
 
-  void on_process(void){
+  void on_process(void)
+  {
     // RCLCPP_DEBUG(this->get_logger(),"Process smap_node");
   }
 
@@ -93,12 +94,13 @@ private:
     }
 
     double roll, pitch, yaw;
-    tf2::Matrix3x3(tf2::Quaternion(
-      transform.transform.rotation.x,
-      transform.transform.rotation.y,
-      transform.transform.rotation.z,
-      transform.transform.rotation.w
-    )).getRPY(roll, pitch, yaw);
+    tf2::Matrix3x3(
+      tf2::Quaternion(
+        transform.transform.rotation.x,
+        transform.transform.rotation.y,
+        transform.transform.rotation.z,
+        transform.transform.rotation.w
+      )).getRPY(roll, pitch, yaw);
 
     geometry_msgs::msg::Point point;
     point.x = transform.transform.translation.x;
@@ -106,77 +108,23 @@ private:
     point.z = transform.transform.translation.z;
     concept_map->add_vertex_(point);
   }
-  public:
+
+public:
   // Map
-    std::shared_ptr<semantic_mapping::Conceptual_Map> concept_map;
+  std::shared_ptr<semantic_mapping::Conceptual_Map> concept_map;
 };
 
 int main(int argc, char ** argv)
 {
   rclcpp::init(argc, argv);
   std::shared_ptr<smap_node> _smap_node = std::make_shared<smap_node>();
-  std::shared_ptr<semantic_mapping::Conceptual_Map> _conceptual_map_node = std::make_shared<semantic_mapping::Conceptual_Map>();
+  std::shared_ptr<semantic_mapping::Conceptual_Map> _conceptual_map_node =
+    std::make_shared<semantic_mapping::Conceptual_Map>();
   _smap_node->concept_map = _conceptual_map_node;
-  // geometry_msgs::msg::Point pos;
-  // pos.x = 0;
-  // pos.y = 0;
-  // pos.z = 0;
-  // _conceptual_map_node->add_vertex_(pos); // 1
-
-
-  // pos.x = 1;
-  // pos.y = 0;
-  // pos.z = 0;
-  // _conceptual_map_node->add_vertex_(pos); // 2
-
-
-  // pos.x = 2;
-  // pos.y = 0;
-  // pos.z = 0;
-  // _conceptual_map_node->add_vertex_(pos); // 3
-
-
-  // pos.x = 2;
-  // pos.y = 1;
-  // pos.z = 0;
-  // _conceptual_map_node->add_vertex_(pos); // 4
-
-
-  // pos.x = 2;
-  // pos.y = 2;
-  // pos.z = 0;
-  // _conceptual_map_node->add_vertex_(pos); // 5
-
-
-  // pos.x = 2;
-  // pos.y = 0;
-  // pos.z = 0;
-  // _conceptual_map_node->add_vertex_(pos); // 5 -> 3
-
-
-  // pos.x = 0;
-  // pos.y = 0;
-  // pos.z = 0;
-  // _conceptual_map_node->add_vertex_(pos); // 3 -> 1
-
-
-  // pos.x = 0;
-  // pos.y = 1;
-  // pos.z = 0;
-  // _conceptual_map_node->add_vertex_(pos); // 6
-
-
-  // pos.x = 0;
-  // pos.y = 0;
-  // pos.z = 0;
-  // _conceptual_map_node->add_vertex_(pos); // 6 -> 1
-
-
-  // return 0;
   rclcpp::executors::MultiThreadedExecutor executor;
   executor.add_node(_smap_node);
   executor.add_node(_conceptual_map_node);
-  while(rclcpp::ok()){
+  while (rclcpp::ok()) {
     _smap_node->on_process();
     _conceptual_map_node->on_process();
     executor.spin_once();
