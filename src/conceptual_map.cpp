@@ -1,5 +1,13 @@
 #include "../include/semantic_mapping/conceptual_map.hpp"
 
+
+// #include "rcl/error_handling.h"
+// #include <rmw/types.h>
+
+void a(void){
+  std::cout << "ASdadasd" << std::endl;
+}
+
 namespace semantic_mapping
 {
 
@@ -11,6 +19,12 @@ Conceptual_Map::Conceptual_Map()
 
   if (NEW_EDGE_FACTOR > 1) {
     RCLCPP_ERROR(this->get_logger(), "NEW_EDGE_FACTOR must be <= 1");
+    rclcpp::exceptions::throw_from_rcl_error( // TODO error handling
+      RCL_RET_INVALID_ARGUMENT,
+      "NEW_EDGE_FACTOR must be <= 1",
+      NULL,
+      NULL
+    );
   }
 
   publisher_marker = this->create_publisher<visualization_msgs::msg::Marker>(
@@ -68,9 +82,8 @@ void Conceptual_Map::on_process(void)
   }
 }
 
-void Conceptual_Map::add_vertex_(const geometry_msgs::msg::Point & pos)
+void Conceptual_Map::add_vertex(const geometry_msgs::msg::Point & pos)
 {
-  RCLCPP_WARN(this->get_logger(), "Call");
   // Initialization
   // static geometry_msgs::msg::Point initial_point;
   // static bool initialization = true;
@@ -80,7 +93,6 @@ void Conceptual_Map::add_vertex_(const geometry_msgs::msg::Point & pos)
   size_t idx;
   static long v_index = 0;
   if (current_vertex == NULL) {
-    RCLCPP_DEBUG(this->get_logger(), "current_vertex == NULL");
     if (closest == NULL) {
       idx = this->_add_vertex(v_index++, pos);
       current_vertex = &(Semantic_Graph[idx]);
@@ -90,18 +102,13 @@ void Conceptual_Map::add_vertex_(const geometry_msgs::msg::Point & pos)
     }
   }
 
-  // current_vertex != NULL
-  RCLCPP_DEBUG(this->get_logger(), "current_vertex != NULL");
-  if ((closest != NULL) && (closest != current_vertex) /* && (closest != previous_vertex)*/) {
-    RCLCPP_DEBUG(this->get_logger(), "(closest != current_vertex) && (closest != previous_vertex)");
+  if ((closest != NULL) && (closest != current_vertex)) {
     _add_edge(
       _get_TopoMap_index(current_vertex),
       _get_TopoMap_index(closest)
     );
     previous_vertex = current_vertex;
     current_vertex = closest;
-    RCLCPP_DEBUG(
-      this->get_logger(), "prev/cur [%i,%i]", previous_vertex->index, current_vertex->index);
     return;
   }
 
@@ -112,14 +119,10 @@ void Conceptual_Map::add_vertex_(const geometry_msgs::msg::Point & pos)
   );
 
   if (dist_current < VERTEX_DISTANCE) {return;}
-  RCLCPP_DEBUG(this->get_logger(), "dist_current >= VERTEX_DISTANCE");
   // dist_current >= VERTEX_DISTANCE
   idx = _add_vertex(v_index++, pos);
   previous_vertex = current_vertex;
   current_vertex = &(Semantic_Graph[idx]);
-  RCLCPP_DEBUG(
-    this->get_logger(), "prev/cur [%i,%i]", previous_vertex->index,
-    current_vertex->index);
 
   _add_edge(
     _get_TopoMap_index(previous_vertex),

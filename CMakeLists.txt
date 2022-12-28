@@ -27,6 +27,9 @@ find_package(geometry_msgs REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(visualization_msgs REQUIRED)
+find_package(std_srvs REQUIRED)
+find_package(rosidl_default_generators REQUIRED)
+find_package(rmw_implementation_cmake REQUIRED)
 
 ##############
 ## Detector ##
@@ -129,6 +132,32 @@ install(
 ## Conceptual_Map ##
 ####################
 
+
+###############
+## Msgs/Srvs ##
+###############
+
+include_directories(include)
+# set(message_files
+#   "msg/FieldsWithSameType.msg"
+#   "msg/UInt32.msg"
+# )
+set(service_files
+  "srv/AddThreeInts.srv"
+)
+
+rosidl_generate_interfaces(${PROJECT_NAME}
+  # ${message_files}
+  ${service_files}
+)
+
+ament_export_dependencies(rosidl_default_runtime)
+
+###############
+## Msgs/Srvs ##
+###############
+
+
 install(
   DIRECTORY include/
   DESTINATION include
@@ -144,8 +173,29 @@ install(DIRECTORY
   DESTINATION share/${PROJECT_NAME}/
 )
 
+
+
 add_executable(semantic_mapping_node src/semantic_mapping_node.cpp)
-# include_directories(${Boost_INCLUDE_DIR})
+
+#######################
+## Msgs/Srvs inlcude ##
+#######################
+
+get_available_rmw_implementations(rmw_implementations2)
+foreach(rmw_implementation ${rmw_implementations2})
+  find_package("${rmw_implementation}" REQUIRED)
+  get_rmw_typesupport(typesupport_impls "${rmw_implementation}" LANGUAGE "cpp")
+  foreach(typesupport_impl ${typesupport_impls})
+    rosidl_target_interfaces(semantic_mapping_node
+      ${PROJECT_NAME} ${typesupport_impl}
+    )
+  endforeach()
+endforeach()
+
+#######################
+## Msgs/Srvs inlcude ##
+#######################
+
 target_include_directories(semantic_mapping_node PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>
@@ -157,6 +207,7 @@ ament_target_dependencies(
   tf2
   tf2_ros
   visualization_msgs
+  std_srvs
 )
 target_link_libraries(semantic_mapping_node detector concept conceptual_map ${Boost_LIBRARIES})
 

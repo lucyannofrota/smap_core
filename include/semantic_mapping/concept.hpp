@@ -27,8 +27,8 @@ public:
 
   // Methods
   Concept();
+  Concept(semantic_type type);
   virtual ~Concept();
-
 
   std::string get_label();
 

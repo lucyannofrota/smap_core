@@ -17,6 +17,10 @@
 #include "../include/semantic_mapping/conceptual_map.hpp"
 #include "../include/semantic_mapping/concept.hpp"
 
+#include "std_srvs/srv/trigger.hpp"
+#include "semantic_mapping/srv/add_three_ints.hpp"
+// #include "../srv/AddThreeInts.hpp"
+
 #define FROM_FRAME std::string("map")
 #define TO_FRAME std::string("base_link")
 
@@ -27,6 +31,8 @@
 /* TODO Parameter POS_RATE
         Position acquisition rate
 */
+
+// Node
 
 class smap_node : public rclcpp::Node
 {
@@ -106,13 +112,23 @@ private:
     point.x = transform.transform.translation.x;
     point.y = transform.transform.translation.y;
     point.z = transform.transform.translation.z;
-    concept_map->add_vertex_(point);
+    concept_map->add_vertex(point);
   }
 
 public:
   // Map
   std::shared_ptr<semantic_mapping::Conceptual_Map> concept_map;
 };
+
+// Services
+
+void test_serv(const std::shared_ptr<std_srvs::srv::Trigger::Request> request, std::shared_ptr<std_srvs::srv::Trigger::Response> response){
+  (void) request;
+  request->structure_needs_at_least_one_member;
+  response->success = true;
+  response->message = "Serv_SMAP";
+  RCLCPP_INFO(rclcpp::get_logger("Serv_SMAP"),"Service Serv_SMAP");
+}
 
 int main(int argc, char ** argv)
 {
@@ -124,10 +140,16 @@ int main(int argc, char ** argv)
   rclcpp::executors::MultiThreadedExecutor executor;
   executor.add_node(_smap_node);
   executor.add_node(_conceptual_map_node);
+  rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr service = _smap_node->create_service<std_srvs::srv::Trigger>("serv_smap", &test_serv);
   while (rclcpp::ok()) {
-    _smap_node->on_process();
-    _conceptual_map_node->on_process();
-    executor.spin_once();
+    try{
+      _smap_node->on_process();
+      _conceptual_map_node->on_process();
+      executor.spin_once();
+    }catch (std::exception& e){
+      std::cout << "Exception!" << std::endl;
+      std::cout << e.what() << std::endl;
+    }
   }
   rclcpp::shutdown();
 

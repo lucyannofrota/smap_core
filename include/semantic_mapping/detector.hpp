@@ -16,6 +16,7 @@ class Detector
 {
 private:
   rclcpp::Logger logger = rclcpp::get_logger("Concept");
+  
 
 public:
   Detector();

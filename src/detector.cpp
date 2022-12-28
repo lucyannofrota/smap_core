@@ -6,14 +6,6 @@ namespace semantic_mapping
 
 Detector::Detector()
 {
-  printf("A\n");
-  printf("A\n");
-  printf("A\n");
-  printf("A\n");
-  printf("A\n");
-  printf("A\n");
-  printf("A\n");
-  printf("A\n");
 }
 
 

@@ -4,31 +4,26 @@
 #include "visibility_control.h"
 
 #include "stdio.h"
-#include <iostream>
-#include <boost/graph/adjacency_list.hpp>
-#include <boost/graph/graphviz.hpp>
 #include <string>
-
-#include "../include/semantic_mapping/concept.hpp"
-#include "../include/semantic_mapping/label_writers.hpp"
-
-
-#include "../include/semantic_mapping/macros.hpp"
-
-
-#include <list>
-#include <boost/serialization/serialization.hpp>
-#include <boost/serialization/list.hpp>
-#include <boost/graph/adj_list_serialize.hpp>
-#include <boost/serialization/version.hpp>
-
-#include <geometry_msgs/msg/pose_stamped.hpp>
-
-#include <boost/archive/text_oarchive.hpp>
-#include <boost/archive/text_iarchive.hpp>
+#include <iostream>
 
 #include "rclcpp/rclcpp.hpp"
 #include <visualization_msgs/msg/marker.hpp>
+#include <geometry_msgs/msg/pose_stamped.hpp>
+
+#include <list>
+#include <boost/graph/adjacency_list.hpp>
+#include <boost/graph/graphviz.hpp>
+#include <boost/serialization/list.hpp>
+#include <boost/serialization/serialization.hpp>
+#include <boost/graph/adj_list_serialize.hpp>
+#include <boost/serialization/version.hpp>
+#include <boost/archive/text_oarchive.hpp>
+#include <boost/archive/text_iarchive.hpp>
+
+#include "../include/semantic_mapping/macros.hpp"
+#include "../include/semantic_mapping/concept.hpp"
+#include "../include/semantic_mapping/label_writers.hpp"
 
 /* XXX current_vertex and previous_vertex can be a problem in the future!
        Check based on the location of the robot when loading
@@ -100,7 +95,7 @@ private:
   VertexData * previous_vertex = NULL;
 
   TopoMap Semantic_Graph;
-  rclcpp::Logger * logger;
+  // rclcpp::Logger * logger;
 
   // rclcpp::TimerBase::SharedPtr timer{nullptr};
 
@@ -191,11 +186,13 @@ private:
   inline size_t _add_vertex(
     long v_index, const geometry_msgs::msg::Point & pos)
   {
+    // semantic_mapping::Concept thing;
+    // thing.type = semantic_type::LOCATION;
     size_t ret = boost::add_vertex(
       {
         v_index,
         pos,
-        Concept(),
+        Concept(semantic_type::LOCATION),
         std::list<Concept>()
       },
       Semantic_Graph
@@ -256,8 +253,6 @@ public:
   void on_process(void);
 
   void add_vertex(const geometry_msgs::msg::Point & pos);
-
-  void add_vertex_(const geometry_msgs::msg::Point & pos);
 
   void export_ThingsGraph(const std::string & f_name);
 

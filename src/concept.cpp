@@ -7,9 +7,15 @@ Concept::Concept()
 {
 }
 
+Concept::Concept(semantic_type type){
+  this->type = type;
+}
+
 Concept::~Concept()
 {
 }
+
+
 
 std::string Concept::get_label(void)
 {
