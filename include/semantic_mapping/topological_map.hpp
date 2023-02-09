@@ -1,5 +1,5 @@
-#ifndef SEMANTIC_MAPPING__CONCEPTUAL_MAP_HPP_
-#define SEMANTIC_MAPPING__CONCEPTUAL_MAP_HPP_
+#ifndef SEMANTIC_MAPPING__TOPOLOGICAL_MAP_HPP_
+#define SEMANTIC_MAPPING__TOPOLOGICAL_MAP_HPP_
 
 #include "visibility_control.h"
 
@@ -85,7 +85,7 @@ typedef boost::adjacency_list<boost::vecS, boost::vecS,
     EdgeData
 > TopoMap;
 
-class Conceptual_Map : public rclcpp::Node
+class topological_map : public rclcpp::Node
 {
 
 private:
@@ -246,9 +246,9 @@ private:
   }
 
 public:
-  Conceptual_Map(void);
+  topological_map(void);
 
-  virtual ~Conceptual_Map(void);
+  virtual ~topological_map(void);
 
   void on_process(void);
 
@@ -258,13 +258,13 @@ public:
 
   void export_TopoGraph(const std::string & f_name);
 
-  static void save_map(Conceptual_Map & obj);
+  static void save_map(topological_map & obj);
 
-  static void save_map(Conceptual_Map & obj, std::string file_name);
+  static void save_map(topological_map & obj, std::string file_name);
 
-  static void load_map(Conceptual_Map & obj);
+  static void load_map(topological_map & obj);
 
-  static void load_map(Conceptual_Map & obj, std::string file_name);
+  static void load_map(topological_map & obj, std::string file_name);
 };
 
 
@@ -279,6 +279,6 @@ double random_double_in_range(double min, double max) // temp
 
 BOOST_CLASS_VERSION(semantic_mapping::VertexData, 0)
 BOOST_CLASS_VERSION(semantic_mapping::EdgeData, 0)
-BOOST_CLASS_VERSION(semantic_mapping::Conceptual_Map, 0)
+BOOST_CLASS_VERSION(semantic_mapping::topological_map, 0)
 
-#endif  // SEMANTIC_MAPPING__CONCEPTUAL_MAP_HPP_
+#endif  // SEMANTIC_MAPPING__TOPOLOGICAL_MAP_HPP_

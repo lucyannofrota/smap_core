@@ -1,4 +1,4 @@
-# Conceptual_Map
+# Topological_Map
 
 Class responsible to create a interface to the TopoMap (Graph Map) and the Concepts associated with each Vertex
 

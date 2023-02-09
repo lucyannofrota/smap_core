@@ -13,8 +13,8 @@
 // #include <visualization_msgs/msg/marker.hpp>
 
 #include "../include/semantic_mapping/macros.hpp"
-#include "../include/semantic_mapping/detector.hpp"
-#include "../include/semantic_mapping/conceptual_map.hpp"
+// #include "../include/semantic_mapping/detector.hpp"
+#include "../include/semantic_mapping/topological_map.hpp"
 #include "../include/semantic_mapping/concept.hpp"
 
 #include "std_srvs/srv/trigger.hpp"
@@ -42,7 +42,7 @@ private:
   std::unique_ptr<tf2_ros::Buffer> tf_buffer;
   std::shared_ptr<tf2_ros::TransformListener> tf_listener{nullptr};
 
-  // semantic_mapping::Conceptual_Map concept_map;
+  // semantic_mapping::topological_map concept_map;
 
 
   // Timer
@@ -117,7 +117,7 @@ private:
 
 public:
   // Map
-  std::shared_ptr<semantic_mapping::Conceptual_Map> concept_map;
+  std::shared_ptr<semantic_mapping::topological_map> concept_map;
 };
 
 // Services
@@ -134,17 +134,17 @@ int main(int argc, char ** argv)
 {
   rclcpp::init(argc, argv);
   std::shared_ptr<smap_node> _smap_node = std::make_shared<smap_node>();
-  std::shared_ptr<semantic_mapping::Conceptual_Map> _conceptual_map_node =
-    std::make_shared<semantic_mapping::Conceptual_Map>();
-  _smap_node->concept_map = _conceptual_map_node;
+  std::shared_ptr<semantic_mapping::topological_map> _topological_map_node =
+    std::make_shared<semantic_mapping::topological_map>();
+  _smap_node->concept_map = _topological_map_node;
   rclcpp::executors::MultiThreadedExecutor executor;
   executor.add_node(_smap_node);
-  executor.add_node(_conceptual_map_node);
+  executor.add_node(_topological_map_node);
   rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr service = _smap_node->create_service<std_srvs::srv::Trigger>("serv_smap", &test_serv);
   while (rclcpp::ok()) {
     try{
       _smap_node->on_process();
-      _conceptual_map_node->on_process();
+      _topological_map_node->on_process();
       executor.spin_once();
     }catch (std::exception& e){
       std::cout << "Exception!" << std::endl;

@@ -7,11 +7,13 @@
   <maintainer email="lucyannofrota@gmail.com">ros</maintainer>
   <license>TODO: License declaration</license>
 
+<buildtool_depend>ament_cmake</buildtool_depend>
   <buildtool_depend>ament_cmake_ros</buildtool_depend>
+  <buildtool_depend>ament_cmake_python</buildtool_depend>
 
 
   <depend>rclcpp</depend>
-  <!-- <depend>rclpy</depend> -->
+  <depend>rclpy</depend>
   <depend>std_msgs</depend>
   <depend>sensor_msgs</depend>
   <depend>tf2</depend>

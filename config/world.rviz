@@ -185,7 +185,7 @@ Visualization Manager:
         Durability Policy: Volatile
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: /semantic_mapper/conceptual_map/graph_nodes
+        Value: /semantic_mapper/topological_map/graph_nodes
       Value: true
   Enabled: true
   Global Options:

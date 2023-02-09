@@ -18,8 +18,9 @@ endif()
 # find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(ament_cmake_ros REQUIRED)
+find_package(ament_cmake_python REQUIRED)
 find_package(rclcpp REQUIRED)
-# find_package(rclpy REQUIRED)
+find_package(rclpy REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(Boost REQUIRED system serialization)
@@ -30,39 +31,6 @@ find_package(visualization_msgs REQUIRED)
 find_package(std_srvs REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 find_package(rmw_implementation_cmake REQUIRED)
-
-##############
-## Detector ##
-##############
-
-add_library(detector src/detector.cpp)
-target_include_directories(detector PUBLIC
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-  $<INSTALL_INTERFACE:include>)
-
-ament_target_dependencies(
-  detector
-  rclcpp
-  # "rclpy"
-  # "std_msgs"
-  # "sensor_msgs"
-)
-
-# Causes the visibility macros to use dllexport rather than dllimport,
-# which is appropriate when building the dll but not consuming it.
-target_compile_definitions(detector PRIVATE "SEMANTIC_MAPPING_BUILDING_LIBRARY")
-
-install(
-  TARGETS detector
-  EXPORT export_${PROJECT_NAME}
-  ARCHIVE DESTINATION lib
-  LIBRARY DESTINATION lib
-  RUNTIME DESTINATION bin
-)
-
-##############
-## Detector ##
-##############
 
 #############
 ## Concept ##
@@ -97,17 +65,17 @@ install(
 ## Concept ##
 #############
 
-####################
-## Conceptual_Map ##
-####################
+#####################
+## Topological_Map ##
+#####################
 
-add_library(conceptual_map src/conceptual_map.cpp src/concept.cpp)
-target_include_directories(conceptual_map PUBLIC
+add_library(topological_map src/topological_map.cpp src/concept.cpp)
+target_include_directories(topological_map PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
 
 ament_target_dependencies(
-  conceptual_map
+  topological_map
   geometry_msgs
   visualization_msgs
   # "rclcpp"
@@ -118,19 +86,19 @@ ament_target_dependencies(
 
 # Causes the visibility macros to use dllexport rather than dllimport,
 # which is appropriate when building the dll but not consuming it.
-target_compile_definitions(conceptual_map PRIVATE "SEMANTIC_MAPPING_BUILDING_LIBRARY")
+target_compile_definitions(topological_map PRIVATE "SEMANTIC_MAPPING_BUILDING_LIBRARY")
 
 install(
-  TARGETS conceptual_map
+  TARGETS topological_map
   EXPORT export_${PROJECT_NAME}
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION bin
 )
 
-####################
-## Conceptual_Map ##
-####################
+#####################
+## Topological_Map ##
+#####################
 
 
 ###############
@@ -164,14 +132,17 @@ install(
 )
 
 install(DIRECTORY
-  launch/
+  launch
+  config
+  Outputs
+  SemMap
   DESTINATION share/${PROJECT_NAME}/
 )
 
-install(DIRECTORY
-  config/
-  DESTINATION share/${PROJECT_NAME}/
-)
+# install(DIRECTORY
+#   config
+#   DESTINATION share/${PROJECT_NAME}/
+# )
 
 
 
@@ -209,7 +180,7 @@ ament_target_dependencies(
   visualization_msgs
   std_srvs
 )
-target_link_libraries(semantic_mapping_node detector concept conceptual_map ${Boost_LIBRARIES})
+target_link_libraries(semantic_mapping_node concept topological_map ${Boost_LIBRARIES})
 
 install(TARGETS semantic_mapping_node
   DESTINATION lib/${PROJECT_NAME})
@@ -230,13 +201,52 @@ ament_export_include_directories(
 )
 
 ament_export_libraries(
-  detector
   concept
-  conceptual_map
+  topological_map
 )
 
 ament_export_targets(
   export_${PROJECT_NAME}
 )
+
+
+
+###############################
+## classification_wrapper_py ##
+###############################
+
+ament_python_install_package(src/classifier_wrapper)
+
+install(PROGRAMS
+  src/classifiers/py_node.py
+  DESTINATION lib/${PROJECT_NAME}
+)
+
+
+# install(TARGETS semantic_mapping_node
+#   DESTINATION lib/${PROJECT_NAME})
+
+###############################
+## classification_wrapper_py ##
+###############################
+
+
+
+
+
+############
+## Launch ##
+############
+
+# install(PROGRAMS
+#   classifiers/py_node.py
+#   DESTINATION lib/${PROJECT_NAME}
+# )
+
+############
+## Launch ##
+############
+
+
 
 ament_package()

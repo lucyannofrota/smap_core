@@ -1,4 +1,4 @@
-#include "../include/semantic_mapping/conceptual_map.hpp"
+#include "../include/semantic_mapping/topological_map.hpp"
 
 
 // #include "rcl/error_handling.h"
@@ -12,10 +12,10 @@ namespace semantic_mapping
 {
 
 
-Conceptual_Map::Conceptual_Map()
-: Node("conceptual_map")
+topological_map::topological_map()
+: Node("topological_map")
 {
-  RCLCPP_INFO(this->get_logger(), "Initializing conceptual_map");
+  RCLCPP_INFO(this->get_logger(), "Initializing topological_map");
 
   if (NEW_EDGE_FACTOR > 1) {
     RCLCPP_ERROR(this->get_logger(), "NEW_EDGE_FACTOR must be <= 1");
@@ -28,7 +28,7 @@ Conceptual_Map::Conceptual_Map()
   }
 
   publisher_marker = this->create_publisher<visualization_msgs::msg::Marker>(
-    "semantic_mapper/conceptual_map/graph_nodes", 10);
+    "semantic_mapper/topological_map/graph_nodes", 10);
 
   // Marker msg initialization
   // Vertex
@@ -56,19 +56,19 @@ Conceptual_Map::Conceptual_Map()
   // timer = this->create_wall_timer(
   //   std::chrono::seconds(1),
   //   std::bind(
-  //     &Conceptual_Map::timer_callback,
+  //     &topological_map::timer_callback,
   //     this
   //   )
   // );
 }
 
-Conceptual_Map::~Conceptual_Map()
+topological_map::~topological_map()
 {
   // delete initial_point;
   this->export_TopoGraph("TopoGraph");
 }
 
-void Conceptual_Map::on_process(void)
+void topological_map::on_process(void)
 {
   if (publish_vertex) {
     publisher_marker->publish(vertex_marker);
@@ -82,7 +82,7 @@ void Conceptual_Map::on_process(void)
   }
 }
 
-void Conceptual_Map::add_vertex(const geometry_msgs::msg::Point & pos)
+void topological_map::add_vertex(const geometry_msgs::msg::Point & pos)
 {
   // Initialization
   // static geometry_msgs::msg::Point initial_point;
@@ -130,7 +130,7 @@ void Conceptual_Map::add_vertex(const geometry_msgs::msg::Point & pos)
   );
 }
 
-void Conceptual_Map::export_TopoGraph(const std::string & f_name)
+void topological_map::export_TopoGraph(const std::string & f_name)
 {
   std::ofstream dotfile(OUTPUT_PATH + f_name + ".dot");
 
@@ -158,12 +158,12 @@ void Conceptual_Map::export_TopoGraph(const std::string & f_name)
 
 }
 
-void Conceptual_Map::save_map(Conceptual_Map & obj)
+void topological_map::save_map(topological_map & obj)
 {
-  Conceptual_Map::save_map(obj, DEFAULT_FILE_NAME);
+  topological_map::save_map(obj, DEFAULT_FILE_NAME);
 }
 
-void Conceptual_Map::save_map(Conceptual_Map & obj, std::string file_name)
+void topological_map::save_map(topological_map & obj, std::string file_name)
 {
   std::ofstream ofs(SAVE_LOAD_PATH + file_name);
   boost::archive::text_oarchive oa(ofs);
@@ -171,12 +171,12 @@ void Conceptual_Map::save_map(Conceptual_Map & obj, std::string file_name)
   ofs.close();
 }
 
-void Conceptual_Map::load_map(Conceptual_Map & obj)
+void topological_map::load_map(topological_map & obj)
 {
-  Conceptual_Map::load_map(obj, DEFAULT_FILE_NAME);
+  topological_map::load_map(obj, DEFAULT_FILE_NAME);
 }
 
-void Conceptual_Map::load_map(Conceptual_Map & obj, std::string file_name)
+void topological_map::load_map(topological_map & obj, std::string file_name)
 {
   std::ifstream ifs(SAVE_LOAD_PATH + file_name);
   boost::archive::text_iarchive ia(ifs);
