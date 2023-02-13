@@ -1,0 +1,3 @@
+[submodule "src/semantic_mapping/src/classifier_wrapper"]
+	path = src/semantic_mapping/src/classifier_wrapper
+	url = https://github.com/lucyannofrota/Classifier-Wrapper.git
