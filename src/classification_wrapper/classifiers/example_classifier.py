@@ -1,14 +1,12 @@
 #!/usr/bin/env python3
 
-import rclpy
 import sys
-sys.path.append(".")
-from classification_wrapper.classification_wrapper import classification_wrapper
-
-
-from std_msgs.msg import String
-
+import rclpy
+#sys.path.append(".")
+sys.path.append("./..")
 from std_srvs.srv import Empty
+from std_msgs.msg import String
+from classification_wrapper.classification_wrapper import classification_wrapper
 
 
 class classifier_1(classification_wrapper):

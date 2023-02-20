@@ -18,6 +18,7 @@
 #include "../include/semantic_mapping/concept.hpp"
 
 #include "std_srvs/srv/trigger.hpp"
+#include "semantic_mapping/msg/smap_data.hpp"
 #include "semantic_mapping/srv/add_three_ints.hpp"
 // #include "../srv/AddThreeInts.hpp"
 
@@ -49,13 +50,15 @@ private:
   // semantic_mapping::topological_map concept_map;
 
 
+  // Publisher
+  rclcpp::Publisher<semantic_mapping::msg::SmapData>::SharedPtr SmapData_pub = this->create_publisher<semantic_mapping::msg::SmapData>("/SMap/classifiers/Data", 10);
+  rclcpp::Publisher<std_msgs::msg::String>::SharedPtr publisher = this->create_publisher<std_msgs::msg::String>("topic", 10);
+
   // Timer
   rclcpp::TimerBase::SharedPtr timer{nullptr};
 
   // Logger
   rclcpp::Logger logger = this->get_logger();
-
-  rclcpp::Publisher<std_msgs::msg::String>::SharedPtr publisher = this->create_publisher<std_msgs::msg::String>("topic", 10);
 
 public:
   // Constructor/Destructor
@@ -114,11 +117,20 @@ private:
         transform.transform.rotation.w
       )).getRPY(roll, pitch, yaw);
 
-    geometry_msgs::msg::Point point;
-    point.x = transform.transform.translation.x;
-    point.y = transform.transform.translation.y;
-    point.z = transform.transform.translation.z;
-    concept_map->add_vertex(point);
+    geometry_msgs::msg::PoseStamped current_pose;
+
+    current_pose.header.frame_id = "/map";
+    current_pose.header.stamp = this->get_clock().get()->now();
+
+    //geometry_msgs::msg::Point point;
+
+    current_pose.pose.position.x = transform.transform.translation.x;
+    current_pose.pose.position.y = transform.transform.translation.y;
+    current_pose.pose.position.z = transform.transform.translation.z;
+    current_pose.pose.orientation = transform.transform.rotation;
+    concept_map->add_vertex(current_pose.pose.position);
+
+    //SmapData_pub->publish(current_pose);
 
     auto message = std_msgs::msg::String();
     message.data = "Hello, world! ";

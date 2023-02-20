@@ -106,17 +106,21 @@ install(
 ###############
 
 include_directories(include)
-# set(message_files
-#   "msg/FieldsWithSameType.msg"
-#   "msg/UInt32.msg"
-# )
+set(message_files
+  "msg/SmapData.msg"
+)
 set(service_files
   "srv/AddThreeInts.srv"
 )
 
 rosidl_generate_interfaces(${PROJECT_NAME}
-  # ${message_files}
+  ${message_files}
   ${service_files}
+  DEPENDENCIES 
+  std_msgs
+  geometry_msgs
+  builtin_interfaces
+  rosidl_default_generators
 )
 
 ament_export_dependencies(rosidl_default_runtime)
@@ -211,12 +215,12 @@ ament_export_libraries(
 
 
 
-###############################
-## classification_wrapper_py ##
-###############################
+#############################################
+## classification_wrapper_py + classifiers ##
+#############################################
 
-ament_python_install_package(classification_wrapper)
-ament_python_install_package(src/classifiers)
+ament_python_install_package(src/classification_wrapper)
+ament_python_install_package(src/classification_wrapper/classifiers)
 
 
 install(PROGRAMS
@@ -224,13 +228,9 @@ install(PROGRAMS
   DESTINATION lib/${PROJECT_NAME}
 )
 
-
-# install(TARGETS semantic_mapping_node
-#   DESTINATION lib/${PROJECT_NAME})
-
-###############################
-## classification_wrapper_py ##
-###############################
+#############################################
+## classification_wrapper_py + classifiers ##
+#############################################
 
 
 
