@@ -68,7 +68,7 @@ topological_map::~topological_map()
   this->export_TopoGraph("TopoGraph");
 }
 
-void topological_map::on_process(void)
+void topological_map::on_process(void) // Pooling
 {
   if (publish_vertex) {
     publisher_marker->publish(vertex_marker);

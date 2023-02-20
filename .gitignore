@@ -1,4 +1,8 @@
 
-Outputs/
+Outputs/*
 
 src/classifier_wrapper
+src/Classifier-Wrapper
+
+__pycache__
+launch/launch_temp.py

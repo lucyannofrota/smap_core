@@ -21,6 +21,10 @@
 #include "semantic_mapping/srv/add_three_ints.hpp"
 // #include "../srv/AddThreeInts.hpp"
 
+#include <string>
+
+#include "std_msgs/msg/string.hpp"
+
 #define FROM_FRAME std::string("map")
 #define TO_FRAME std::string("base_link")
 
@@ -51,6 +55,8 @@ private:
   // Logger
   rclcpp::Logger logger = this->get_logger();
 
+  rclcpp::Publisher<std_msgs::msg::String>::SharedPtr publisher = this->create_publisher<std_msgs::msg::String>("topic", 10);
+
 public:
   // Constructor/Destructor
   smap_node()
@@ -76,7 +82,7 @@ public:
   {
   }
 
-  void on_process(void)
+  void on_process(void) // Pooling
   {
     // RCLCPP_DEBUG(this->get_logger(),"Process smap_node");
   }
@@ -113,6 +119,12 @@ private:
     point.y = transform.transform.translation.y;
     point.z = transform.transform.translation.z;
     concept_map->add_vertex(point);
+
+    auto message = std_msgs::msg::String();
+    message.data = "Hello, world! ";
+    //RCLCPP_INFO(this->get_logger(), "Publishing: '%s'", message.data.c_str());
+    publisher->publish(message);
+
   }
 
 public:
@@ -143,8 +155,8 @@ int main(int argc, char ** argv)
   rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr service = _smap_node->create_service<std_srvs::srv::Trigger>("serv_smap", &test_serv);
   while (rclcpp::ok()) {
     try{
-      _smap_node->on_process();
-      _topological_map_node->on_process();
+      _smap_node->on_process(); // Pooling
+      _topological_map_node->on_process(); // Pooling
       executor.spin_once();
     }catch (std::exception& e){
       std::cout << "Exception!" << std::endl;

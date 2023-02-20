@@ -205,9 +205,9 @@ ament_export_libraries(
   topological_map
 )
 
-ament_export_targets(
-  export_${PROJECT_NAME}
-)
+#ament_export_targets(Python
+#  export_${PROJECT_NAME}
+#)
 
 
 
@@ -215,10 +215,12 @@ ament_export_targets(
 ## classification_wrapper_py ##
 ###############################
 
-ament_python_install_package(src/classifier_wrapper)
+ament_python_install_package(classification_wrapper)
+ament_python_install_package(src/classifiers)
+
 
 install(PROGRAMS
-  src/classifiers/py_node.py
+  src/classification_node.py
   DESTINATION lib/${PROJECT_NAME}
 )
 

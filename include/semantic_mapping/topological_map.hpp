@@ -250,7 +250,7 @@ public:
 
   virtual ~topological_map(void);
 
-  void on_process(void);
+  void on_process(void); // Pooling
 
   void add_vertex(const geometry_msgs::msg::Point & pos);
 
