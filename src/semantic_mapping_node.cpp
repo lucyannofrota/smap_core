@@ -15,7 +15,7 @@
 #include "../include/semantic_mapping/macros.hpp"
 // #include "../include/semantic_mapping/detector.hpp"
 #include "../include/semantic_mapping/topological_map.hpp"
-#include "../include/semantic_mapping/concept.hpp"
+#include "../include/semantic_mapping/thing.hpp"
 
 #include "std_srvs/srv/trigger.hpp"
 #include "semantic_mapping/msg/smap_data.hpp"
@@ -47,12 +47,15 @@ private:
   std::unique_ptr<tf2_ros::Buffer> tf_buffer;
   std::shared_ptr<tf2_ros::TransformListener> tf_listener{nullptr};
 
-  // semantic_mapping::topological_map concept_map;
+  // semantic_mapping::topological_map thing_map;
 
 
   // Publisher
   rclcpp::Publisher<semantic_mapping::msg::SmapData>::SharedPtr SmapData_pub = this->create_publisher<semantic_mapping::msg::SmapData>("/SMap/classifiers/Data", 10);
   rclcpp::Publisher<std_msgs::msg::String>::SharedPtr publisher = this->create_publisher<std_msgs::msg::String>("topic", 10);
+
+  // Subscriptions
+  //rclcpp::Subscriptions<
 
   // Timer
   rclcpp::TimerBase::SharedPtr timer{nullptr};
@@ -128,7 +131,7 @@ private:
     current_pose.pose.position.y = transform.transform.translation.y;
     current_pose.pose.position.z = transform.transform.translation.z;
     current_pose.pose.orientation = transform.transform.rotation;
-    concept_map->add_vertex(current_pose.pose.position);
+    thing_map->add_vertex(current_pose.pose.position);
 
     //SmapData_pub->publish(current_pose);
 
@@ -141,7 +144,7 @@ private:
 
 public:
   // Map
-  std::shared_ptr<semantic_mapping::topological_map> concept_map;
+  std::shared_ptr<semantic_mapping::topological_map> thing_map;
 };
 
 // Services
@@ -160,7 +163,7 @@ int main(int argc, char ** argv)
   std::shared_ptr<smap_node> _smap_node = std::make_shared<smap_node>();
   std::shared_ptr<semantic_mapping::topological_map> _topological_map_node =
     std::make_shared<semantic_mapping::topological_map>();
-  _smap_node->concept_map = _topological_map_node;
+  _smap_node->thing_map = _topological_map_node;
   rclcpp::executors::MultiThreadedExecutor executor;
   executor.add_node(_smap_node);
   executor.add_node(_topological_map_node);

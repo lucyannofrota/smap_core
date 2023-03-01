@@ -1,6 +1,6 @@
 # Topological_Map
 
-Class responsible to create a interface to the TopoMap (Graph Map) and the Concepts associated with each Vertex
+Class responsible to create a interface to the TopoMap (Graph Map) and the things associated with each Vertex
 
 - Has a tf buffer to track robot position
 
@@ -31,14 +31,14 @@ Additions to the data stored in the TopoMap can be done in the structures that d
 VertexData:\
 |  const long index = 0;\
 |  geometry_msgs::msg::Point pos;\
-|  Concept this_thing;\
-|  boost::container::list<Concept> related_things;
+|  thing this_thing;\
+|  boost::container::list<thing> related_things;
 
 
 - index: Index of the vertice
 - pos: postion of the vertice
-- this_thing: Is the concept of the current Vertice. Should be a semantic_type::Location
-- related_things: Linked list of Concepts detected while in the current Vertex Location
+- this_thing: Is the thing of the current Vertice. Should be a semantic_type::Location
+- related_things: Linked list of things detected while in the current Vertex Location
 
 Boost Container: https://www.boost.org/doc/libs/1_80_0/doc/html/container.html
 
@@ -53,4 +53,4 @@ EdgeData:\
 - modifier: Modifier utilized to determine the cost of traversing this edge
 - cost: distance*modifier
 
-# Concept
+# thing

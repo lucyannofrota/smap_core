@@ -33,16 +33,16 @@ find_package(rosidl_default_generators REQUIRED)
 find_package(rmw_implementation_cmake REQUIRED)
 
 #############
-## Concept ##
+## thing ##
 #############
 
-add_library(concept src/concept.cpp)
-target_include_directories(concept PUBLIC
+add_library(thing src/thing.cpp)
+target_include_directories(thing PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
 
 ament_target_dependencies(
-  concept
+  thing
   rclcpp
   # "rclpy"
   # "std_msgs"
@@ -51,10 +51,10 @@ ament_target_dependencies(
 
 # Causes the visibility macros to use dllexport rather than dllimport,
 # which is appropriate when building the dll but not consuming it.
-target_compile_definitions(concept PRIVATE "SEMANTIC_MAPPING_BUILDING_LIBRARY")
+target_compile_definitions(thing PRIVATE "SEMANTIC_MAPPING_BUILDING_LIBRARY")
 
 install(
-  TARGETS concept
+  TARGETS thing
   EXPORT export_${PROJECT_NAME}
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
@@ -62,14 +62,14 @@ install(
 )
 
 #############
-## Concept ##
+## thing ##
 #############
 
 #####################
 ## Topological_Map ##
 #####################
 
-add_library(topological_map src/topological_map.cpp src/concept.cpp)
+add_library(topological_map src/topological_map.cpp src/thing.cpp)
 target_include_directories(topological_map PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
@@ -108,6 +108,7 @@ install(
 include_directories(include)
 set(message_files
   "msg/SmapData.msg"
+  "msg/SmapPrediction.msg"
 )
 set(service_files
   "srv/AddThreeInts.srv"
@@ -184,7 +185,7 @@ ament_target_dependencies(
   visualization_msgs
   std_srvs
 )
-target_link_libraries(semantic_mapping_node concept topological_map ${Boost_LIBRARIES})
+target_link_libraries(semantic_mapping_node thing topological_map ${Boost_LIBRARIES})
 
 install(TARGETS semantic_mapping_node
   DESTINATION lib/${PROJECT_NAME})
@@ -205,7 +206,7 @@ ament_export_include_directories(
 )
 
 ament_export_libraries(
-  concept
+  thing
   topological_map
 )
 

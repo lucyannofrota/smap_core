@@ -1,5 +1,5 @@
-#ifndef SEMANTIC_MAPPING__CONCEPT_HPP_
-#define SEMANTIC_MAPPING__CONCEPT_HPP_
+#ifndef SEMANTIC_MAPPING__THING_HPP_
+#define SEMANTIC_MAPPING__THING_HPP_
 
 #include "visibility_control.h"
 
@@ -16,9 +16,9 @@ namespace semantic_mapping
 
 enum semantic_type {OBJECT, LOCATION};
 
-// Can be a scene or object concept
+// Can be a scene or object thing
 
-class Concept
+class thing
 {
 public:
   // Attributes
@@ -26,9 +26,9 @@ public:
 
 
   // Methods
-  Concept();
-  Concept(semantic_type type);
-  virtual ~Concept();
+  thing();
+  thing(semantic_type type);
+  virtual ~thing();
 
   std::string get_label();
 
@@ -36,7 +36,7 @@ public:
 
 private:
   friend class boost::serialization::access;
-  rclcpp::Logger logger = rclcpp::get_logger("Concept");
+  rclcpp::Logger logger = rclcpp::get_logger("thing");
   template<class Archive>
   void serialize(Archive & ar, const unsigned int version)
   {
@@ -47,6 +47,6 @@ private:
 
 }  // namespace semantic_mapping
 
-BOOST_CLASS_VERSION(semantic_mapping::Concept, 0)
+BOOST_CLASS_VERSION(semantic_mapping::thing, 0)
 
-#endif  // SEMANTIC_MAPPING__concept_HPP_
+#endif  // SEMANTIC_MAPPING__THING_HPP_

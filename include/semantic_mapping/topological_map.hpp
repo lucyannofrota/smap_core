@@ -22,7 +22,7 @@
 #include <boost/archive/text_iarchive.hpp>
 
 #include "../include/semantic_mapping/macros.hpp"
-#include "../include/semantic_mapping/concept.hpp"
+#include "../include/semantic_mapping/thing.hpp"
 #include "../include/semantic_mapping/label_writers.hpp"
 
 /* XXX current_vertex and previous_vertex can be a problem in the future!
@@ -40,8 +40,8 @@ struct VertexData
 {
   long index = 0;
   geometry_msgs::msg::Point pos;
-  Concept this_thing;
-  std::list<Concept> related_things;
+  thing this_thing;
+  std::list<thing> related_things;
 
   friend class boost::serialization::access;
   template<class Archive>
@@ -186,14 +186,14 @@ private:
   inline size_t _add_vertex(
     long v_index, const geometry_msgs::msg::Point & pos)
   {
-    // semantic_mapping::Concept thing;
+    // semantic_mapping::thing thing;
     // thing.type = semantic_type::LOCATION;
     size_t ret = boost::add_vertex(
       {
         v_index,
         pos,
-        Concept(semantic_type::LOCATION),
-        std::list<Concept>()
+        thing(semantic_type::LOCATION),
+        std::list<thing>()
       },
       Semantic_Graph
     );

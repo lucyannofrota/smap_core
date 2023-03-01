@@ -11,5 +11,5 @@ from classification_wrapper.classification_wrapper import classification_wrapper
 class classifier_1(classification_wrapper):
 
     def __init__(self):
-        super().__init__('C_1')
+        super().__init__(1)
         

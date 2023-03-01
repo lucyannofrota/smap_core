@@ -12,7 +12,7 @@ from classification_wrapper.classification_wrapper import classification_wrapper
 class classifier_2(classification_wrapper):
 
     def __init__(self):
-        super().__init__('C_2')
+        super().__init__(2)
         self.client = self.create_client(Empty, 'test_service', callback_group=self.reentrant_cb_group)
         self.call_timer = self.create_timer(1, self.timer_callback, callback_group=self.reentrant_cb_group)
 
