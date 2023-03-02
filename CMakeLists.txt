@@ -51,7 +51,7 @@ ament_target_dependencies(
   # "sensor_msgs"
 )
 
-# Causes the visibility macros to use dllexp<depend>semantic_mapping_interfaces</depend>ort rather than dllimport,
+# Causes the visibility macros to use dllexp<depend>smap_interfaces</depend>ort rather than dllimport,
 # which is appropriate when building the dll but not consuming it.
 target_compile_definitions(thing PRIVATE "smap_BUILDING_LIBRARY")
 
@@ -110,8 +110,8 @@ install(
 
 #include_directories(include)
 #set(message_files
-#  "msg/smapData.msg"
-#  "msg/smapPrediction.msg"
+#  "msg/SmapData.msg"
+#  "msg/SmapPrediction.msg"
 #)
 #set(service_files
 #  "srv/AddThreeInts.srv"

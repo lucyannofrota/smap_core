@@ -104,7 +104,7 @@ private:
   // rclcpp::TimerBase::SharedPtr timer{nullptr};
 
   // Subscriptions
-  // rclcpp::Subscription<smap::msg::smapData>::SharedPtr smapData_sub;
+  // rclcpp::Subscription<smap::msg::SmapData>::SharedPtr SmapData_sub;
 
   // Publishers
   rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr publisher_marker;

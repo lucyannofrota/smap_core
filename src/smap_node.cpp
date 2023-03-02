@@ -38,7 +38,7 @@
 
 // Node
 
-class smap_node : public rclcpp::Node
+class SMAP_node : public rclcpp::Node
 {
 private:
   //** Variables **//
@@ -50,7 +50,7 @@ private:
 
 
   // Publisher
-  rclcpp::Publisher<smap_interfaces::msg::smapData>::SharedPtr smapData_pub = this->create_publisher<smap_interfaces::msg::smapData>("/smap/classifiers/Data", 10);
+  rclcpp::Publisher<smap_interfaces::msg::SmapData>::SharedPtr SmapData_pub = this->create_publisher<smap_interfaces::msg::SmapData>("/smap/classifiers/Data", 10);
   // rclcpp::Publisher<std_msgs::msg::String>::SharedPtr publisher = this->create_publisher<std_msgs::msg::String>("topic", 10);
 
   // Subscriptions
@@ -64,7 +64,7 @@ private:
 
 public:
   // Constructor/Destructor
-  smap_node()
+  SMAP_node()
   : Node("semantic_mapper")
   {
     RCLCPP_INFO(this->get_logger(), "Initializing semantic_mapper");
@@ -77,19 +77,19 @@ public:
       std::chrono::milliseconds(250), // Change Frequency
       // std::chrono::seconds(1),
       std::bind(
-        &smap_node::data_sampler,
+        &SMAP_node::data_sampler,
         this
       )
     );
 
   }
-  ~smap_node()
+  ~SMAP_node()
   {
   }
 
   void on_process(void) // Pooling
   {
-    // RCLCPP_DEBUG(this->get_logger(),"Process smap_node");
+    // RCLCPP_DEBUG(this->get_logger(),"Process SMAP_node");
   }
 
 private:
@@ -139,7 +139,7 @@ private:
 
     // Publish 
 
-    //smapData_pub->publish(current_pose);
+    //SmapData_pub->publish(current_pose);
 
     // auto message = std_msgs::msg::String();
     //message.data = "Hello, world! ";
@@ -166,17 +166,17 @@ void test_serv(const std::shared_ptr<std_srvs::srv::Trigger::Request> request, s
 int main(int argc, char ** argv)
 {
   rclcpp::init(argc, argv);
-  std::shared_ptr<smap_node> _smap_node = std::make_shared<smap_node>();
+  std::shared_ptr<SMAP_node> _SMAP_node = std::make_shared<SMAP_node>();
   std::shared_ptr<smap::topological_map> _topological_map_node =
     std::make_shared<smap::topological_map>();
-  _smap_node->topo_map = _topological_map_node;
+  _SMAP_node->topo_map = _topological_map_node;
   rclcpp::executors::MultiThreadedExecutor executor;
-  executor.add_node(_smap_node);
+  executor.add_node(_SMAP_node);
   executor.add_node(_topological_map_node);
-  rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr service = _smap_node->create_service<std_srvs::srv::Trigger>("serv_smap", &test_serv);
+  rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr service = _SMAP_node->create_service<std_srvs::srv::Trigger>("serv_smap", &test_serv);
   while (rclcpp::ok()) {
     try{
-      _smap_node->on_process(); // Pooling
+      _SMAP_node->on_process(); // Pooling
       _topological_map_node->on_process(); // Pooling
       executor.spin_once();
     }catch (std::exception& e){

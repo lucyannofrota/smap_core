@@ -4,7 +4,7 @@
 from rclpy.node import Node
 from std_msgs.msg import String
 from rclpy.callback_groups import MutuallyExclusiveCallbackGroup, ReentrantCallbackGroup
-from smap_interfaces.msg import smapData, smapPrediction
+from smap_interfaces.msg import SmapData, SmapPrediction
 
 class classification_wrapper(Node):
 
@@ -13,14 +13,14 @@ class classification_wrapper(Node):
     parameters = []
 
     def __init__(self,classifier_id=0):
-        super().__init__("smap_classification_{}".format(classifier_id))
+        super().__init__("SMAP_classification_{}".format(classifier_id))
         self.classifier_id=classifier_id
 
         self.reentrant_cb_group = ReentrantCallbackGroup()
 
-        self.subscription = self.create_subscription(smapData, '/smap/classifiers/data', self.predict, 10,callback_group= self.reentrant_cb_group)
+        self.subscription = self.create_subscription(SmapData, '/smap/classifiers/data', self.predict, 10,callback_group= self.reentrant_cb_group)
 
-        self.publisher = self.create_publisher(smapPrediction, '/smap/classifiers/predictions', 10,callback_group= self.reentrant_cb_group)
+        self.publisher = self.create_publisher(SmapPrediction, '/smap/classifiers/predictions', 10,callback_group= self.reentrant_cb_group)
 
     def train(self,data):
         pass
