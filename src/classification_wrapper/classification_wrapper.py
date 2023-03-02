@@ -4,7 +4,7 @@
 from rclpy.node import Node
 from std_msgs.msg import String
 from rclpy.callback_groups import MutuallyExclusiveCallbackGroup, ReentrantCallbackGroup
-from semantic_mapping.msg import SmapData, SmapPrediction
+from semantic_mapping_interfaces.msg import SmapData, SmapPrediction
 
 class classification_wrapper(Node):
 

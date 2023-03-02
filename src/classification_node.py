@@ -6,7 +6,7 @@ from rclpy.node import Node
 from rclpy.executors import MultiThreadedExecutor
 from rclpy.callback_groups import MutuallyExclusiveCallbackGroup, ReentrantCallbackGroup
 
-from semantic_mapping.msg import SmapPrediction
+from semantic_mapping_interfaces.msg import SmapPrediction
 
 ########################################################################
 ######################## Import the Classifiers ########################

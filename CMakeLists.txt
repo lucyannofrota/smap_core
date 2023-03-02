@@ -29,7 +29,9 @@ find_package(tf2 REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(visualization_msgs REQUIRED)
 find_package(std_srvs REQUIRED)
-find_package(rosidl_default_generators REQUIRED)
+find_package(semantic_mapping_interfaces REQUIRED)
+#find_package(builtin_interfaces REQUIRED)
+#find_package(rosidl_default_generators REQUIRED)
 find_package(rmw_implementation_cmake REQUIRED)
 
 #############
@@ -49,7 +51,7 @@ ament_target_dependencies(
   # "sensor_msgs"
 )
 
-# Causes the visibility macros to use dllexport rather than dllimport,
+# Causes the visibility macros to use dllexp<depend>semantic_mapping_interfaces</depend>ort rather than dllimport,
 # which is appropriate when building the dll but not consuming it.
 target_compile_definitions(thing PRIVATE "SEMANTIC_MAPPING_BUILDING_LIBRARY")
 
@@ -77,6 +79,7 @@ target_include_directories(topological_map PUBLIC
 ament_target_dependencies(
   topological_map
   geometry_msgs
+  semantic_mapping_interfaces
   visualization_msgs
   # "rclcpp"
   # "rclpy"
@@ -105,26 +108,26 @@ install(
 ## Msgs/Srvs ##
 ###############
 
-include_directories(include)
-set(message_files
-  "msg/SmapData.msg"
-  "msg/SmapPrediction.msg"
-)
-set(service_files
-  "srv/AddThreeInts.srv"
-)
+#include_directories(include)
+#set(message_files
+#  "msg/SmapData.msg"
+#  "msg/SmapPrediction.msg"
+#)
+#set(service_files
+#  "srv/AddThreeInts.srv"
+#)
 
-rosidl_generate_interfaces(${PROJECT_NAME}
-  ${message_files}
-  ${service_files}
-  DEPENDENCIES 
-  std_msgs
-  geometry_msgs
-  builtin_interfaces
-  rosidl_default_generators
-)
+#rosidl_generate_interfaces(${PROJECT_NAME}
+#  ${message_files}
+#  ${service_files}
+#  DEPENDENCIES 
+#  std_msgs
+#  geometry_msgs
+#  builtin_interfaces
+#  rosidl_default_generators
+#)
 
-ament_export_dependencies(rosidl_default_runtime)
+#ament_export_dependencies(rosidl_default_runtime)
 
 ###############
 ## Msgs/Srvs ##
@@ -157,16 +160,16 @@ add_executable(semantic_mapping_node src/semantic_mapping_node.cpp)
 ## Msgs/Srvs inlcude ##
 #######################
 
-get_available_rmw_implementations(rmw_implementations2)
-foreach(rmw_implementation ${rmw_implementations2})
-  find_package("${rmw_implementation}" REQUIRED)
-  get_rmw_typesupport(typesupport_impls "${rmw_implementation}" LANGUAGE "cpp")
-  foreach(typesupport_impl ${typesupport_impls})
-    rosidl_target_interfaces(semantic_mapping_node
-      ${PROJECT_NAME} ${typesupport_impl}
-    )
-  endforeach()
-endforeach()
+#get_available_rmw_implementations(rmw_implementations2)
+#foreach(rmw_implementation ${rmw_implementations2})
+#  find_package("${rmw_implementation}" REQUIRED)
+#  get_rmw_typesupport(typesupport_impls "${rmw_implementation}" LANGUAGE "cpp")
+#  foreach(typesupport_impl ${typesupport_impls})
+#    rosidl_target_interfaces(semantic_mapping_node
+#      ${PROJECT_NAME} ${typesupport_impl}
+#    )
+#  endforeach()
+#endforeach()
 
 #######################
 ## Msgs/Srvs inlcude ##
@@ -183,6 +186,7 @@ ament_target_dependencies(
   tf2
   tf2_ros
   visualization_msgs
+  semantic_mapping_interfaces
   std_srvs
 )
 target_link_libraries(semantic_mapping_node thing topological_map ${Boost_LIBRARIES})

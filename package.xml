@@ -4,7 +4,7 @@
   <name>semantic_mapping</name>
   <version>0.0.0</version>
   <description>TODO: Package description</description>
-  <maintainer email="lucyannofrota@gmail.com">ros</maintainer>
+  <maintainer email="lucyannofrota@gmail.com">Lucyanno</maintainer>
   <license>TODO: License declaration</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
@@ -21,6 +21,7 @@
   <depend>tf2_ros</depend>
   <depend>visualization_msgs</depend>
   <depend>std_srvs</depend>
+  <depend>semantic_mapping_interfaces</depend>
 
   <depend>boost</depend>
   

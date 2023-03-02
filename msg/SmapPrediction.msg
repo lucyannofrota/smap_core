@@ -1,1 +1,0 @@
-uint8 classifier_id

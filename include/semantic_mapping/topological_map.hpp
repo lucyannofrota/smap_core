@@ -25,6 +25,10 @@
 #include "../include/semantic_mapping/thing.hpp"
 #include "../include/semantic_mapping/label_writers.hpp"
 
+//#include "semantic_mapping/msg/smap_data.hpp"
+
+//#include "../include/semantic_mapping/msg/smap_data.hpp"
+
 /* XXX current_vertex and previous_vertex can be a problem in the future!
        Check based on the location of the robot when loading
 */
@@ -98,6 +102,9 @@ private:
   // rclcpp::Logger * logger;
 
   // rclcpp::TimerBase::SharedPtr timer{nullptr};
+
+  // Subscriptions
+  // rclcpp::Subscription<semantic_mapping::msg::SmapData>::SharedPtr SmapData_sub;
 
   // Publishers
   rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr publisher_marker;

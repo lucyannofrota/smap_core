@@ -18,8 +18,8 @@
 #include "../include/semantic_mapping/thing.hpp"
 
 #include "std_srvs/srv/trigger.hpp"
-#include "semantic_mapping/msg/smap_data.hpp"
-#include "semantic_mapping/srv/add_three_ints.hpp"
+#include "semantic_mapping_interfaces/msg/smap_data.hpp"
+#include "semantic_mapping_interfaces/srv/add_three_ints.hpp"
 // #include "../srv/AddThreeInts.hpp"
 
 #include <string>
@@ -32,7 +32,6 @@
 #define RAD2DEG(x) 180 * x / M_PI
 
 // Node responsible to manage all the services
-
 /* TODO Parameter POS_RATE
         Position acquisition rate
 */
@@ -47,12 +46,12 @@ private:
   std::unique_ptr<tf2_ros::Buffer> tf_buffer;
   std::shared_ptr<tf2_ros::TransformListener> tf_listener{nullptr};
 
-  // semantic_mapping::topological_map thing_map;
+  // semantic_mapping::topological_map topo_map;
 
 
   // Publisher
-  rclcpp::Publisher<semantic_mapping::msg::SmapData>::SharedPtr SmapData_pub = this->create_publisher<semantic_mapping::msg::SmapData>("/SMap/classifiers/Data", 10);
-  rclcpp::Publisher<std_msgs::msg::String>::SharedPtr publisher = this->create_publisher<std_msgs::msg::String>("topic", 10);
+  rclcpp::Publisher<semantic_mapping_interfaces::msg::SmapData>::SharedPtr SmapData_pub = this->create_publisher<semantic_mapping_interfaces::msg::SmapData>("/SMap/classifiers/Data", 10);
+  // rclcpp::Publisher<std_msgs::msg::String>::SharedPtr publisher = this->create_publisher<std_msgs::msg::String>("topic", 10);
 
   // Subscriptions
   //rclcpp::Subscriptions<
@@ -75,10 +74,10 @@ public:
 
     // Callbacks
     timer = this->create_wall_timer(
-      std::chrono::milliseconds(250),
+      std::chrono::milliseconds(250), // Change Frequency
       // std::chrono::seconds(1),
       std::bind(
-        &smap_node::timer_callback,
+        &smap_node::data_sampler,
         this
       )
     );
@@ -94,8 +93,9 @@ public:
   }
 
 private:
-  void timer_callback()
-  {
+  void data_sampler()
+  { 
+    // Sample Position
     geometry_msgs::msg::TransformStamped transform;
 
     // https://docs.ros.org/en/foxy/Tutorials/Intermediate/Tf2/Writing-A-Tf2-Listener-Cpp.html
@@ -131,20 +131,26 @@ private:
     current_pose.pose.position.y = transform.transform.translation.y;
     current_pose.pose.position.z = transform.transform.translation.z;
     current_pose.pose.orientation = transform.transform.rotation;
-    thing_map->add_vertex(current_pose.pose.position);
+
+    // Publish 
+    topo_map->add_vertex(current_pose.pose.position);
+
+    // Sample Image
+
+    // Publish 
 
     //SmapData_pub->publish(current_pose);
 
-    auto message = std_msgs::msg::String();
-    message.data = "Hello, world! ";
+    // auto message = std_msgs::msg::String();
+    //message.data = "Hello, world! ";
     //RCLCPP_INFO(this->get_logger(), "Publishing: '%s'", message.data.c_str());
-    publisher->publish(message);
+    //publisher->publish(message);
 
   }
 
 public:
   // Map
-  std::shared_ptr<semantic_mapping::topological_map> thing_map;
+  std::shared_ptr<semantic_mapping::topological_map> topo_map;
 };
 
 // Services
@@ -163,7 +169,7 @@ int main(int argc, char ** argv)
   std::shared_ptr<smap_node> _smap_node = std::make_shared<smap_node>();
   std::shared_ptr<semantic_mapping::topological_map> _topological_map_node =
     std::make_shared<semantic_mapping::topological_map>();
-  _smap_node->thing_map = _topological_map_node;
+  _smap_node->topo_map = _topological_map_node;
   rclcpp::executors::MultiThreadedExecutor executor;
   executor.add_node(_smap_node);
   executor.add_node(_topological_map_node);
