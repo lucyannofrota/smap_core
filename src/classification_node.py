@@ -6,7 +6,7 @@ from rclpy.node import Node
 from rclpy.executors import MultiThreadedExecutor
 from rclpy.callback_groups import MutuallyExclusiveCallbackGroup, ReentrantCallbackGroup
 
-from semantic_mapping_interfaces.msg import SmapPrediction
+from smap_interfaces.msg import smapPrediction
 
 ########################################################################
 ######################## Import the Classifiers ########################
@@ -29,9 +29,9 @@ class classification_component(Node):
 
         self.reentrant_cb_group = ReentrantCallbackGroup()
 
-        self.create_subscription(SmapPrediction, '/SMap/classifiers/predictions', self.predict, 10, callback_group=self.reentrant_cb_group)
+        self.create_subscription(smapPrediction, '/smap/classifiers/predictions', self.predict, 10, callback_group=self.reentrant_cb_group)
 
-        self.create_publisher(SmapPrediction, '/SMap/classification_component/predictions', 10, callback_group=self.reentrant_cb_group)
+        self.create_publisher(smapPrediction, '/smap/classification_component/predictions', 10, callback_group=self.reentrant_cb_group)
         # Verificar a atomicidade de operações chave
 
 

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(semantic_mapping)
+project(smap)
 
 # Default to C99
 if(NOT CMAKE_C_STANDARD)
@@ -29,7 +29,7 @@ find_package(tf2 REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(visualization_msgs REQUIRED)
 find_package(std_srvs REQUIRED)
-find_package(semantic_mapping_interfaces REQUIRED)
+find_package(smap_interfaces REQUIRED)
 #find_package(builtin_interfaces REQUIRED)
 #find_package(rosidl_default_generators REQUIRED)
 find_package(rmw_implementation_cmake REQUIRED)
@@ -53,7 +53,7 @@ ament_target_dependencies(
 
 # Causes the visibility macros to use dllexp<depend>semantic_mapping_interfaces</depend>ort rather than dllimport,
 # which is appropriate when building the dll but not consuming it.
-target_compile_definitions(thing PRIVATE "SEMANTIC_MAPPING_BUILDING_LIBRARY")
+target_compile_definitions(thing PRIVATE "smap_BUILDING_LIBRARY")
 
 install(
   TARGETS thing
@@ -79,7 +79,7 @@ target_include_directories(topological_map PUBLIC
 ament_target_dependencies(
   topological_map
   geometry_msgs
-  semantic_mapping_interfaces
+  smap_interfaces
   visualization_msgs
   # "rclcpp"
   # "rclpy"
@@ -89,7 +89,7 @@ ament_target_dependencies(
 
 # Causes the visibility macros to use dllexport rather than dllimport,
 # which is appropriate when building the dll but not consuming it.
-target_compile_definitions(topological_map PRIVATE "SEMANTIC_MAPPING_BUILDING_LIBRARY")
+target_compile_definitions(topological_map PRIVATE "smap_BUILDING_LIBRARY")
 
 install(
   TARGETS topological_map
@@ -110,8 +110,8 @@ install(
 
 #include_directories(include)
 #set(message_files
-#  "msg/SmapData.msg"
-#  "msg/SmapPrediction.msg"
+#  "msg/smapData.msg"
+#  "msg/smapPrediction.msg"
 #)
 #set(service_files
 #  "srv/AddThreeInts.srv"
@@ -154,7 +154,7 @@ install(DIRECTORY
 
 
 
-add_executable(semantic_mapping_node src/semantic_mapping_node.cpp)
+add_executable(smap_node src/smap_node.cpp)
 
 #######################
 ## Msgs/Srvs inlcude ##
@@ -165,7 +165,7 @@ add_executable(semantic_mapping_node src/semantic_mapping_node.cpp)
 #  find_package("${rmw_implementation}" REQUIRED)
 #  get_rmw_typesupport(typesupport_impls "${rmw_implementation}" LANGUAGE "cpp")
 #  foreach(typesupport_impl ${typesupport_impls})
-#    rosidl_target_interfaces(semantic_mapping_node
+#    rosidl_target_interfaces(smap_node
 #      ${PROJECT_NAME} ${typesupport_impl}
 #    )
 #  endforeach()
@@ -175,23 +175,23 @@ add_executable(semantic_mapping_node src/semantic_mapping_node.cpp)
 ## Msgs/Srvs inlcude ##
 #######################
 
-target_include_directories(semantic_mapping_node PUBLIC
+target_include_directories(smap_node PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>
   ${Boost_INCLUDE_DIR})
 
 ament_target_dependencies(
-  semantic_mapping_node
+  smap_node
   rclcpp
   tf2
   tf2_ros
   visualization_msgs
-  semantic_mapping_interfaces
+  smap_interfaces
   std_srvs
 )
-target_link_libraries(semantic_mapping_node thing topological_map ${Boost_LIBRARIES})
+target_link_libraries(smap_node thing topological_map ${Boost_LIBRARIES})
 
-install(TARGETS semantic_mapping_node
+install(TARGETS smap_node
   DESTINATION lib/${PROJECT_NAME})
 
 if(BUILD_TESTING)

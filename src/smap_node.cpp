@@ -12,14 +12,14 @@
 
 // #include <visualization_msgs/msg/marker.hpp>
 
-#include "../include/semantic_mapping/macros.hpp"
-// #include "../include/semantic_mapping/detector.hpp"
-#include "../include/semantic_mapping/topological_map.hpp"
-#include "../include/semantic_mapping/thing.hpp"
+#include "../include/smap/macros.hpp"
+// #include "../include/smap/detector.hpp"
+#include "../include/smap/topological_map.hpp"
+#include "../include/smap/thing.hpp"
 
 #include "std_srvs/srv/trigger.hpp"
-#include "semantic_mapping_interfaces/msg/smap_data.hpp"
-#include "semantic_mapping_interfaces/srv/add_three_ints.hpp"
+#include "smap_interfaces/msg/smap_data.hpp"
+#include "smap_interfaces/srv/add_three_ints.hpp"
 // #include "../srv/AddThreeInts.hpp"
 
 #include <string>
@@ -46,11 +46,11 @@ private:
   std::unique_ptr<tf2_ros::Buffer> tf_buffer;
   std::shared_ptr<tf2_ros::TransformListener> tf_listener{nullptr};
 
-  // semantic_mapping::topological_map topo_map;
+  // smap::topological_map topo_map;
 
 
   // Publisher
-  rclcpp::Publisher<semantic_mapping_interfaces::msg::SmapData>::SharedPtr SmapData_pub = this->create_publisher<semantic_mapping_interfaces::msg::SmapData>("/SMap/classifiers/Data", 10);
+  rclcpp::Publisher<smap_interfaces::msg::smapData>::SharedPtr smapData_pub = this->create_publisher<smap_interfaces::msg::smapData>("/smap/classifiers/Data", 10);
   // rclcpp::Publisher<std_msgs::msg::String>::SharedPtr publisher = this->create_publisher<std_msgs::msg::String>("topic", 10);
 
   // Subscriptions
@@ -139,7 +139,7 @@ private:
 
     // Publish 
 
-    //SmapData_pub->publish(current_pose);
+    //smapData_pub->publish(current_pose);
 
     // auto message = std_msgs::msg::String();
     //message.data = "Hello, world! ";
@@ -150,7 +150,7 @@ private:
 
 public:
   // Map
-  std::shared_ptr<semantic_mapping::topological_map> topo_map;
+  std::shared_ptr<smap::topological_map> topo_map;
 };
 
 // Services
@@ -159,16 +159,16 @@ void test_serv(const std::shared_ptr<std_srvs::srv::Trigger::Request> request, s
   (void) request;
   request->structure_needs_at_least_one_member;
   response->success = true;
-  response->message = "Serv_SMAP";
-  RCLCPP_INFO(rclcpp::get_logger("Serv_SMAP"),"Service Serv_SMAP");
+  response->message = "Serv_smap";
+  RCLCPP_INFO(rclcpp::get_logger("Serv_smap"),"Service Serv_smap");
 }
 
 int main(int argc, char ** argv)
 {
   rclcpp::init(argc, argv);
   std::shared_ptr<smap_node> _smap_node = std::make_shared<smap_node>();
-  std::shared_ptr<semantic_mapping::topological_map> _topological_map_node =
-    std::make_shared<semantic_mapping::topological_map>();
+  std::shared_ptr<smap::topological_map> _topological_map_node =
+    std::make_shared<smap::topological_map>();
   _smap_node->topo_map = _topological_map_node;
   rclcpp::executors::MultiThreadedExecutor executor;
   executor.add_node(_smap_node);
@@ -187,6 +187,6 @@ int main(int argc, char ** argv)
   rclcpp::shutdown();
 
 
-  printf("hello world semantic_mapping package\n");
+  printf("hello world smap package\n");
   return 0;
 }

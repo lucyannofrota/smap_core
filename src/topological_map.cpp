@@ -1,4 +1,4 @@
-#include "../include/semantic_mapping/topological_map.hpp"
+#include "../include/smap/topological_map.hpp"
 
 
 // #include "rcl/error_handling.h"
@@ -8,7 +8,7 @@ void a(void){
   std::cout << "ASdadasd" << std::endl;
 }
 
-namespace semantic_mapping
+namespace smap
 {
 
 
@@ -186,4 +186,4 @@ void topological_map::load_map(topological_map & obj, std::string file_name)
   ifs.close();
 }
 
-}  // namespace semantic_mapping
+}  // namespace smap

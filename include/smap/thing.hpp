@@ -1,5 +1,5 @@
-#ifndef SEMANTIC_MAPPING__THING_HPP_
-#define SEMANTIC_MAPPING__THING_HPP_
+#ifndef SMAP__THING_HPP_
+#define SMAP__THING_HPP_
 
 #include "visibility_control.h"
 
@@ -11,7 +11,7 @@
 
 #include "rclcpp/rclcpp.hpp"
 
-namespace semantic_mapping
+namespace smap
 {
 
 enum semantic_type {OBJECT, LOCATION};
@@ -45,8 +45,8 @@ private:
   }
 };
 
-}  // namespace semantic_mapping
+}  // namespace smap
 
-BOOST_CLASS_VERSION(semantic_mapping::thing, 0)
+BOOST_CLASS_VERSION(smap::thing, 0)
 
-#endif  // SEMANTIC_MAPPING__THING_HPP_
+#endif  // SMAP__THING_HPP_

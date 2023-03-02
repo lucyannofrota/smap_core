@@ -1,5 +1,5 @@
-#ifndef SEMANTIC_MAPPING__TOPOLOGICAL_MAP_HPP_
-#define SEMANTIC_MAPPING__TOPOLOGICAL_MAP_HPP_
+#ifndef SMAP__TOPOLOGICAL_MAP_HPP_
+#define SMAP__TOPOLOGICAL_MAP_HPP_
 
 #include "visibility_control.h"
 
@@ -21,13 +21,13 @@
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/archive/text_iarchive.hpp>
 
-#include "../include/semantic_mapping/macros.hpp"
-#include "../include/semantic_mapping/thing.hpp"
-#include "../include/semantic_mapping/label_writers.hpp"
+#include "../include/smap/macros.hpp"
+#include "../include/smap/thing.hpp"
+#include "../include/smap/label_writers.hpp"
 
-//#include "semantic_mapping/msg/smap_data.hpp"
+//#include "smap/msg/smap_data.hpp"
 
-//#include "../include/semantic_mapping/msg/smap_data.hpp"
+//#include "../include/smap/msg/smap_data.hpp"
 
 /* XXX current_vertex and previous_vertex can be a problem in the future!
        Check based on the location of the robot when loading
@@ -37,7 +37,7 @@
         acquired, vertex creation will gonna be blocked
 */
 
-namespace semantic_mapping
+namespace smap
 {
 
 struct VertexData
@@ -104,7 +104,7 @@ private:
   // rclcpp::TimerBase::SharedPtr timer{nullptr};
 
   // Subscriptions
-  // rclcpp::Subscription<semantic_mapping::msg::SmapData>::SharedPtr SmapData_sub;
+  // rclcpp::Subscription<smap::msg::smapData>::SharedPtr smapData_sub;
 
   // Publishers
   rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr publisher_marker;
@@ -193,7 +193,7 @@ private:
   inline size_t _add_vertex(
     long v_index, const geometry_msgs::msg::Point & pos)
   {
-    // semantic_mapping::thing thing;
+    // smap::thing thing;
     // thing.type = semantic_type::LOCATION;
     size_t ret = boost::add_vertex(
       {
@@ -282,10 +282,10 @@ double random_double_in_range(double min, double max) // temp
          (max - min);
 }
 
-}  // namespace semantic_mapping
+}  // namespace smap
 
-BOOST_CLASS_VERSION(semantic_mapping::VertexData, 0)
-BOOST_CLASS_VERSION(semantic_mapping::EdgeData, 0)
-BOOST_CLASS_VERSION(semantic_mapping::topological_map, 0)
+BOOST_CLASS_VERSION(smap::VertexData, 0)
+BOOST_CLASS_VERSION(smap::EdgeData, 0)
+BOOST_CLASS_VERSION(smap::topological_map, 0)
 
-#endif  // SEMANTIC_MAPPING__TOPOLOGICAL_MAP_HPP_
+#endif  // SMAP__TOPOLOGICAL_MAP_HPP_

@@ -4,7 +4,7 @@
 #include <list>
 #include <utility>
 
-namespace semantic_mapping
+namespace smap
 {
 
 template<class Name>

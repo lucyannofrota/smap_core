@@ -1,6 +1,6 @@
-#include "../include/semantic_mapping/thing.hpp"
+#include "../include/smap/thing.hpp"
 
-namespace semantic_mapping
+namespace smap
 {
 
 thing::thing()
@@ -27,4 +27,4 @@ std::pair<std::string, std::string> thing::get_vertex_representation()
   return std::pair<std::string, std::string>(std::string("Corridor"), std::string("red"));
 }
 
-}  // namespace semantic_mapping
+}  // namespace smap

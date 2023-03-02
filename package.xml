@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>semantic_mapping</name>
+  <name>smap</name>
   <version>0.0.0</version>
   <description>TODO: Package description</description>
   <maintainer email="lucyannofrota@gmail.com">Lucyanno</maintainer>
@@ -21,7 +21,7 @@
   <depend>tf2_ros</depend>
   <depend>visualization_msgs</depend>
   <depend>std_srvs</depend>
-  <depend>semantic_mapping_interfaces</depend>
+  <depend>smap_interfaces</depend>
 
   <depend>boost</depend>
   
