@@ -89,7 +89,7 @@ ament_target_dependencies(
 
 # Causes the visibility macros to use dllexport rather than dllimport,
 # which is appropriate when building the dll but not consuming it.
-target_compile_definitions(topological_map PRIVATE "smap_BUILDING_LIBRARY")
+target_compile_definitions(topological_map PRIVATE "SMAP_BUILDING_LIBRARY")
 
 install(
   TARGETS topological_map
@@ -141,6 +141,7 @@ install(
 
 install(DIRECTORY
   launch
+  scripts
   config
   Outputs
   SemMap
@@ -224,12 +225,14 @@ ament_export_libraries(
 ## classification_wrapper_py + classifiers ##
 #############################################
 
-ament_python_install_package(src/classification_wrapper)
-ament_python_install_package(src/classification_wrapper/classifiers)
-
+#ament_python_install_package(src/classification_wrapper)
+#ament_python_install_package(src/classification_wrapper/classifiers)
+#ament_python_install
 
 install(PROGRAMS
-  src/classification_node.py
+src/classification_node.py
+  scripts/import_classifiers.py
+  scripts/import_classifiers_template.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
@@ -245,10 +248,10 @@ install(PROGRAMS
 ## Launch ##
 ############
 
-# install(PROGRAMS
-#   classifiers/py_node.py
-#   DESTINATION lib/${PROJECT_NAME}
-# )
+#install(PROGRAMS
+#  launch/py_node_launch.py
+#  DESTINATION lib/${PROJECT_NAME}
+#)
 
 ############
 ## Launch ##
