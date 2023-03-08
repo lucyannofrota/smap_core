@@ -12,14 +12,12 @@ from smap_interfaces.msg import SmapPrediction
 ######################## Import the Classifiers ########################
 ########################################################################
 
-### Import Classifiers ###
+### <import_classifiers> ###
+### </import_classifiers> ###
 
 ########################################################################
 ######################## Import the Classifiers ########################
 ########################################################################
-
-#from smap_classifiers.classifier_1 import classifier_1
-#from smap_classifiers.classifier_2 import classifier_2
 
 class classification_component(Node):
 
@@ -50,6 +48,7 @@ class classification_component(Node):
 def main(args=None):
 
     rclpy.init(args=args)
+
     class_comp = classification_component()
     node_list = []
 
@@ -57,14 +56,18 @@ def main(args=None):
     ######################## Node List ########################
     ###########################################################
 
-    ### Append Classifiers ###
+    ### <append_classifiers> ###
+    ### </append_classifiers> ###
 
     ###########################################################
     ######################## Node List ########################
     ###########################################################
 
-    #node_list.append(classifier_1())
-    #node_list.append(classifier_2())
+    if not node_list:
+        # TODO Insert url example
+        class_comp.get_logger().fatal("No classifiers detected!\nThe classifiers shoud be define using a launch file. Example: #url#")
+        rclpy.shutdown()
+        return 1
 
     executor = MultiThreadedExecutor(4)
     executor.add_node(class_comp)
