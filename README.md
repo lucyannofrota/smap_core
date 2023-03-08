@@ -1,4 +1,4 @@
-# Semantic Mapping (smap)
+# Semantic Mapping (smap_core)
 
 ## Classification Wrapper
 

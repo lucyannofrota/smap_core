@@ -50,7 +50,7 @@ def generate_launch_description():
     rqt = launch.actions.ExecuteProcess(
         cmd=['rqt', '--perspective-file',
              PathJoinSubstitution([
-                    FindPackageShare('smap'),
+                    FindPackageShare('smap_core'),
                     'Debug.perspective'
              ])
              ])
@@ -59,7 +59,7 @@ def generate_launch_description():
         package="rviz2",
         executable="rviz2",
         name="rviz2",
-        arguments=['-d' + "src/smap/config/world.rviz"]
+        arguments=['-d' + "src/smap_core/config/world.rviz"]
     )
     return LaunchDescription([
         rqt,

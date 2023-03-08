@@ -1,4 +1,4 @@
-#include "../include/smap/thing.hpp"
+#include "../include/smap_core/thing.hpp"
 
 namespace smap
 {

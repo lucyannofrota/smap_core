@@ -21,8 +21,7 @@ def cimporter(classifiers=None):
 
         if classifiers == None or classifiers == []:
             print("Missing input arguments.")
-            # TODO Insert url example
-            print("The classifiers shoud be define using a launch file. Example: #url#")
+            print("The classifiers shoud be define using a launch file. Example: https://github.com/lucyannofrota/smap_core/blob/master/launch/importer_example_launch.py")
             return
         
         print("Importing Classifiers...")

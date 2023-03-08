@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(smap)
+project(smap_core)
 
 # Default to C99
 if(NOT CMAKE_C_STANDARD)
@@ -53,7 +53,7 @@ ament_target_dependencies(
 
 # Causes the visibility macros to use dllexp<depend>smap_interfaces</depend>ort rather than dllimport,
 # which is appropriate when building the dll but not consuming it.
-target_compile_definitions(thing PRIVATE "smap_BUILDING_LIBRARY")
+target_compile_definitions(thing PRIVATE "SMAP_BUILDING_LIBRARY")
 
 install(
   TARGETS thing
@@ -143,8 +143,8 @@ install(DIRECTORY
   launch
   scripts
   config
-  Outputs
-  SemMap
+  outputs
+  maps
   DESTINATION share/${PROJECT_NAME}/
 )
 

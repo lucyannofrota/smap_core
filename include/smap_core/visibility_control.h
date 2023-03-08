@@ -1,5 +1,5 @@
-#ifndef SMAP__VISIBILITY_CONTROL_H_
-#define SMAP__VISIBILITY_CONTROL_H_
+#ifndef SMAP_CORE__VISIBILITY_CONTROL_H_
+#define SMAP_CORE__VISIBILITY_CONTROL_H_
 
 // This logic was borrowed (then namespaced) from the examples on the gcc wiki:
 //     https://gcc.gnu.org/wiki/Visibility
@@ -32,4 +32,4 @@
   #define SMAP_PUBLIC_TYPE
 #endif
 
-#endif  // SMAP__VISIBILITY_CONTROL_H_
+#endif  // SMAP_CORE__VISIBILITY_CONTROL_H_

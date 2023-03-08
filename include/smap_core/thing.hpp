@@ -1,5 +1,5 @@
-#ifndef SMAP__THING_HPP_
-#define SMAP__THING_HPP_
+#ifndef SMAP_CORE__THING_HPP_
+#define SMAP_CORE__THING_HPP_
 
 #include "visibility_control.h"
 
@@ -49,4 +49,4 @@ private:
 
 BOOST_CLASS_VERSION(smap::thing, 0)
 
-#endif  // SMAP__THING_HPP_
+#endif  // SMAP_CORE__THING_HPP_

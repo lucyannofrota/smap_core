@@ -1,5 +1,5 @@
-#ifndef SMAP__TOPOLOGICAL_MAP_HPP_
-#define SMAP__TOPOLOGICAL_MAP_HPP_
+#ifndef SMAP_CORE__TOPOLOGICAL_MAP_HPP_
+#define SMAP_CORE__TOPOLOGICAL_MAP_HPP_
 
 #include "visibility_control.h"
 
@@ -21,13 +21,13 @@
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/archive/text_iarchive.hpp>
 
-#include "../include/smap/macros.hpp"
-#include "../include/smap/thing.hpp"
-#include "../include/smap/label_writers.hpp"
+#include "../include/smap_core/macros.hpp"
+#include "../include/smap_core/thing.hpp"
+#include "../include/smap_core/label_writers.hpp"
 
-//#include "smap/msg/smap_data.hpp"
+//#include "smap_core/msg/smap_data.hpp"
 
-//#include "../include/smap/msg/smap_data.hpp"
+//#include "../include/smap_core/msg/smap_data.hpp"
 
 /* XXX current_vertex and previous_vertex can be a problem in the future!
        Check based on the location of the robot when loading
@@ -288,4 +288,4 @@ BOOST_CLASS_VERSION(smap::VertexData, 0)
 BOOST_CLASS_VERSION(smap::EdgeData, 0)
 BOOST_CLASS_VERSION(smap::topological_map, 0)
 
-#endif  // SMAP__TOPOLOGICAL_MAP_HPP_
+#endif  // SMAP_CORE__TOPOLOGICAL_MAP_HPP_

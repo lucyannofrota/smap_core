@@ -1,4 +1,4 @@
-#include "../include/smap/topological_map.hpp"
+#include "../include/smap_core/topological_map.hpp"
 
 
 // #include "rcl/error_handling.h"

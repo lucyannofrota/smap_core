@@ -29,9 +29,9 @@ class classification_component(Node):
 
         self.reentrant_cb_group = ReentrantCallbackGroup()
 
-        self.create_subscription(SmapPrediction, '/smap/classification/classifiers/predictions', self.predict, 10, callback_group=self.reentrant_cb_group)
+        self.create_subscription(SmapPrediction, '/smap_core/classification/classifiers/predictions', self.predict, 10, callback_group=self.reentrant_cb_group)
 
-        self.create_publisher(SmapPrediction, '/smap/classification/predictions', 10, callback_group=self.reentrant_cb_group)
+        self.create_publisher(SmapPrediction, '/smap_core/classification/predictions', 10, callback_group=self.reentrant_cb_group)
         # Verificar a atomicidade de operações chave
 
 
@@ -64,8 +64,7 @@ def main(args=None):
     ###########################################################
 
     if not node_list:
-        # TODO Insert url example
-        class_comp.get_logger().fatal("No classifiers detected!\nThe classifiers shoud be define using a launch file. Example: #url#")
+        class_comp.get_logger().fatal("No classifiers detected!\nThe classifiers shoud be define using a launch file. Example: https://github.com/lucyannofrota/smap_core/blob/master/launch/importer_example_launch.py")
         rclpy.shutdown()
         return 1
 
