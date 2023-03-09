@@ -9,11 +9,11 @@ namespace smap
 {
 
 
-  #define OUTPUT_PATH std::string("src/smap_core/outputs/") // Output path of files
+  #define OUTPUT_PATH std::string("src/smap/smap_core/outputs/") // Output path of files
 
   #define DEFAULT_FILE_NAME "Sem_Map.smp"
 
-  #define SAVE_LOAD_PATH std::string("src/smap_core/SemMap/") // Save/Load path
+  #define SAVE_LOAD_PATH std::string("src/smap/smap_core/SemMap/") // Save/Load path
 
   #define VERTEX_DISTANCE 0.5 // Minimun distance to create a new vertece
 
