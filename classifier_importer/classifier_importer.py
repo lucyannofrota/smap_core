@@ -31,7 +31,7 @@ def cimporter(classifiers=None):
         
         cpath = os.path.realpath(__file__)
         poccurrences = [i for i in range(len(cpath)) if cpath.startswith('/', i)]
-        dpath = cpath[:poccurrences[-2]+1] + 'classifier_importer/classification_node_template.py'
+        dpath = cpath[:poccurrences[-2]+1] + 'src/classification_node_template.py'
         epath = cpath[:poccurrences[-2]+1] + 'src/classification_node.py'
         n_cl = len(classifiers)
         tab_4 = '    '
