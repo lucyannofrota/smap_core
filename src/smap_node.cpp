@@ -38,6 +38,9 @@
 
 // Node
 
+namespace smap
+{
+
 class smap_node : public rclcpp::Node
 {
 private:
@@ -77,7 +80,7 @@ public:
       std::chrono::milliseconds(250), // Change Frequency
       // std::chrono::seconds(1),
       std::bind(
-        &smap_node::data_sampler,
+        &smap::smap_node::data_sampler,
         this
       )
     );
@@ -89,7 +92,7 @@ public:
 
   void on_process(void) // Pooling
   {
-    // RCLCPP_DEBUG(this->get_logger(),"Process smap_node");
+    // RCLCPP_DEBUG(this->get_logger(),"Process smap::smap_node");
   }
 
 private:
@@ -163,17 +166,19 @@ void test_serv(const std::shared_ptr<std_srvs::srv::Trigger::Request> request, s
   RCLCPP_INFO(rclcpp::get_logger("Serv_smap"),"Service Serv_smap");
 }
 
+}
+
 int main(int argc, char ** argv)
 {
   rclcpp::init(argc, argv);
-  std::shared_ptr<smap_node> _smap_node = std::make_shared<smap_node>();
+  std::shared_ptr<smap::smap_node> _smap_node = std::make_shared<smap::smap_node>();
   std::shared_ptr<smap::topological_map> _topological_map_node =
     std::make_shared<smap::topological_map>();
   _smap_node->topo_map = _topological_map_node;
   rclcpp::executors::MultiThreadedExecutor executor;
   executor.add_node(_smap_node);
   executor.add_node(_topological_map_node);
-  rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr service = _smap_node->create_service<std_srvs::srv::Trigger>("serv_smap", &test_serv);
+  rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr service = _smap_node->create_service<std_srvs::srv::Trigger>("serv_smap", &smap::test_serv);
   while (rclcpp::ok()) {
     try{
       _smap_node->on_process(); // Pooling
@@ -190,3 +195,4 @@ int main(int argc, char ** argv)
   //printf("hello world smap package\n");
   return 0;
 }
+
