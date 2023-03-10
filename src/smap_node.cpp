@@ -8,7 +8,7 @@
 #include <boost/archive/text_iarchive.hpp>
 
 #include "rclcpp/rclcpp.hpp"
-#include "tf2_ros/transform_listener.h"
+// #include "tf2_ros/transform_listener.h"
 
 // #include <visualization_msgs/msg/marker.hpp>
 
@@ -46,21 +46,21 @@ class smap_node : public rclcpp::Node
 private:
   //** Variables **//
   // TF
-  std::unique_ptr<tf2_ros::Buffer> tf_buffer;
-  std::shared_ptr<tf2_ros::TransformListener> tf_listener{nullptr};
+  // std::unique_ptr<tf2_ros::Buffer> tf_buffer;
+  // std::shared_ptr<tf2_ros::TransformListener> tf_listener{nullptr};
 
   // smap::topological_map topo_map;
 
 
   // Publisher
-  rclcpp::Publisher<smap_interfaces::msg::SmapData>::SharedPtr SmapData_pub = this->create_publisher<smap_interfaces::msg::SmapData>("/smap_core/classifiers/Data", 10);
+  //rclcpp::Publisher<smap_interfaces::msg::SmapData>::SharedPtr SmapData_pub = this->create_publisher<smap_interfaces::msg::SmapData>("/smap_core/classifiers/Data", 10);
   // rclcpp::Publisher<std_msgs::msg::String>::SharedPtr publisher = this->create_publisher<std_msgs::msg::String>("topic", 10);
 
   // Subscriptions
   //rclcpp::Subscriptions<
 
   // Timer
-  rclcpp::TimerBase::SharedPtr timer{nullptr};
+  //rclcpp::TimerBase::SharedPtr timer{nullptr};
 
   // Logger
   rclcpp::Logger logger = this->get_logger();
@@ -68,22 +68,22 @@ private:
 public:
   // Constructor/Destructor
   smap_node()
-  : Node("semantic_mapper")
+  : Node("smap_core")
   {
-    RCLCPP_INFO(this->get_logger(), "Initializing semantic_mapper");
+    RCLCPP_INFO(this->get_logger(), "Initializing smap_core");
     // tf buffer
-    tf_buffer = std::make_unique<tf2_ros::Buffer>(this->get_clock());
-    tf_listener = std::make_shared<tf2_ros::TransformListener>(*tf_buffer);
+    //tf_buffer = std::make_unique<tf2_ros::Buffer>(this->get_clock());
+    //tf_listener = std::make_shared<tf2_ros::TransformListener>(*tf_buffer);
 
     // Callbacks
-    timer = this->create_wall_timer(
+    /*timer = this->create_wall_timer(
       std::chrono::milliseconds(250), // Change Frequency
       // std::chrono::seconds(1),
       std::bind(
         &smap::smap_node::data_sampler,
         this
       )
-    );
+    );*/
 
   }
   ~smap_node()
@@ -96,7 +96,7 @@ public:
   }
 
 private:
-  void data_sampler()
+  /*void data_sampler()
   { 
     // Sample Position
     geometry_msgs::msg::TransformStamped transform;
@@ -149,7 +149,7 @@ private:
     //RCLCPP_INFO(this->get_logger(), "Publishing: '%s'", message.data.c_str());
     //publisher->publish(message);
 
-  }
+  }*/
 
 public:
   // Map
@@ -178,7 +178,7 @@ int main(int argc, char ** argv)
   rclcpp::executors::MultiThreadedExecutor executor;
   executor.add_node(_smap_node);
   executor.add_node(_topological_map_node);
-  rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr service = _smap_node->create_service<std_srvs::srv::Trigger>("serv_smap", &smap::test_serv);
+  // rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr service = _smap_node->create_service<std_srvs::srv::Trigger>("serv_smap", &smap::test_serv);
   while (rclcpp::ok()) {
     try{
       _smap_node->on_process(); // Pooling
