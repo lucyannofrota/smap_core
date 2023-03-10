@@ -59,7 +59,7 @@ def generate_launch_description():
         package="rviz2",
         executable="rviz2",
         name="rviz2",
-        arguments=['-d' + "src/smap_core/config/world.rviz"]
+        arguments=['-d' + "src/smap/smap_core/config/world.rviz"]
     )
     return LaunchDescription([
         rqt,
