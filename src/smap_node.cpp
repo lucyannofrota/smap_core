@@ -19,7 +19,7 @@
 
 #include "std_srvs/srv/trigger.hpp"
 #include "smap_interfaces/msg/smap_data.hpp"
-#include "smap_interfaces/srv/add_three_ints.hpp"
+// #include "smap_interfaces/srv/add_three_ints.hpp"
 // #include "../srv/AddThreeInts.hpp"
 
 #include <string>
@@ -158,13 +158,13 @@ public:
 
 // Services
 
-void test_serv(const std::shared_ptr<std_srvs::srv::Trigger::Request> request, std::shared_ptr<std_srvs::srv::Trigger::Response> response){
-  (void) request;
-  request->structure_needs_at_least_one_member;
-  response->success = true;
-  response->message = "Serv_smap";
-  RCLCPP_INFO(rclcpp::get_logger("Serv_smap"),"Service Serv_smap");
-}
+// void test_serv(const std::shared_ptr<std_srvs::srv::Trigger::Request> request, std::shared_ptr<std_srvs::srv::Trigger::Response> response){
+//   (void) request;
+//   request->structure_needs_at_least_one_member;
+//   response->success = true;
+//   response->message = "Serv_smap";
+//   RCLCPP_INFO(rclcpp::get_logger("Serv_smap"),"Service Serv_smap");
+// }
 
 }
 
