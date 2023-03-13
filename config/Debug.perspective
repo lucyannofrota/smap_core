@@ -9,7 +9,7 @@
           "pretty-print": "     H     0 H @   0      H @   0"
         },
         "state": {
-          "repr(QByteArray.hex)": "QtCore.QByteArray(b'000000ff00000000fd000000010000000300000373000001c7fc0100000001fb0000004c007200710074005f0063006f006e0073006f006c0065005f005f0043006f006e0073006f006c0065005f005f0031005f005f0043006f006e0073006f006c00650057006900640067006500740100000000000003730000026300ffffff000003730000000000000004000000040000000800000008fc00000001000000030000000100000036004d0069006e0069006d0069007a006500640044006f0063006b00570069006400670065007400730054006f006f006c0062006100720000000000ffffffff0000000000000000')",
+          "repr(QByteArray.hex)": "QtCore.QByteArray(b'000000ff00000000fd000000010000000300000373000001c7fc0100000001fb0000004c007200710074005f0063006f006e0073006f006c0065005f005f0043006f006e0073006f006c0065005f005f0031005f005f0043006f006e0073006f006c00650057006900640067006500740100000000000003730000025b00ffffff000003730000000000000004000000040000000800000008fc00000001000000030000000100000036004d0069006e0069006d0069007a006500640044006f0063006b00570069006400670065007400730054006f006f006c0062006100720000000000ffffffff0000000000000000')",
           "type": "repr(QByteArray.hex)",
           "pretty-print": "                 Lrqt_console__Console__1__ConsoleWidget                            6MinimizedDockWidgetsToolbar        "
         }
@@ -66,7 +66,7 @@
                   "pretty-print": "       p p     "
                 },
                 "highlight_filters": {
-                  "repr": "'node'",
+                  "repr": "['node', 'severity']",
                   "type": "repr"
                 },
                 "message_limit": {
@@ -112,7 +112,7 @@
                       "type": "repr"
                     },
                     "itemlist": {
-                      "repr": "['topological_map', 'semantic_mapper']",
+                      "repr": "''",
                       "type": "repr"
                     },
                     "regex": {
@@ -130,6 +130,10 @@
                   "keys": {
                     "enabled": {
                       "repr": "True",
+                      "type": "repr"
+                    },
+                    "itemlist": {
+                      "repr": "['Debug', 'Warn', 'Error', 'Fatal']",
                       "type": "repr"
                     },
                     "regex": {

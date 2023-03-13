@@ -56,10 +56,21 @@ def generate_launch_description():
         name="rviz2",
         arguments=['-d' + "src/smap/smap_core/config/world.rviz"]
     )
+
+    set_sim_time = launch_ros.actions.SetParameter(name='use_sim_time', value=True)
+
+    node = launch_ros.actions.Node(
+            package='smap_sampler',
+            executable='smap_sampler_node',
+            name='smap_sampler_node'
+    )
+
     return LaunchDescription([
         rqt,
         launch_file_gazebo,
         launch_nav2,
         launch_slam,
         launch_rviz
+        #set_sim_time,
+        #node
     ])
