@@ -48,12 +48,7 @@ def generate_launch_description():
     )
 
     rqt = launch.actions.ExecuteProcess(
-        cmd=['rqt', '--perspective-file',
-             PathJoinSubstitution([
-                    FindPackageShare('smap_core'),
-                    'Debug.perspective'
-             ])
-             ])
+        cmd=['rqt', '--perspective-file', "src/smap/smap_core/config/Debug.perspective"])
 
     launch_rviz = launch_ros.actions.Node(
         package="rviz2",
