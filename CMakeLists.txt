@@ -231,8 +231,6 @@ ament_python_install_package(classifier_importer)
 
 install(PROGRAMS
   src/classification_node.py
-  #classifier_importer/classification_node_template.py
-  #classifier_importer/classifier_importer.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
