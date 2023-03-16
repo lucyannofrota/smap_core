@@ -30,8 +30,6 @@ find_package(tf2_ros REQUIRED)
 find_package(visualization_msgs REQUIRED)
 find_package(std_srvs REQUIRED)
 find_package(smap_interfaces REQUIRED)
-#find_package(builtin_interfaces REQUIRED)
-#find_package(rosidl_default_generators REQUIRED)
 find_package(rmw_implementation_cmake REQUIRED)
 
 #############
@@ -46,9 +44,6 @@ target_include_directories(thing PUBLIC
 ament_target_dependencies(
   thing
   rclcpp
-  # "rclpy"
-  # "std_msgs"
-  # "sensor_msgs"
 )
 
 # Causes the visibility macros to use dllexp<depend>smap_interfaces</depend>ort rather than dllimport,
@@ -81,10 +76,6 @@ ament_target_dependencies(
   geometry_msgs
   smap_interfaces
   visualization_msgs
-  # "rclcpp"
-  # "rclpy"
-  # "std_msgs"
-  # "sensor_msgs"
 )
 
 # Causes the visibility macros to use dllexport rather than dllimport,
@@ -102,36 +93,6 @@ install(
 #####################
 ## Topological_Map ##
 #####################
-
-
-###############
-## Msgs/Srvs ##
-###############
-
-#include_directories(include)
-#set(message_files
-#  "msg/SmapData.msg"
-#  "msg/SmapPrediction.msg"
-#)
-#set(service_files
-#  "srv/AddThreeInts.srv"
-#)
-
-#rosidl_generate_interfaces(${PROJECT_NAME}
-#  ${message_files}
-#  ${service_files}
-#  DEPENDENCIES 
-#  std_msgs
-#  geometry_msgs
-#  builtin_interfaces
-#  rosidl_default_generators
-#)
-
-#ament_export_dependencies(rosidl_default_runtime)
-
-###############
-## Msgs/Srvs ##
-###############
 
 
 install(
@@ -154,27 +115,8 @@ install(DIRECTORY
 # )
 
 
-
 add_executable(smap_node src/smap_node.cpp)
 
-#######################
-## Msgs/Srvs inlcude ##
-#######################
-
-#get_available_rmw_implementations(rmw_implementations2)
-#foreach(rmw_implementation ${rmw_implementations2})
-#  find_package("${rmw_implementation}" REQUIRED)
-#  get_rmw_typesupport(typesupport_impls "${rmw_implementation}" LANGUAGE "cpp")
-#  foreach(typesupport_impl ${typesupport_impls})
-#    rosidl_target_interfaces(smap_node
-#      ${PROJECT_NAME} ${typesupport_impl}
-#    )
-#  endforeach()
-#endforeach()
-
-#######################
-## Msgs/Srvs inlcude ##
-#######################
 
 target_include_directories(smap_node PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -215,15 +157,10 @@ ament_export_libraries(
   topological_map
 )
 
-#ament_export_targets(Python
-#  export_${PROJECT_NAME}
-#)
 
-
-
-#############################################
-## classification_wrapper_py + classifiers ##
-#############################################
+#########################
+## classifier importer ##
+#########################
 
 ament_python_install_package(classifier_importer)
 #ament_python_install_package(src/classification_wrapper/classifiers)
@@ -234,9 +171,9 @@ install(PROGRAMS
   DESTINATION lib/${PROJECT_NAME}
 )
 
-#############################################
-## classification_wrapper_py + classifiers ##
-#############################################
+#########################
+## classifier importer ##
+#########################
 
 
 
