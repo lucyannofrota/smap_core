@@ -1,0 +1,11 @@
+classifiers:
+  - name: yolo_v5_1
+    cnamename: yolo_v5
+    external_pkg:
+      pkg_name: smap_classifiers
+      config_file: config/classifiers_config.yaml
+  - name: classifier_1
+    cnamename: yolo_v3
+    external_pkg:
+      pkg_name: smap_classifiers
+      config_file: config/classifiers_config.yaml

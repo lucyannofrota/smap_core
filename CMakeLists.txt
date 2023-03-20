@@ -162,12 +162,12 @@ ament_export_libraries(
 ## classifier importer ##
 #########################
 
-ament_python_install_package(classifier_importer)
+#ament_python_install_package(classifier_importer)
 #ament_python_install_package(src/classification_wrapper/classifiers)
 #ament_python_install
 
 install(PROGRAMS
-  src/classification_node.py
+  src/classification_component_node.py
   DESTINATION lib/${PROJECT_NAME}
 )
 

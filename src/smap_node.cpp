@@ -181,9 +181,9 @@ int main(int argc, char ** argv)
   // rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr service = _smap_node->create_service<std_srvs::srv::Trigger>("serv_smap", &smap::test_serv);
   while (rclcpp::ok()) {
     try{
+      executor.spin_once();
       _smap_node->on_process(); // Pooling
       _topological_map_node->on_process(); // Pooling
-      executor.spin_once();
     }catch (std::exception& e){
       std::cout << "Exception!" << std::endl;
       std::cout << e.what() << std::endl;
