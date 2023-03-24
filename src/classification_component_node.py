@@ -7,27 +7,27 @@ from rclpy.executors import MultiThreadedExecutor
 from rclpy.callback_groups import MutuallyExclusiveCallbackGroup, ReentrantCallbackGroup
 
 from smap_interfaces.msg import SmapPrediction
-from smap_interfaces.srv import AddClassifier
+from smap_interfaces.srv import AddPerceptionModule
 
 # TODO: List of labes service
 
 class classification_component(Node):
 
-    classifiers=[]
+    detectors=[]
 
     def __init__(self):
         super().__init__("classification")
 
         self.reentrant_cb_group = ReentrantCallbackGroup()
 
-        self.sub = self.create_subscription(SmapPrediction, '/smap_core/classification/classifiers/predictions', self.predict, 10, callback_group=self.reentrant_cb_group)
+        #self.sub = self.create_subscription(SmapPrediction, '/smap_core/perception/detectors/predictions', self.predict, 10, callback_group=self.reentrant_cb_group)
 
-        self.pub = self.create_publisher(SmapPrediction, '/smap_core/classification/predictions', 10, callback_group=self.reentrant_cb_group)
+        #self.pub = self.create_publisher(SmapPrediction, '/smap_core/perception/predictions', 10, callback_group=self.reentrant_cb_group)
 
-        self.AddClassifier_srv = self.create_service(AddClassifier, 'add_classifier', self.AddClassifier_callback)
+        self.AddPerceptionModule_srv = self.create_service(AddPerceptionModule, 'add_perception_module', self.AddPerceptionModule_callback)
         # Verificar a atomicidade de operações chave
 
-    def AddClassifier_callback(self, request, response):
+    def AddPerceptionModule_callback(self, request, response):
         self.get_logger().info("Request received.")
         response.is_new=True
         response.success=True
@@ -43,28 +43,26 @@ class classification_component(Node):
             response.success=False
             self.get_logger().warning("Invalid request received from client.")
             return response
-
-        for cls in self.classifiers:
+        for cls in self.detectors:
             if cls['name'] == request.name:
                 response.is_new=False
                 response.success = (
                     cls['type'] == request.type and 
                     cls['architecture'] == request.architecture
                 )
-                response.classifier_id=cls['id']
-                self.get_logger().warning("Client requesting connection with duplicate classifier name. The id of the first entry will be sent.")
+                response.module_id=cls['id']
+                self.get_logger().warning("Client requesting connection with duplicate detector name. The id of the first entry will be sent.")
                 return response
-        if self.classifiers:
-            response.classifier_id=self.classifiers[-1]['id']+1
+        if self.detectors:
+            response.module_id=self.detectors[-1]['id']+1
         else:
-            response.classifier_id=1
-        self.classifiers.append({
+            response.module_id=1
+        self.detectors.append({
             'name': request.name,
-            'id': response.classifier_id,
+            'id': response.module_id,
             'type': request.type,
             'architecture': request.architecture
         })
-        print(self.classifiers)
         self.get_logger().info("Request successfully processed.")
         return response
     
