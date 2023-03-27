@@ -8,11 +8,15 @@ from launch.actions import (IncludeLaunchDescription)
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import PathJoinSubstitution
 from launch_ros.substitutions import FindPackageShare
-
-# import os
-
+from launch.launch_context import LaunchContext
 
 def generate_launch_description():
+
+    params=PathJoinSubstitution([
+        FindPackageShare('smap_core'),
+        'config/simultation_config.yaml'
+    ])
+
     launch_file_gazebo = IncludeLaunchDescription(
         PythonLaunchDescriptionSource([
             PathJoinSubstitution([
@@ -62,15 +66,19 @@ def generate_launch_description():
     node = launch_ros.actions.Node(
             package='smap_sampler',
             executable='smap_sampler_node',
-            name='smap_sampler_node'
+            name='smap_sampler_node',
+            parameters=[params],
+            output='screen',
+            arguments=[('__log_level:=debug')]
     )
+
 
     return LaunchDescription([
         rqt,
         launch_file_gazebo,
         launch_nav2,
         launch_slam,
-        launch_rviz
+        launch_rviz,
         #set_sim_time,
         #node
     ])
