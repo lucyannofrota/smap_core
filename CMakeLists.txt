@@ -167,7 +167,7 @@ ament_export_libraries(
 #ament_python_install
 
 install(PROGRAMS
-  src/classification_component_node.py
+  src/perception_server_node.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
