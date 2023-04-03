@@ -9,11 +9,10 @@ from rclpy.callback_groups import MutuallyExclusiveCallbackGroup, ReentrantCallb
 from smap_interfaces.msg import SmapPrediction
 from smap_interfaces.srv import AddPerceptionModule
 
-# TODO: List of labes service
-
 class classification_component(Node):
 
     detectors=[]
+    classes=[]
 
     def __init__(self):
         super().__init__("classification")
@@ -33,7 +32,7 @@ class classification_component(Node):
         self.get_logger().info("Request received.")
         response.is_new=True
         response.success=True
-        if(
+        if( # Check if request is empty or if type is invalid
             (request.name == '') or 
             (request.type == '') or 
             (request.architecture == '') or 
@@ -45,16 +44,41 @@ class classification_component(Node):
             response.success=False
             self.get_logger().warning("Invalid request received from client.")
             return response
-        for cls in self.detectors:
+        for cls in self.detectors: # Check if the name of the detector is already registered
             if cls['name'] == request.name:
                 response.is_new=False
                 response.success = (
                     cls['type'] == request.type and 
-                    cls['architecture'] == request.architecture
+                    cls['architecture'] == request.architecture and 
+                    cls['n_classes'] == request.n_classes
                 )
-                response.module_id=cls['id']
-                self.get_logger().warning("Client requesting connection with duplicate detector name. The id of the first entry will be sent.")
+                eq_classes = 0
+                for i in range(cls['n_classes']):
+                    print(cls['classes'][i])
+                    if cls['classes'][i] == request.classes[i]:
+                        eq_classes += 1
+                    
+                response.success &= (eq_classes == cls['n_classes'])
+
+                if response.success:
+                    response.module_id=cls['id']
+                    self.get_logger().warning("Client requesting connection with duplicate detector name. The id of the first entry will be sent.")
+                else:
+                    self.get_logger().warning("Client requesting connection with duplicate detector name and different classes.")
                 return response
+            
+        # Check if the classes list is empty
+        if not request.classes:
+            self.get_logger().warning("Empty classes list.")
+            response.success=False
+            return response
+        
+        # Check the integrity of the classes list
+        if len(request.classes) != request.n_classes:
+            self.get_logger().warning("Invalid classes list.")
+            response.success=False
+            return response
+
         if self.detectors:
             response.module_id=self.detectors[-1]['id']+1
         else:
@@ -63,9 +87,14 @@ class classification_component(Node):
             'name': request.name,
             'id': response.module_id,
             'type': request.type,
-            'architecture': request.architecture
+            'architecture': request.architecture,
+            'n_classes': request.n_classes,
+            'classes': request.classes
         })
         self.get_logger().info("Request successfully processed.")
+        self.get_logger().info("Module added with {} classes:".format(self.detectors[-1]['n_classes']))
+        for cl in self.detectors[-1]['classes']:
+            self.get_logger().info("\t {}".format(cl))
         return response
     
 
