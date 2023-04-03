@@ -6,7 +6,7 @@ from rclpy.node import Node
 from rclpy.executors import MultiThreadedExecutor
 from rclpy.callback_groups import MutuallyExclusiveCallbackGroup, ReentrantCallbackGroup
 
-from smap_interfaces.msg import SmapPrediction
+from smap_interfaces.msg import SmapDetections
 from smap_interfaces.srv import AddPerceptionModule
 
 class classification_component(Node):
@@ -19,9 +19,9 @@ class classification_component(Node):
 
         self.reentrant_cb_group = ReentrantCallbackGroup()
 
-        #self.sub = self.create_subscription(SmapPrediction, '/smap_core/perception/detectors/predictions', self.predict, 10, callback_group=self.reentrant_cb_group)
+        #self.sub = self.create_subscription(SmapDetections, '/smap_core/perception/detectors/predictions', self.predict, 10, callback_group=self.reentrant_cb_group)
 
-        #self.pub = self.create_publisher(SmapPrediction, '/smap_core/perception/predictions', 10, callback_group=self.reentrant_cb_group)
+        #self.pub = self.create_publisher(SmapDetections, '/smap_core/perception/predictions', 10, callback_group=self.reentrant_cb_group)
 
 
         self.AddPerceptionModule_srv = self.create_service(AddPerceptionModule, 'add_perception_module', self.AddPerceptionModule_callback)
