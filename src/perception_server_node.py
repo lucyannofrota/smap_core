@@ -11,8 +11,9 @@ from smap_interfaces.srv import AddPerceptionModule
 
 class classification_component(Node):
 
-    detectors=[]
-    classes=[]
+    detectors={}
+    classes={}
+    n_classes=0
 
     def __init__(self):
         super().__init__("classification")
@@ -45,23 +46,23 @@ class classification_component(Node):
             self.get_logger().warning("Invalid request received from client.")
             return response
         for cls in self.detectors: # Check if the name of the detector is already registered
-            if cls['name'] == request.name:
+            if self.detectors[cls]['name'] == request.name:
                 response.is_new=False
                 response.success = (
-                    cls['type'] == request.type and 
-                    cls['architecture'] == request.architecture and 
-                    cls['n_classes'] == request.n_classes
+                    self.detectors[cls]['type'] == request.type and 
+                    self.detectors[cls]['architecture'] == request.architecture and 
+                    self.detectors[cls]['n_classes'] == request.n_classes
                 )
                 eq_classes = 0
-                for i in range(cls['n_classes']):
-                    print(cls['classes'][i])
-                    if cls['classes'][i] == request.classes[i]:
-                        eq_classes += 1
-                    
-                response.success &= (eq_classes == cls['n_classes'])
+                for i in range(self.detectors[cls]['n_classes']):
+                    for cln in request.classes:
+                        if self.detectors[cls]['classes'][i] == cln:
+                            eq_classes += 1
+                            break
+                response.success &= (eq_classes == self.detectors[cls]['n_classes'])
 
                 if response.success:
-                    response.module_id=cls['id']
+                    response.module_id=self.detectors[cls]['id']
                     self.get_logger().warning("Client requesting connection with duplicate detector name. The id of the first entry will be sent.")
                 else:
                     self.get_logger().warning("Client requesting connection with duplicate detector name and different classes.")
@@ -79,24 +80,65 @@ class classification_component(Node):
             response.success=False
             return response
 
-        if self.detectors:
-            response.module_id=self.detectors[-1]['id']+1
-        else:
-            response.module_id=1
-        self.detectors.append({
+        
+        response.module_id, new_classes = self.add_detector({
             'name': request.name,
-            'id': response.module_id,
+            'id': None,
             'type': request.type,
             'architecture': request.architecture,
             'n_classes': request.n_classes,
             'classes': request.classes
         })
+
         self.get_logger().info("Request successfully processed.")
-        self.get_logger().info("Module added with {} classes:".format(self.detectors[-1]['n_classes']))
-        for cl in self.detectors[-1]['classes']:
-            self.get_logger().info("\t {}".format(cl))
+        self.get_logger().info("Module added with {} classes:".format(self.detectors[len(self.detectors)]['n_classes']))
+        for cl in self.detectors[len(self.detectors)]['classes']:
+            is_new=False
+            for nc in new_classes:
+                if cl == nc:
+                    is_new = True
+                    break
+            if is_new:
+                self.get_logger().info("\t\t\t     {} (new)".format(cl))
+            else:
+                self.get_logger().info("\t\t\t     {}".format(cl))
+        
+        self.get_logger().info("Server classes [{}]:".format(len(self.classes)))
+        for cl in self.classes:
+            self.get_logger().info("\t\t    {}".format(self.classes[cl]))
         return response
     
+    def add_detector(self,new_detector={}):
+
+        if self.detectors:
+            new_detector['id'] = self.detectors[len(self.detectors)]['id']+1
+        else:
+            new_detector['id'] = 1
+
+        new_classes=[]
+        # Combine classes
+        if not self.classes:
+            for i in range(len(new_detector['classes'])):
+                self.classes.update({i:new_detector['classes'][i]})
+                self.n_classes += 1
+                new_classes.append(new_detector['classes'][i])
+        else:
+            for i in range(len(new_detector['classes'])):
+                # check if exist
+                rep = False
+                for j in range(self.n_classes):
+                    if self.classes[j] == new_detector['classes'][i]:
+                        rep = True     
+
+                # append
+                if not rep:
+                    self.classes.update({len(self.classes):new_detector['classes'][i]})
+                    new_classes.append(new_detector['classes'][i])
+                    self.n_classes += 1
+
+
+        self.detectors.update({new_detector['id']:new_detector})
+        return new_detector['id'], new_classes
 
 
     def train(self,data):
