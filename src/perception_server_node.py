@@ -25,7 +25,7 @@ class classification_component(Node):
         #self.pub = self.create_publisher(SmapDetections, '/smap_core/perception/predictions', 10, callback_group=self.reentrant_cb_group)
 
 
-        self.AddPerceptionModule_srv = self.create_service(AddPerceptionModule, 'add_perception_module', self.AddPerceptionModule_callback)
+        self.AddPerceptionModule_srv = self.create_service(AddPerceptionModule, '/smap_core/perception_server/add_perception_module', self.AddPerceptionModule_callback)
         self.get_logger().info("add_perception_module server online.")
         # Verificar a atomicidade de operações chave
 
