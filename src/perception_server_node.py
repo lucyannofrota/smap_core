@@ -8,8 +8,9 @@ from rclpy.callback_groups import MutuallyExclusiveCallbackGroup, ReentrantCallb
 
 from smap_interfaces.msg import SmapDetections
 from smap_interfaces.srv import AddPerceptionModule
+from smap_interfaces.srv import SmapClasses
 
-class classification_component(Node):
+class perception_server(Node):
 
     detectors={}
     classes={}
@@ -27,10 +28,16 @@ class classification_component(Node):
 
         self.AddPerceptionModule_srv = self.create_service(AddPerceptionModule, '/smap_core/perception_server/add_perception_module', self.AddPerceptionModule_callback)
         self.get_logger().info("add_perception_module server online.")
+
+        self.ListClasses_srv = self.create_service(SmapClasses, '/smap_core/perception_server/list_classes', self.ListClasses_callback)
+        self.get_logger().info("list_classes server online.")
+
+        #SmapClasses
         # Verificar a atomicidade de operações chave
 
     def AddPerceptionModule_callback(self, request, response):
-        self.get_logger().info("Request received.")
+        self.get_logger().info("add_perception_module request received.")
+        self.get_logger().debug("".format(request))
         response.is_new=True
         response.success=True
         if( # Check if request is empty or if type is invalid
@@ -140,6 +147,25 @@ class classification_component(Node):
         self.detectors.update({new_detector['id']:new_detector})
         return new_detector['id'], new_classes
 
+    def ListClasses_callback(self, request, response):
+        self.get_logger().info("list_classes request received.")
+        self.get_logger().debug("".format(request))
+        if request.module_id == 0:
+            c_list = self.classes
+            response.n_classes = len(c_list)
+            response.classes = list(c_list.values())
+        else:
+            try:
+                c_list = self.detectors[request.module_id]
+                response.n_classes = c_list['n_classes']
+                response.classes = c_list['classes']
+            except Exception as e:
+                self.get_logger().warn("Requested module does not exist.")
+                response.n_classes = 0
+                response.classes = []
+                return response
+            
+        return response
 
     def train(self,data):
         pass
@@ -155,7 +181,7 @@ def main(args=None):
 
     rclpy.init(args=args)
 
-    class_comp = classification_component()
+    class_comp = perception_server()
 
     executor = MultiThreadedExecutor(4)
     executor.add_node(class_comp)
