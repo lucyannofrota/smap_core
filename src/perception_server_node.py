@@ -26,10 +26,10 @@ class perception_server(Node):
         #self.pub = self.create_publisher(SmapDetections, '/smap_core/perception/predictions', 10, callback_group=self.reentrant_cb_group)
 
 
-        self.AddPerceptionModule_srv = self.create_service(AddPerceptionModule, '/smap_core/perception_server/add_perception_module', self.AddPerceptionModule_callback)
+        self.AddPerceptionModule_srv = self.create_service(AddPerceptionModule, '/smap_core/perception_server/add_perception_module', self.AddPerceptionModule_callback,callback_group=self.reentrant_cb_group)
         self.get_logger().info("add_perception_module server online.")
 
-        self.ListClasses_srv = self.create_service(SmapClasses, '/smap_core/perception_server/list_classes', self.ListClasses_callback)
+        self.ListClasses_srv = self.create_service(SmapClasses, '/smap_core/perception_server/list_classes', self.ListClasses_callback,callback_group=self.reentrant_cb_group)
         self.get_logger().info("list_classes server online.")
 
         #SmapClasses
@@ -166,6 +166,8 @@ class perception_server(Node):
                 return response
             
         return response
+
+
 
     def train(self,data):
         pass
