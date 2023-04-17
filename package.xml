@@ -25,6 +25,11 @@
   <depend>smap_interfaces</depend>
 
   <depend>boost</depend>
+  <depend>libopencv-dev</depend>
+  <depend>cv_bridge</depend>
+  <depend>libpcl-all-dev</depend>
+  <depend>pcl_conversions</depend>
+
   
   <build_depend>rosidl_default_generators</build_depend>
   <exec_depend>rosidl_default_runtime</exec_depend>

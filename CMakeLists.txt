@@ -23,7 +23,6 @@ find_package(rclcpp REQUIRED)
 find_package(rclpy REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
-find_package(Boost REQUIRED system serialization)
 find_package(geometry_msgs REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(tf2_ros REQUIRED)
@@ -31,6 +30,44 @@ find_package(visualization_msgs REQUIRED)
 find_package(std_srvs REQUIRED)
 find_package(smap_interfaces REQUIRED)
 find_package(rmw_implementation_cmake REQUIRED)
+
+
+#########
+## PCL ##
+#########
+
+cmake_minimum_required(VERSION 2.6 FATAL_ERROR)
+
+find_package(PCL 1.1 REQUIRED)
+find_package(pcl_conversions REQUIRED)
+
+
+include_directories(${PCL_INCLUDE_DIRS})
+link_directories(${PCL_LIBRARY_DIRS})
+add_definitions(${PCL_DEFINITIONS})
+
+
+#include_directories(${PCL_INCLUDE_DIRS})
+#link_directories(${PCL_LIBRARY_DIRS})
+#add_definitions(${PCL_DEFINITIONS})
+
+
+##########
+## /PCL ##
+##########
+
+###########
+## BOOST ##
+###########
+
+#set(Boost_USE_STATIC_LIBS OFF) 
+set(Boost_USE_MULTITHREADED ON)  
+#set(Boost_USE_STATIC_RUNTIME OFF) 
+find_package(Boost REQUIRED system serialization) 
+
+############
+## /BOOST ##
+############
 
 #############
 ## thing ##
@@ -58,9 +95,9 @@ install(
   RUNTIME DESTINATION bin
 )
 
-#############
-## thing ##
-#############
+############
+## /thing ##
+############
 
 #####################
 ## Topological_Map ##
@@ -90,10 +127,79 @@ install(
   RUNTIME DESTINATION bin
 )
 
-#####################
-## Topological_Map ##
-#####################
+######################
+## /Topological_Map ##
+######################
 
+###########################
+## object_pose_estimator ##
+###########################
+
+add_executable(object_pose_estimator src/object_pose_estimator.cpp)
+
+target_include_directories(object_pose_estimator PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>
+)
+
+target_link_libraries(object_pose_estimator ${PCL_LIBRARIES})
+#target_link_directories(object_pose_estimator ${PCL_INCLUDE_DIRS})
+
+ament_target_dependencies(
+  object_pose_estimator
+  rclcpp
+  PCL
+  pcl_conversions
+  smap_interfaces
+)
+
+install(TARGETS object_pose_estimator
+  DESTINATION lib/${PROJECT_NAME}
+)
+
+
+
+
+
+
+
+# target_include_directories(object_pose_estimator PUBLIC
+#   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+#   $<INSTALL_INTERFACE:include>
+#   ${PCL_INCLUDE_DIRS}
+# )
+
+# target_link_libraries(object_pose_estimator ${PCL_LIBRARY_DIRS})
+
+
+# add_definitions(${PCL_DEFINITIONS})
+# #target_link_directories(object_pose_estimator ${PCL_INCLUDE_DIRS})
+
+# ament_target_dependencies(
+#   object_pose_estimator
+#   rclcpp
+#   PCL
+#   pcl_conversions
+# )
+
+# add_executable(object_pose_estimator src/object_pose_estimator.cpp)
+
+# install(TARGETS object_pose_estimator
+#   DESTINATION lib/${PROJECT_NAME}
+# )
+
+
+
+
+
+
+    #include_directories(${Boost_INCLUDE_DIRS}) 
+    #add_executable(progname file1.cxx file2.cxx) 
+    #target_link_libraries(progname ${Boost_LIBRARIES})
+
+############################
+## /object_pose_estimator ##
+############################
 
 install(
   DIRECTORY include/
@@ -118,10 +224,14 @@ install(DIRECTORY
 add_executable(smap_node src/smap_node.cpp)
 
 
+
 target_include_directories(smap_node PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>
-  ${Boost_INCLUDE_DIR})
+  ${Boost_INCLUDE_DIR}
+)
+
+
 
 ament_target_dependencies(
   smap_node
@@ -132,6 +242,8 @@ ament_target_dependencies(
   smap_interfaces
   std_srvs
 )
+
+
 target_link_libraries(smap_node thing topological_map ${Boost_LIBRARIES})
 
 install(TARGETS smap_node
@@ -158,9 +270,9 @@ ament_export_libraries(
 )
 
 
-#########################
-## classifier importer ##
-#########################
+##################
+## python nodes ##
+##################
 
 #ament_python_install_package(classifier_importer)
 #ament_python_install_package(src/classification_wrapper/classifiers)
@@ -171,9 +283,9 @@ install(PROGRAMS
   DESTINATION lib/${PROJECT_NAME}
 )
 
-#########################
-## classifier importer ##
-#########################
+###################
+## /python nodes ##
+###################
 
 
 
