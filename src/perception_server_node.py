@@ -17,11 +17,11 @@ class perception_server(Node):
     n_classes=0
 
     def __init__(self):
-        super().__init__("classification")
+        super().__init__("perception_server")
 
         self.reentrant_cb_group = ReentrantCallbackGroup()
 
-        #self.sub = self.create_subscription(SmapDetections, '/smap_core/perception/detectors/predictions', self.predict, 10, callback_group=self.reentrant_cb_group)
+        self.sub = self.create_subscription(SmapDetections, '/smap_core/perception/modules/predictions', self.predict, 10, callback_group=self.reentrant_cb_group)
 
         #self.pub = self.create_publisher(SmapDetections, '/smap_core/perception/predictions', 10, callback_group=self.reentrant_cb_group)
 
@@ -168,12 +168,22 @@ class perception_server(Node):
         return response
 
 
-
     def train(self,data):
-        pass
+        print(data)
+        return
+        
+
 
     def predict(self,data):
-        print(data)
+        is_registered = False
+        for id in list(self.detectors.keys()):
+            if id == data.module_id:
+                is_registered = True
+                break
+        if not is_registered:
+            self.get_logger().warn("Detection received from unregistered module!")
+        
+        return
 
     def on_process(self): # Pooling
         pass
