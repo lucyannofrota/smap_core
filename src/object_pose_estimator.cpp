@@ -6,19 +6,22 @@
 //#include <pcl-1.10/pcl/point_types.h>
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
-#include <sensor_msgs/msg/point_cloud2.h>
+#include <pcl/exceptions.h>
 #include <pcl_conversions/pcl_conversions.h>
 
-
-#include <pcl/range_image/range_image.h>
-
-
-#include <pcl/range_image/range_image.h>
 #include <pcl/io/pcd_io.h>
 #include <pcl/visualization/range_image_visualizer.h>
 #include <pcl/visualization/pcl_visualizer.h>
+#include <pcl/range_image/range_image.h>
 #include <pcl/console/parse.h>
 
+#include <pcl/range_image/range_image.h>
+
+
+
+
+#include <sensor_msgs/msg/point_cloud2.h>
+#include "sensor_msgs/point_cloud2_iterator.hpp"
 #include <boost/foreach.hpp>
 
 #include <iostream>
@@ -29,15 +32,15 @@
 #include <pcl/io/pcd_io.h>
 #include <pcl/visualization/pcl_visualizer.h>
 #include <pcl/console/parse.h>
+#include <pcl/filters/statistical_outlier_removal.h>
 
 // #include "smap_interfaces/msg"
-#include "smap_interfaces/msg/smap_detections.hpp"
 #include "smap_interfaces/msg/smap_data.hpp"
 #include "smap_interfaces/msg/smap_object.hpp"
+#include "smap_interfaces/msg/smap_detections.hpp"
 #include "smap_interfaces/msg/bounding_box2_d.hpp"
 // #include "smap_interfaces/msg/smap_data.hpp"
 
-#include "sensor_msgs/point_cloud2_iterator.hpp"
 
 #include <iostream>
 
@@ -84,8 +87,8 @@ private:
 
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr debug_pcl_pub = this->create_publisher<sensor_msgs::msg::PointCloud2>("/smap_core/perception/cpp",10);
 
-  rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr test_pcl_pub = this->create_publisher<sensor_msgs::msg::PointCloud2>("pci",10);
-  rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr test_pcl_pub1 = this->create_publisher<sensor_msgs::msg::PointCloud2>("pci1",10);
+  rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr test_pcl_pub = this->create_publisher<sensor_msgs::msg::PointCloud2>("pci_unfilt",10);
+  rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr test_pcl_pub1 = this->create_publisher<sensor_msgs::msg::PointCloud2>("pci_filt",10);
 
   // rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr sub_test = this->create_subscription<sensor_msgs::msg::PointCloud2>(
   //   "pci",10,std::bind(
@@ -93,7 +96,7 @@ private:
   // );
 
   // rclcpp::TimerBase::SharedPtr timer = this->create_wall_timer(
-  //   std::chrono::seconds(5), // Change Frequency
+  //   std::chrono::seconds(1), // Change Frequency
   //   std::bind(
   //     &smap::object_pose_estimator::pcl_pub,
   //     this
@@ -130,19 +133,46 @@ public:
   {
   }
 
-  void pcl_pub(void){
-    const int width = 5, height = 5;
-    printf(".\n");
-    sensor_msgs::msg::PointCloud2 msg;
+  void print_pcl_params(const std::string txt,const sensor_msgs::msg::PointCloud2 &msg) const {
+    printf("%s: \n",txt.c_str());
+    printf("\tDims: \n");
+    printf("\t\theight: %i\n",msg.height);
+    printf("\t\twidth: %i\n",msg.width);
+    printf("\t\tpoint_step: %i\n",msg.point_step);
+    printf("\t\trow_step: %i\n",msg.row_step);
+    printf("\tFields: \n");
+    for(auto it = msg.fields.begin(); it != msg.fields.end(); ++it){
+      printf("\t\tname: %s\n",it->name.c_str());
+      printf("\t\toffset: %i\n",it->offset);
+      printf("\t\tdatatype: %i\n",it->datatype);
+      printf("\t\tcount: %i\n",it->count);
+    }
+  }
+
+  void init_pcl_msg(sensor_msgs::msg::PointCloud2 &msg,size_t width,size_t height) const{
     msg.data.resize(width*height);
     msg.header.stamp = rclcpp::Clock().now();
     msg.header.frame_id = "map";
-    // msg.point_step = (sizeof(float) * 4);
-    msg.row_step = width*msg.point_step;
+    msg.height = width;
+    msg.width = height;
 
-    sensor_msgs::PointCloud2Modifier mod(msg);
-    mod.setPointCloud2FieldsByString(2,"xyz","rgb");
-    mod.resize(height*width);
+    msg.fields.clear();
+    msg.fields.reserve(4);
+    msg.fields.resize(4);
+    msg.fields[0].name = 'x'; msg.fields[0].offset = 0; msg.fields[0].datatype = 7; msg.fields[0].count = 1;
+    msg.fields[1].name = 'y'; msg.fields[1].offset = 4; msg.fields[1].datatype = 7; msg.fields[1].count = 1;
+    msg.fields[2].name = 'z'; msg.fields[2].offset = 8; msg.fields[2].datatype = 7; msg.fields[2].count = 1;
+    msg.fields[3].name = "rgb"; msg.fields[3].offset = 12; msg.fields[3].datatype = 7; msg.fields[3].count = 1;
+    msg.point_step = 4*sizeof(float);
+    msg.row_step = msg.width*msg.point_step;
+    msg.data.resize(msg.height*msg.row_step);
+  }
+
+  void pcl_pub(void){
+    const int width = 5, height = 5;
+    sensor_msgs::msg::PointCloud2 msg;
+    this->init_pcl_msg(msg,width,height);
+
 
     sensor_msgs::PointCloud2Iterator<float> iter_x(msg,"x");
     sensor_msgs::PointCloud2Iterator<float> iter_y(msg,"y");
@@ -150,32 +180,19 @@ public:
     sensor_msgs::PointCloud2Iterator<uint8_t> iter_r(msg,"r");
     sensor_msgs::PointCloud2Iterator<uint8_t> iter_g(msg,"g");
     sensor_msgs::PointCloud2Iterator<uint8_t> iter_b(msg,"b");
-    
 
-    // Salvar em formato de image!
 
-    msg.height = width;
-    msg.width = height;
 
     unsigned int x,y;
-    printf("(h,w)|(%i,%i)\n",msg.height,msg.width);
     for(y = 1; y <= msg.height; y++){
       for(x = 1; x <= msg.width; x++){
+        printf(".\n");
         *iter_x = (float) x+0.1;
         *iter_y = (float) y+0.2;
         *iter_z = (float) 1;
         *iter_r = (uint8_t) 255;
         *iter_g = (uint8_t) 144;
         *iter_b = (uint8_t) 77;
-
-        printf("(x,y,z,r,g,b)->[%5.2f,%5.2f,%5.2f,%3i,%3i,%3i]\n",
-          *iter_x,
-          *iter_y,
-          *iter_z,
-          *iter_r,
-          *iter_g,
-          *iter_b
-        );
 
         ++iter_x;
         ++iter_y;
@@ -185,27 +202,15 @@ public:
         ++iter_b;
       }
     }
-
+    this->print_pcl_params("cloud",msg);
     this->test_pcl_pub->publish(msg);
   }
 
-  void object_segmentation(sensor_msgs::msg::PointCloud2 &pointcloud, smap_interfaces::msg::SmapObject &obj) const{
+  void object_segmentation(sensor_msgs::msg::PointCloud2 &pointcloud, sensor_msgs::msg::PointCloud2 &segment_cloud, const smap_interfaces::msg::SmapObject &obj) const{
     RCLCPP_DEBUG(this->get_logger(),"object_segmentation");
     const size_t width = obj.bounding_box_2d.keypoint_2[0] - obj.bounding_box_2d.keypoint_1[0] + 1, height = obj.bounding_box_2d.keypoint_2[1] - obj.bounding_box_2d.keypoint_1[1] + 1;
 
-    obj.obj_pointcloud.data.resize(width*height);
-    obj.obj_pointcloud.header.stamp = rclcpp::Clock().now();
-    obj.obj_pointcloud.header.frame_id = "map";
-    obj.obj_pointcloud.point_step = pointcloud.point_step;
-    obj.obj_pointcloud.row_step = width*obj.obj_pointcloud.point_step;
-
-
-    sensor_msgs::PointCloud2Modifier mod(obj.obj_pointcloud);
-    mod.setPointCloud2FieldsByString(2,"xyz","rgb");
-    mod.resize(height*width);
-
-    obj.obj_pointcloud.height = height;
-    obj.obj_pointcloud.width = width;
+    this->init_pcl_msg(segment_cloud,width,height);
 
     sensor_msgs::PointCloud2Iterator<float> iter_x(pointcloud,"x");
     sensor_msgs::PointCloud2Iterator<float> iter_y(pointcloud,"y");
@@ -214,14 +219,14 @@ public:
     sensor_msgs::PointCloud2Iterator<uint8_t> iter_g(pointcloud,"g");
     sensor_msgs::PointCloud2Iterator<uint8_t> iter_b(pointcloud,"b");
 
-    sensor_msgs::PointCloud2Iterator<float> msg_x(obj.obj_pointcloud,"x");
-    sensor_msgs::PointCloud2Iterator<float> msg_y(obj.obj_pointcloud,"y");
-    sensor_msgs::PointCloud2Iterator<float> msg_z(obj.obj_pointcloud,"z");
-    sensor_msgs::PointCloud2Iterator<uint8_t> msg_r(obj.obj_pointcloud,"r");
-    sensor_msgs::PointCloud2Iterator<uint8_t> msg_g(obj.obj_pointcloud,"g");
-    sensor_msgs::PointCloud2Iterator<uint8_t> msg_b(obj.obj_pointcloud,"b");
+    sensor_msgs::PointCloud2Iterator<float> msg_x(segment_cloud,"x");
+    sensor_msgs::PointCloud2Iterator<float> msg_y(segment_cloud,"y");
+    sensor_msgs::PointCloud2Iterator<float> msg_z(segment_cloud,"z");
+    sensor_msgs::PointCloud2Iterator<uint8_t> msg_r(segment_cloud,"r");
+    sensor_msgs::PointCloud2Iterator<uint8_t> msg_g(segment_cloud,"g");
+    sensor_msgs::PointCloud2Iterator<uint8_t> msg_b(segment_cloud,"b");
 
-    int offset;
+    static size_t offset;
 
     for(int h = obj.bounding_box_2d.keypoint_1[1]; h <= obj.bounding_box_2d.keypoint_2[1]; h++){
       for(int w = obj.bounding_box_2d.keypoint_1[0]; w <= obj.bounding_box_2d.keypoint_2[0]; w++){
@@ -237,29 +242,61 @@ public:
       }
     }
 
-    obj.has_pointcloud = true;
+    // printf("/c|PS: %i, RS: %i\n",segment_cloud.point_step,segment_cloud.row_step);
+  }
+
+  void object_cloud_filtering(sensor_msgs::msg::PointCloud2 &segment_cloud) const{
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr pcl_unfilt (new pcl::PointCloud<pcl::PointXYZRGB>);
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr pcl_filt (new pcl::PointCloud<pcl::PointXYZRGB>);
+    // pcl::PointCloud<pcl::PointXYZRGB>::Ptr pcl_unfilt (new pcl::PointCloud<pcl::PointXYZRGB>);
+    this->test_pcl_pub->publish(segment_cloud);
+    // pcl::fromROSMsg(segment_cloud,pcl_unfilt_);
+    pcl::fromROSMsg(segment_cloud,*pcl_unfilt);
+
+    pcl::StatisticalOutlierRemoval<pcl::PointXYZRGB> sor;
+    // printf("2\n");
+    // pcl::StatisticalOutlierRemoval<pcl::PointXYZRGB> sor2;
+
+    // pcl::StatisticalOutlierRemoval<pcl::PointXYZRGB> sor;
+    // pcl::StatisticalOutlierRemoval<sensor_msgs::msg::PointCloud2> sor2;
+
+    // pcl::fromROSMsg(segment_cloud,pcl_filt);
+
+    // pcl::fromROSMsg(segment_cloud,pcl_unfilt);
+
+    // static pcl::StatisticalOutlierRemoval<pcl::PointXYZRGB> sor;
+    // sor.setInputCloud(pcl_unfilt.makeShared());
+    // sor.setMeanK(50);
+    // sor.setStddevMulThresh(1.0);
+    // sor.filter(pcl_filt);
+    // pcl::toROSMsg(pcl_filt,segment_cloud);
+    this->test_pcl_pub1->publish(segment_cloud);
   }
 
   void detections_callback(const smap_interfaces::msg::SmapDetections::SharedPtr input_msg) {
+    // return;
     RCLCPP_INFO(this->get_logger(),"detections_callback");
 
 
     // this->object_segmentation(input_msg);
     // this->pcl_pub();
 
-    static smap_interfaces::msg::SmapObject obj;
-    BOOST_FOREACH(obj, input_msg->objects){
-      RCLCPP_INFO(this->get_logger(),"Object: %i",obj.label);
-      if(obj.label == 62) this->object_segmentation(input_msg->pointcloud,obj);
+    // Convert to pcl
+    static pcl::PointCloud<pcl::PointXYZRGB> cloud;
+    // sensor_msgs::msg::PointCloud2 pc;
+    // pcl::fromROSMsg(pc,cloud);
+    pcl::fromROSMsg(input_msg->pointcloud,cloud);
 
+    static smap_interfaces::msg::SmapObject obj;
+    static sensor_msgs::msg::PointCloud2 segment_cloud;
+    BOOST_FOREACH(obj, input_msg->objects){
+      if(obj.label == 62){
+        RCLCPP_INFO(this->get_logger(),"Object: %i",obj.label);
+        this->object_segmentation(input_msg->pointcloud,segment_cloud,obj);
+        this->object_cloud_filtering(segment_cloud);
+      }
     }
 
-
-    // Convert to pcl
-    // static pcl::PointCloud<pcl::PointXYZRGB> cloud;
-    // // sensor_msgs::msg::PointCloud2 pc;
-    // // pcl::fromROSMsg(pc,cloud);
-    // pcl::fromROSMsg(input_msg->pointcloud,cloud);
 
 
     // RCLCPP_INFO(this->get_logger(),"Points: %i, %i",cloud.width,cloud.height);
@@ -302,7 +339,7 @@ public:
     // const sensor_msgs::msg::PointCloud2::SharedPtr input) const{
     RCLCPP_INFO(this->get_logger(),"_callback");
     // Convert to pcl
-    static pcl::PointCloud<pcl::PointXYZRGB> cloud;
+    pcl::PointCloud<pcl::PointXYZRGB> cloud;
     pcl::fromROSMsg(input_msg->pointcloud,cloud);
 
 
