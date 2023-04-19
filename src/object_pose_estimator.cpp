@@ -246,31 +246,20 @@ public:
   }
 
   void object_cloud_filtering(sensor_msgs::msg::PointCloud2 &segment_cloud) const{
+    auto start = std::chrono::high_resolution_clock::now();
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr pcl_unfilt (new pcl::PointCloud<pcl::PointXYZRGB>);
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr pcl_filt (new pcl::PointCloud<pcl::PointXYZRGB>);
-    // pcl::PointCloud<pcl::PointXYZRGB>::Ptr pcl_unfilt (new pcl::PointCloud<pcl::PointXYZRGB>);
-    this->test_pcl_pub->publish(segment_cloud);
-    // pcl::fromROSMsg(segment_cloud,pcl_unfilt_);
+
     pcl::fromROSMsg(segment_cloud,*pcl_unfilt);
 
-    pcl::StatisticalOutlierRemoval<pcl::PointXYZRGB> sor;
-    // printf("2\n");
-    // pcl::StatisticalOutlierRemoval<pcl::PointXYZRGB> sor2;
-
-    // pcl::StatisticalOutlierRemoval<pcl::PointXYZRGB> sor;
-    // pcl::StatisticalOutlierRemoval<sensor_msgs::msg::PointCloud2> sor2;
-
-    // pcl::fromROSMsg(segment_cloud,pcl_filt);
-
-    // pcl::fromROSMsg(segment_cloud,pcl_unfilt);
-
-    // static pcl::StatisticalOutlierRemoval<pcl::PointXYZRGB> sor;
-    // sor.setInputCloud(pcl_unfilt.makeShared());
-    // sor.setMeanK(50);
-    // sor.setStddevMulThresh(1.0);
-    // sor.filter(pcl_filt);
-    // pcl::toROSMsg(pcl_filt,segment_cloud);
-    this->test_pcl_pub1->publish(segment_cloud);
+    static pcl::StatisticalOutlierRemoval<pcl::PointXYZRGB> sor;
+    sor.setInputCloud(pcl_unfilt);
+    sor.setMeanK(50);
+    sor.setStddevMulThresh(1.0);
+    sor.filter(*pcl_filt);
+    pcl::toROSMsg(*pcl_filt,segment_cloud);
+    auto stop = std::chrono::high_resolution_clock::now();
+    RCLCPP_WARN(this->get_logger(),"Filter time %ims",(std::chrono::duration_cast<std::chrono::milliseconds>(stop-start)).count());
   }
 
   void detections_callback(const smap_interfaces::msg::SmapDetections::SharedPtr input_msg) {
@@ -289,6 +278,7 @@ public:
 
     static smap_interfaces::msg::SmapObject obj;
     static sensor_msgs::msg::PointCloud2 segment_cloud;
+    // std::thread t1(smap::object_pose_estimator::object_segmentation)
     BOOST_FOREACH(obj, input_msg->objects){
       if(obj.label == 62){
         RCLCPP_INFO(this->get_logger(),"Object: %i",obj.label);
