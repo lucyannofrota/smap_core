@@ -69,9 +69,71 @@ pcl::visualization::PCLVisualizer::Ptr simpleVis (pcl::PointCloud<pcl::PointXYZR
 namespace smap
 {
 
+
+bool timeout(const std::tuple<std::shared_ptr<std::future<void>>,std::chrono::_V2::system_clock::time_point,float> &element){
+  if(std::get<0>(element)){
+    bool ret = (std::get<0>(element)->wait_for(0ms) == std::future_status::ready) || (std::chrono::duration_cast<std::chrono::milliseconds>(
+            std::chrono::high_resolution_clock::now()-std::get<1>(element)
+    )).count() >= std::get<2>(element);
+    if(ret){
+      printf("timeout (%f)\n",std::get<2>(element));
+      std::get<0>(element).get(); // Finalize the thread
+    }
+    return ret;
+  }
+  printf("\tf /timeout\n");
+  return true;
+  // return false;
+}
+
+class thread_pool : public std::vector<std::tuple<std::shared_ptr<std::future<void>>,std::chrono::_V2::system_clock::time_point,float>>
+{
+  using element_type = std::tuple<std::shared_ptr<std::future<void>>,std::chrono::_V2::system_clock::time_point,float>;
+  private:
+  size_t _max_size;
+
+
+
+  public:
+  thread_pool(size_t max_size) : std::vector<element_type>(){
+    this->_max_size = max_size;
+  }
+
+  bool available(void){ // Return true if the thread pool is not full
+    std::vector<element_type>::erase(
+      std::remove_if(std::vector<element_type>::begin(),std::vector<element_type>::end(),timeout),
+      std::vector<element_type>::end()
+    );
+    printf("vec size: %i\n",std::vector<element_type>::size());
+    return std::vector<element_type>::size() < this->_max_size;
+  }
+
+  bool push_back(const std::tuple<std::shared_ptr<std::future<void>>,float> &element){
+
+    // Add a new thread if possible
+    printf("push\n");
+    if(smap::thread_pool::available()){
+      std::vector<element_type>::push_back(
+        element_type({
+          std::get<0>(element),
+          std::chrono::high_resolution_clock::now(),
+          std::get<1>(element)
+        })
+      );
+      printf("/push T\n");
+      return true;
+    }
+    else{
+      printf("/push F\n");
+      return false;
+    } 
+  }
+};
+
 class object_pose_estimator : public rclcpp::Node
 {
 private:
+  const size_t max_threads = 8; // Should be grathen than 1 because of the function "__compute_timeout"
   rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr img_publisher = this->create_publisher<sensor_msgs::msg::Image>(
     "pcl", 10);
     
@@ -108,6 +170,7 @@ private:
   // pcl::visualization::PCLVisualizer::Ptr viewer;
 
   // pcl::visualization::RangeImageVisualizer range_image_widget;
+  std::shared_ptr<smap::thread_pool> thread_ctl;
 
 public:
   // Constructor/Destructor
@@ -127,7 +190,8 @@ public:
     // this->viewer->setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1, "sample cloud");
     // this->viewer->addCoordinateSystem (1.0);
     // this->viewer->initCameraParameters ();
-    
+    // this->thread_ctl;
+    this->thread_ctl = std::make_shared<smap::thread_pool>(smap::thread_pool(this->max_threads));
   }
   ~object_pose_estimator()
   {
@@ -206,31 +270,35 @@ public:
     this->test_pcl_pub->publish(msg);
   }
 
-  void object_segmentation(sensor_msgs::msg::PointCloud2 &pointcloud, sensor_msgs::msg::PointCloud2 &segment_cloud, const smap_interfaces::msg::SmapObject &obj) const{
+  void object_segmentation(
+    const sensor_msgs::msg::PointCloud2::SharedPtr pointcloud, 
+    const sensor_msgs::msg::PointCloud2::SharedPtr segment_cloud, 
+    const smap_interfaces::msg::SmapObject::SharedPtr obj) const
+  {
     RCLCPP_DEBUG(this->get_logger(),"object_segmentation");
-    const size_t width = obj.bounding_box_2d.keypoint_2[0] - obj.bounding_box_2d.keypoint_1[0] + 1, height = obj.bounding_box_2d.keypoint_2[1] - obj.bounding_box_2d.keypoint_1[1] + 1;
+    const size_t width = obj->bounding_box_2d.keypoint_2[0] - obj->bounding_box_2d.keypoint_1[0] + 1, height = obj->bounding_box_2d.keypoint_2[1] - obj->bounding_box_2d.keypoint_1[1] + 1;
 
-    this->init_pcl_msg(segment_cloud,width,height);
+    this->init_pcl_msg(*segment_cloud,width,height);
 
-    sensor_msgs::PointCloud2Iterator<float> iter_x(pointcloud,"x");
-    sensor_msgs::PointCloud2Iterator<float> iter_y(pointcloud,"y");
-    sensor_msgs::PointCloud2Iterator<float> iter_z(pointcloud,"z");
-    sensor_msgs::PointCloud2Iterator<uint8_t> iter_r(pointcloud,"r");
-    sensor_msgs::PointCloud2Iterator<uint8_t> iter_g(pointcloud,"g");
-    sensor_msgs::PointCloud2Iterator<uint8_t> iter_b(pointcloud,"b");
+    sensor_msgs::PointCloud2Iterator<float> iter_x(*pointcloud,"x");
+    sensor_msgs::PointCloud2Iterator<float> iter_y(*pointcloud,"y");
+    sensor_msgs::PointCloud2Iterator<float> iter_z(*pointcloud,"z");
+    sensor_msgs::PointCloud2Iterator<uint8_t> iter_r(*pointcloud,"r");
+    sensor_msgs::PointCloud2Iterator<uint8_t> iter_g(*pointcloud,"g");
+    sensor_msgs::PointCloud2Iterator<uint8_t> iter_b(*pointcloud,"b");
 
-    sensor_msgs::PointCloud2Iterator<float> msg_x(segment_cloud,"x");
-    sensor_msgs::PointCloud2Iterator<float> msg_y(segment_cloud,"y");
-    sensor_msgs::PointCloud2Iterator<float> msg_z(segment_cloud,"z");
-    sensor_msgs::PointCloud2Iterator<uint8_t> msg_r(segment_cloud,"r");
-    sensor_msgs::PointCloud2Iterator<uint8_t> msg_g(segment_cloud,"g");
-    sensor_msgs::PointCloud2Iterator<uint8_t> msg_b(segment_cloud,"b");
+    sensor_msgs::PointCloud2Iterator<float> msg_x(*segment_cloud,"x");
+    sensor_msgs::PointCloud2Iterator<float> msg_y(*segment_cloud,"y");
+    sensor_msgs::PointCloud2Iterator<float> msg_z(*segment_cloud,"z");
+    sensor_msgs::PointCloud2Iterator<uint8_t> msg_r(*segment_cloud,"r");
+    sensor_msgs::PointCloud2Iterator<uint8_t> msg_g(*segment_cloud,"g");
+    sensor_msgs::PointCloud2Iterator<uint8_t> msg_b(*segment_cloud,"b");
 
     static size_t offset;
 
-    for(int h = obj.bounding_box_2d.keypoint_1[1]; h <= obj.bounding_box_2d.keypoint_2[1]; h++){
-      for(int w = obj.bounding_box_2d.keypoint_1[0]; w <= obj.bounding_box_2d.keypoint_2[0]; w++){
-        offset=(w)+pointcloud.width*(h);
+    for(int h = obj->bounding_box_2d.keypoint_1[1]; h <= obj->bounding_box_2d.keypoint_2[1]; h++){
+      for(int w = obj->bounding_box_2d.keypoint_1[0]; w <= obj->bounding_box_2d.keypoint_2[0]; w++){
+        offset=(w)+pointcloud->width*(h);
 
         *msg_x = *(iter_x+offset); ++msg_x;
         *msg_y = *(iter_y+offset); ++msg_y;
@@ -241,29 +309,56 @@ public:
 
       }
     }
-
-    // printf("/c|PS: %i, RS: %i\n",segment_cloud.point_step,segment_cloud.row_step);
   }
 
-  void object_cloud_filtering(sensor_msgs::msg::PointCloud2 &segment_cloud) const{
+  void object_cloud_filtering(sensor_msgs::msg::PointCloud2::SharedPtr segment_cloud) const{
     auto start = std::chrono::high_resolution_clock::now();
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr pcl_unfilt (new pcl::PointCloud<pcl::PointXYZRGB>);
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr pcl_filt (new pcl::PointCloud<pcl::PointXYZRGB>);
 
-    pcl::fromROSMsg(segment_cloud,*pcl_unfilt);
+    pcl::fromROSMsg(*segment_cloud,*pcl_unfilt);
 
-    static pcl::StatisticalOutlierRemoval<pcl::PointXYZRGB> sor;
+    pcl::StatisticalOutlierRemoval<pcl::PointXYZRGB> sor;
     sor.setInputCloud(pcl_unfilt);
     sor.setMeanK(50);
     sor.setStddevMulThresh(1.0);
     sor.filter(*pcl_filt);
-    pcl::toROSMsg(*pcl_filt,segment_cloud);
+    pcl::toROSMsg(*pcl_filt,*segment_cloud);
     auto stop = std::chrono::high_resolution_clock::now();
     RCLCPP_WARN(this->get_logger(),"Filter time %ims",(std::chrono::duration_cast<std::chrono::milliseconds>(stop-start)).count());
   }
 
-  void detections_callback(const smap_interfaces::msg::SmapDetections::SharedPtr input_msg) {
+  // void check_futures(bool *is_free, std::future<void> *futures){
+
+  // }
+
+  void object_filtering_thread(const sensor_msgs::msg::PointCloud2::SharedPtr point_cloud, const smap_interfaces::msg::SmapObject::SharedPtr obj){
     // return;
+    // RCLCPP_INFO(this->get_logger(),"Object: %i",obj->label);
+    std::this_thread::sleep_for(20000ms);
+    // std::shared_ptr<sensor_msgs::msg::PointCloud2> segment_cloud(new sensor_msgs::msg::PointCloud2);
+    // // sensor_msgs::msg::PointCloud2 segment_cloud;
+    // // sensor_msgs::msg::PointCloud2 segment_cloud;
+
+    // // this->object_segmentation()
+
+    // this->object_segmentation(point_cloud,segment_cloud,obj);
+    // // this->object_cloud_filtering(segment_cloud);
+    // // this->object_segmentation(*segment_cloud,*segment_cloud,obj);
+    // // this->object_segmentation(segment_cloud)
+
+    // this->object_cloud_filtering(segment_cloud);
+    RCLCPP_INFO(this->get_logger(),"Object: %i",obj->label);
+  }
+
+  float __compute_timeout(const size_t active_threads) const{
+    const float tau = 2.5;
+    double timeout = (double) this->max_threads-1;
+    if(active_threads > 0) timeout = (double) this->max_threads*(exp(-(active_threads*1.0)/(tau)));
+    return timeout;
+  }
+
+  void detections_callback(const smap_interfaces::msg::SmapDetections::SharedPtr input_msg) {
     RCLCPP_INFO(this->get_logger(),"detections_callback");
 
 
@@ -271,58 +366,81 @@ public:
     // this->pcl_pub();
 
     // Convert to pcl
-    static pcl::PointCloud<pcl::PointXYZRGB> cloud;
+    // static pcl::PointCloud<pcl::PointXYZRGB> cloud;
     // sensor_msgs::msg::PointCloud2 pc;
     // pcl::fromROSMsg(pc,cloud);
-    pcl::fromROSMsg(input_msg->pointcloud,cloud);
+    // pcl::fromROSMsg(input_msg->pointcloud,cloud);
 
-    static smap_interfaces::msg::SmapObject obj;
-    static sensor_msgs::msg::PointCloud2 segment_cloud;
-    // std::thread t1(smap::object_pose_estimator::object_segmentation)
+
+    // Thread launch
+
+    smap_interfaces::msg::SmapObject obj;
+    sensor_msgs::msg::PointCloud2 segment_cloud;
+    std::vector<std::tuple<std::shared_ptr<std::future<void>>,std::chrono::_V2::system_clock::time_point,float>>::iterator it;
+    // std::future_status status;
+    static int z = 0;
     BOOST_FOREACH(obj, input_msg->objects){
-      if(obj.label == 62){
-        RCLCPP_INFO(this->get_logger(),"Object: %i",obj.label);
-        this->object_segmentation(input_msg->pointcloud,segment_cloud,obj);
-        this->object_cloud_filtering(segment_cloud);
+      // if(obj.label == 62){
+
+      // Block until thread pool is available
+      while(!this->thread_ctl->available()){
+        printf("*");
+        std::this_thread::sleep_for(50ms);
       }
+      // while(this->thread_ctl->size() == this->max_threads){
+      //   // Check thread status
+      //   for(it = this->thread_ctl->begin(); it != this->thread_ctl->end(); ++it){
+      //     status = (std::get<0>(*it))->wait_for(0ms);
+      //     if(status == std::future_status::ready || status == std::future_status::timeout){
+      //       this->thread_ctl->erase(it);
+      //     }
+      //   }
+      //   std::this_thread::sleep_for(50ms);
+      // }
+
+      // this->smap::object_pose_estimator::object_filtering_thread_with_timeout(
+      //   std::make_shared<sensor_msgs::msg::PointCloud2>(input_msg->pointcloud),
+      //   std::make_shared<smap_interfaces::msg::SmapObject>(obj)
+      // );
+
+      this->thread_ctl->push_back(
+        {
+          std::make_shared<std::future<void>>(
+            std::async(
+              std::launch::async,
+              &smap::object_pose_estimator::object_filtering_thread,this,
+              std::make_shared<sensor_msgs::msg::PointCloud2>(input_msg->pointcloud),
+              std::make_shared<smap_interfaces::msg::SmapObject>(obj)
+            )
+          ),
+          this->__compute_timeout(this->thread_ctl->size())*1000
+        }
+      );
+
+      RCLCPP_INFO(this->get_logger(),"Item launched: %i| label: %i | Total: %i",this->thread_ctl->size(),obj.label,++z);
+
+      // std::async(
+      //   std::launch::async,
+      //   &smap::object_pose_estimator::object_thread,this,
+      //   std::make_shared<sensor_msgs::msg::PointCloud2>(input_msg->pointcloud),
+      //   std::make_shared<smap_interfaces::msg::SmapObject>(obj)
+      // )
+
+      // this->thread_ctl->push_back();
+
+      // create new thread
+      // is_free[i] = false;
+      // futures[i] = std::async(
+      //   std::launch::async,
+      //   &smap::object_pose_estimator::object_thread,this,
+      //   std::make_shared<sensor_msgs::msg::PointCloud2>(input_msg->pointcloud),
+      //   std::make_shared<smap_interfaces::msg::SmapObject>(obj)
+      // );
+      // std::set<0>
+      // std::get
+
     }
-
-
-
-    // RCLCPP_INFO(this->get_logger(),"Points: %i, %i",cloud.width,cloud.height);
-
-    // if(!this->viewer->wasStopped()){
-    //   this->viewer->removePointCloud("sample cloud");
-    //   this->viewer->addPointCloud<pcl::PointXYZRGB>(cloud.makeShared(), "sample cloud");
-    //   this->viewer->updatePointCloud(cloud.makeShared(),"sample cloud");
-    //   this->viewer->spinOnce(100,true);
-    // }
-
-
-
-    // // BOOST_FOREACH()
-
-    //     // // while (!viewer->wasStopped ())
-    // // while (!this->range_image_widget.wasStopped())
-    // // {
-    // //   // viewer->spinOnce (100);
-    // //   // range_image_widget
-    // //   // std::this_thread::sleep_for(100ms);
-    // //   this->range_image_widget.spinOnce ();
-    // //   // viewer->spinOnce(100);
-    // //   pcl_sleep (0.01);
-    // // }
-
-
-
-
-
-
-    // // Convert to sensor_msgs
-    // sensor_msgs::msg::PointCloud2 output;
-    // pcl::toROSMsg(cloud,output);
-    // // pub
-    // this->debug_pcl_pub->publish(output);
+    RCLCPP_INFO(this->get_logger(),"---Callback complete---");
   }
 
   void _callback(const smap_interfaces::msg::SmapData::SharedPtr input_msg) const {
