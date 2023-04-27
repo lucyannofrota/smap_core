@@ -160,9 +160,6 @@ install(TARGETS object_pose_estimator
 
 
 
-
-
-
 # target_include_directories(object_pose_estimator PUBLIC
 #   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
 #   $<INSTALL_INTERFACE:include>
