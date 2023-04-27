@@ -14,6 +14,8 @@
 #include <pcl/visualization/pcl_visualizer.h>
 #include <pcl/range_image/range_image.h>
 #include <pcl/console/parse.h>
+#include <pcl/filters/extract_indices.h>
+#include <pcl/filters/voxel_grid.h>
 
 #include <pcl/range_image/range_image.h>
 
@@ -40,6 +42,7 @@
 #include "smap_interfaces/msg/smap_detections.hpp"
 #include "smap_interfaces/msg/bounding_box2_d.hpp"
 // #include "smap_interfaces/msg/smap_data.hpp"
+
 
 
 #include <iostream>
@@ -76,7 +79,7 @@ bool timeout(const std::tuple<std::shared_ptr<std::future<void>>,std::chrono::_V
             std::chrono::high_resolution_clock::now()-std::get<1>(element)
     )).count() >= std::get<2>(element);
     if(ret){
-      printf("timeout (%f)\n",std::get<2>(element));
+      printf("timeout (%f)|%i\n",std::get<2>(element),(std::get<0>(element)->wait_for(0ms) == std::future_status::ready));
       std::get<0>(element).get(); // Finalize the thread
     }
     return ret;
@@ -149,8 +152,8 @@ private:
 
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr debug_pcl_pub = this->create_publisher<sensor_msgs::msg::PointCloud2>("/smap_core/perception/cpp",10);
 
-  rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr test_pcl_pub = this->create_publisher<sensor_msgs::msg::PointCloud2>("pci_unfilt",10);
-  rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr test_pcl_pub1 = this->create_publisher<sensor_msgs::msg::PointCloud2>("pci_filt",10);
+  rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr test_pcl_pub_unfilt = this->create_publisher<sensor_msgs::msg::PointCloud2>("pci_unfilt",10);
+  rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr test_pcl_pub_filt = this->create_publisher<sensor_msgs::msg::PointCloud2>("pci_filt",10);
 
   // rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr sub_test = this->create_subscription<sensor_msgs::msg::PointCloud2>(
   //   "pci",10,std::bind(
@@ -192,6 +195,7 @@ public:
     // this->viewer->initCameraParameters ();
     // this->thread_ctl;
     this->thread_ctl = std::make_shared<smap::thread_pool>(smap::thread_pool(this->max_threads));
+
   }
   ~object_pose_estimator()
   {
@@ -214,7 +218,7 @@ public:
   }
 
   void init_pcl_msg(sensor_msgs::msg::PointCloud2 &msg,size_t width,size_t height) const{
-    msg.data.resize(width*height);
+    // msg.data.resize(width*height);
     msg.header.stamp = rclcpp::Clock().now();
     msg.header.frame_id = "map";
     msg.height = width;
@@ -232,7 +236,7 @@ public:
     msg.data.resize(msg.height*msg.row_step);
   }
 
-  void pcl_pub(void){
+  sensor_msgs::msg::PointCloud2 pcl_pub(void){
     const int width = 5, height = 5;
     sensor_msgs::msg::PointCloud2 msg;
     this->init_pcl_msg(msg,width,height);
@@ -250,7 +254,6 @@ public:
     unsigned int x,y;
     for(y = 1; y <= msg.height; y++){
       for(x = 1; x <= msg.width; x++){
-        printf(".\n");
         *iter_x = (float) x+0.1;
         *iter_y = (float) y+0.2;
         *iter_z = (float) 1;
@@ -266,17 +269,18 @@ public:
         ++iter_b;
       }
     }
-    this->print_pcl_params("cloud",msg);
-    this->test_pcl_pub->publish(msg);
+    // this->print_pcl_params("cloud",msg);
+    // this->test_pcl_pub_unfilt->publish(msg);
+    return msg;
   }
 
   void object_segmentation(
     const sensor_msgs::msg::PointCloud2::SharedPtr pointcloud, 
-    const sensor_msgs::msg::PointCloud2::SharedPtr segment_cloud, 
+    const sensor_msgs::msg::PointCloud2::SharedPtr segment_cloud,
     const smap_interfaces::msg::SmapObject::SharedPtr obj) const
   {
     RCLCPP_DEBUG(this->get_logger(),"object_segmentation");
-    const size_t width = obj->bounding_box_2d.keypoint_2[0] - obj->bounding_box_2d.keypoint_1[0] + 1, height = obj->bounding_box_2d.keypoint_2[1] - obj->bounding_box_2d.keypoint_1[1] + 1;
+    size_t width = obj->bounding_box_2d.keypoint_2[0] - obj->bounding_box_2d.keypoint_1[0] + 1, height = obj->bounding_box_2d.keypoint_2[1] - obj->bounding_box_2d.keypoint_1[1] + 1;
 
     this->init_pcl_msg(*segment_cloud,width,height);
 
@@ -298,7 +302,7 @@ public:
 
     for(int h = obj->bounding_box_2d.keypoint_1[1]; h <= obj->bounding_box_2d.keypoint_2[1]; h++){
       for(int w = obj->bounding_box_2d.keypoint_1[0]; w <= obj->bounding_box_2d.keypoint_2[0]; w++){
-        offset=(w)+pointcloud->width*(h);
+        offset=(w)+pointcloud->width*(h)-1;
 
         *msg_x = *(iter_x+offset); ++msg_x;
         *msg_y = *(iter_y+offset); ++msg_y;
@@ -311,80 +315,162 @@ public:
     }
   }
 
-  void object_cloud_filtering(sensor_msgs::msg::PointCloud2::SharedPtr segment_cloud) const{
-    auto start = std::chrono::high_resolution_clock::now();
-    pcl::PointCloud<pcl::PointXYZRGB>::Ptr pcl_unfilt (new pcl::PointCloud<pcl::PointXYZRGB>);
-    pcl::PointCloud<pcl::PointXYZRGB>::Ptr pcl_filt (new pcl::PointCloud<pcl::PointXYZRGB>);
+  void object_segmentation_pcl(
+    const pcl::shared_ptr<pcl::PointCloud<pcl::PointXYZRGB>> input_cloud,
+    const pcl::shared_ptr<pcl::PointCloud<pcl::PointXYZRGB>> cloud_segment,
+    const pcl::shared_ptr<pcl::PointCloud<pcl::PointXYZRGB>> cloud_segment_neg,
+    const smap_interfaces::msg::SmapObject::SharedPtr obj) const
+  {
+    std::chrono::_V2::system_clock::time_point start, stop;
+    size_t outliers = input_cloud->size();
+    start = std::chrono::high_resolution_clock::now();
+    pcl::PointIndices::Ptr inliers (new pcl::PointIndices ());
+    inliers->header = input_cloud->header;
 
-    pcl::fromROSMsg(*segment_cloud,*pcl_unfilt);
 
-    pcl::StatisticalOutlierRemoval<pcl::PointXYZRGB> sor;
-    sor.setInputCloud(pcl_unfilt);
-    sor.setMeanK(50);
-    sor.setStddevMulThresh(1.0);
-    sor.filter(*pcl_filt);
-    pcl::toROSMsg(*pcl_filt,*segment_cloud);
-    auto stop = std::chrono::high_resolution_clock::now();
-    RCLCPP_WARN(this->get_logger(),"Filter time %ims",(std::chrono::duration_cast<std::chrono::milliseconds>(stop-start)).count());
+    for(size_t h = obj->bounding_box_2d.keypoint_1[1]; h <= obj->bounding_box_2d.keypoint_2[1]; h++){
+      for(size_t w = obj->bounding_box_2d.keypoint_1[0]; w <= obj->bounding_box_2d.keypoint_2[0]; w++){
+        inliers->indices.push_back(
+          (w)+input_cloud->width*(h)-1
+        );
+      }
+    }
+
+    pcl::ExtractIndices<pcl::PointXYZRGB> extract;
+    extract.setInputCloud(input_cloud);
+    extract.setIndices(inliers);
+
+
+    extract.setNegative(false);
+    extract.filter(*cloud_segment);
+
+    // Negatives
+    extract.setNegative(true);
+    extract.filter(*cloud_segment_neg);
+
+    stop = std::chrono::high_resolution_clock::now();
+    RCLCPP_WARN(this->get_logger(),"object_segmentation_pcl time %ims | %i points removed (%5.2f%%)",
+      (std::chrono::duration_cast<std::chrono::milliseconds>(stop-start)).count(),
+      outliers-cloud_segment->size(),
+      ((outliers-cloud_segment->size())*100.0/outliers)
+    );
   }
 
-  // void check_futures(bool *is_free, std::future<void> *futures){
+  void object_cloud_filtering(
+    const pcl::shared_ptr<pcl::PointCloud<pcl::PointXYZRGB>> cloud_segment,
+    const pcl::shared_ptr<pcl::PointCloud<pcl::PointXYZRGB>> cloud_segment_neg) const
+  {
+    std::chrono::_V2::system_clock::time_point start, stop;
+    size_t outliers = cloud_segment->size();
+    start = std::chrono::high_resolution_clock::now();
+    pcl::StatisticalOutlierRemoval<pcl::PointXYZRGB> sor;
+    sor.setInputCloud(cloud_segment);
+    sor.setMeanK(1); // Greather values take more time to compute
+    sor.setStddevMulThresh(0.5);
+    sor.setNegative(false);
+    sor.filter(*cloud_segment);
 
-  // }
+    // Negatives
+    sor.setNegative(true);
+    sor.filter(*cloud_segment_neg);
 
-  void object_filtering_thread(const sensor_msgs::msg::PointCloud2::SharedPtr point_cloud, const smap_interfaces::msg::SmapObject::SharedPtr obj){
-    // return;
-    // RCLCPP_INFO(this->get_logger(),"Object: %i",obj->label);
-    std::this_thread::sleep_for(20000ms);
-    // std::shared_ptr<sensor_msgs::msg::PointCloud2> segment_cloud(new sensor_msgs::msg::PointCloud2);
-    // // sensor_msgs::msg::PointCloud2 segment_cloud;
-    // // sensor_msgs::msg::PointCloud2 segment_cloud;
+    stop = std::chrono::high_resolution_clock::now();
+    RCLCPP_WARN(this->get_logger(),"object_cloud_filtering time %ims | %i points removed (%5.2f%%)",
+      (std::chrono::duration_cast<std::chrono::milliseconds>(stop-start)).count(),
+      outliers-cloud_segment->size(),
+      ((outliers-cloud_segment->size())*100.0/outliers)
+    );
+  }
 
-    // // this->object_segmentation()
+    void pcl_voxelization(
+      const pcl::shared_ptr<pcl::PointCloud<pcl::PointXYZRGB>> point_cloud,
+      const pcl::shared_ptr<pcl::PointCloud<pcl::PointXYZRGB>> cloud_segment
+    ) const
+  {
+    std::chrono::_V2::system_clock::time_point start, stop;
+    size_t outliers = cloud_segment->size();
+    start = std::chrono::high_resolution_clock::now();
+    pcl::VoxelGrid<pcl::PointXYZRGB> vox_grid;
 
-    // this->object_segmentation(point_cloud,segment_cloud,obj);
-    // // this->object_cloud_filtering(segment_cloud);
-    // // this->object_segmentation(*segment_cloud,*segment_cloud,obj);
-    // // this->object_segmentation(segment_cloud)
+    vox_grid.setInputCloud(point_cloud);
+    // vox_grid.setLeafSize (0.01f, 0.01f, 0.01f);
+    vox_grid.setLeafSize (0.02f, 0.02f, 0.02f);
+    vox_grid.setDownsampleAllData(true);
+    vox_grid.filter(*cloud_segment);
 
-    // this->object_cloud_filtering(segment_cloud);
+    stop = std::chrono::high_resolution_clock::now();
+    RCLCPP_WARN(this->get_logger(),"pcl_vox time %ims | %i points removed (%5.2f%%)",
+      (std::chrono::duration_cast<std::chrono::milliseconds>(stop-start)).count(),
+      outliers-cloud_segment->size(),
+      ((outliers-cloud_segment->size())*100.0/outliers)
+    );
+  }
+
+  void object_filtering_thread(const pcl::shared_ptr<pcl::PointCloud<pcl::PointXYZRGB>> point_cloud, const smap_interfaces::msg::SmapObject::SharedPtr obj){
+    std::chrono::_V2::system_clock::time_point start, stop;
+    size_t outliers = point_cloud->size();
+    start = std::chrono::high_resolution_clock::now();
     RCLCPP_INFO(this->get_logger(),"Object: %i",obj->label);
+    pcl::shared_ptr<pcl::PointCloud<pcl::PointXYZRGB>> point_cloud_vox(new pcl::PointCloud<pcl::PointXYZRGB>);
+    pcl::shared_ptr<pcl::PointCloud<pcl::PointXYZRGB>> segment_cloud_pcl(new pcl::PointCloud<pcl::PointXYZRGB>);
+    pcl::shared_ptr<pcl::PointCloud<pcl::PointXYZRGB>> segment_cloud_pcl_neg(new pcl::PointCloud<pcl::PointXYZRGB>);
+
+    std::shared_ptr<sensor_msgs::msg::PointCloud2> segment_cloud_ros(new sensor_msgs::msg::PointCloud2);
+
+
+
+
+    this->object_segmentation_pcl(point_cloud,segment_cloud_pcl,segment_cloud_pcl_neg,obj); // < 20ms
+
+    this->pcl_voxelization(segment_cloud_pcl,segment_cloud_pcl); // < 20ms
+
+    this->object_cloud_filtering(segment_cloud_pcl,segment_cloud_pcl_neg); // < 800ms
+
+    stop = std::chrono::high_resolution_clock::now();
+    RCLCPP_WARN(this->get_logger(),"pcl_process time %ims | %i points removed (%5.2f%%)",
+      (std::chrono::duration_cast<std::chrono::milliseconds>(stop-start)).count(),
+      outliers-segment_cloud_pcl->size(),
+      ((outliers-segment_cloud_pcl->size())*100.0/outliers)
+    );
+
+
+    pcl::toROSMsg(*segment_cloud_pcl_neg,*segment_cloud_ros);
+    this->test_pcl_pub_unfilt->publish(*segment_cloud_ros);
+    pcl::toROSMsg(*segment_cloud_pcl,*segment_cloud_ros);
+    this->test_pcl_pub_filt->publish(*segment_cloud_ros);
+
+
+
+    // RCLCPP_INFO(this->get_logger(),"Object: %i",obj->label);
   }
 
   float __compute_timeout(const size_t active_threads) const{
     const float tau = 2.5;
     double timeout = (double) this->max_threads-1;
     if(active_threads > 0) timeout = (double) this->max_threads*(exp(-(active_threads*1.0)/(tau)));
-    return timeout;
+    return timeout*100;
   }
 
   void detections_callback(const smap_interfaces::msg::SmapDetections::SharedPtr input_msg) {
     RCLCPP_INFO(this->get_logger(),"detections_callback");
 
 
-    // this->object_segmentation(input_msg);
-    // this->pcl_pub();
-
-    // Convert to pcl
-    // static pcl::PointCloud<pcl::PointXYZRGB> cloud;
-    // sensor_msgs::msg::PointCloud2 pc;
-    // pcl::fromROSMsg(pc,cloud);
-    // pcl::fromROSMsg(input_msg->pointcloud,cloud);
+    // Convert sensor_msgs::pointloud2 to pcl::PointCloud
+    pcl::shared_ptr<pcl::PointCloud<pcl::PointXYZRGB>> pcl_point_cloud (new pcl::PointCloud<pcl::PointXYZRGB>);
+    pcl::fromROSMsg(input_msg->pointcloud,*pcl_point_cloud);
 
 
     // Thread launch
 
     smap_interfaces::msg::SmapObject obj;
     sensor_msgs::msg::PointCloud2 segment_cloud;
-    std::vector<std::tuple<std::shared_ptr<std::future<void>>,std::chrono::_V2::system_clock::time_point,float>>::iterator it;
-    // std::future_status status;
+
     static int z = 0;
     BOOST_FOREACH(obj, input_msg->objects){
-      // if(obj.label == 62){
+      if(obj.label != 62) continue;
 
       // Block until thread pool is available
       while(!this->thread_ctl->available()){
-        printf("*");
         std::this_thread::sleep_for(50ms);
       }
       // while(this->thread_ctl->size() == this->max_threads){
@@ -403,19 +489,31 @@ public:
       //   std::make_shared<smap_interfaces::msg::SmapObject>(obj)
       // );
 
-      this->thread_ctl->push_back(
-        {
-          std::make_shared<std::future<void>>(
-            std::async(
-              std::launch::async,
-              &smap::object_pose_estimator::object_filtering_thread,this,
-              std::make_shared<sensor_msgs::msg::PointCloud2>(input_msg->pointcloud),
-              std::make_shared<smap_interfaces::msg::SmapObject>(obj)
-            )
-          ),
-          this->__compute_timeout(this->thread_ctl->size())*1000
-        }
+      // this->object_filtering_thread(
+      //   std::make_shared<sensor_msgs::msg::PointCloud2>(input_msg->pointcloud),
+      //   std::make_shared<smap_interfaces::msg::SmapObject>(obj)
+      // );
+
+
+
+      this->object_filtering_thread(
+        pcl_point_cloud,
+        std::make_shared<smap_interfaces::msg::SmapObject>(obj)
       );
+
+      // this->thread_ctl->push_back(
+      //   {
+      //     std::make_shared<std::future<void>>(
+      //       std::async(
+      //         std::launch::async,
+      //         &smap::object_pose_estimator::object_filtering_thread,this,
+      //         pcl_point_cloud,
+      //         std::make_shared<smap_interfaces::msg::SmapObject>(obj)
+      //       )
+      //     ),
+      //     this->__compute_timeout(this->thread_ctl->size())*1000
+      //   }
+      // );
 
       RCLCPP_INFO(this->get_logger(),"Item launched: %i| label: %i | Total: %i",this->thread_ctl->size(),obj.label,++z);
 
@@ -575,10 +673,11 @@ int main(int argc, char ** argv)
 
   std::shared_ptr<smap::object_pose_estimator> node = std::make_shared<smap::object_pose_estimator>();
 
+
   try{
     rclcpp::spin(node);
   }catch (std::exception& e){
-    std::cout << "Exception!" << std::endl;
+    std::cout << "SMAP Exception!" << std::endl;
     std::cout << e.what() << std::endl;
   }
   rclcpp::shutdown();
