@@ -83,11 +83,11 @@ namespace smap
 
 
 
-void object_pose_estimator::object_filtering_thread(const pcl::shared_ptr<pcl::PointCloud<pcl::PointXYZRGB>> point_cloud_, const smap_interfaces::msg::SmapObject::SharedPtr obj){
-  if(obj->bounding_box_2d.keypoint_1[0] < 896/2) return; // REMOVE
+void object_pose_estimator::object_estimation_thread(const pcl::shared_ptr<pcl::PointCloud<pcl::PointXYZRGB>> point_cloud, const smap_interfaces::msg::SmapObject::SharedPtr obj){
   std::chrono::_V2::system_clock::time_point start, stop;
-  pcl::shared_ptr<pcl::PointCloud<pcl::PointXYZRGB>> point_cloud (new pcl::PointCloud<pcl::PointXYZRGB>); // REMOVE
-  pcl::io::loadPCDFile("test_pcd.pcd",*point_cloud);
+  // pcl::shared_ptr<pcl::PointCloud<pcl::PointXYZRGB>> point_cloud (new pcl::PointCloud<pcl::PointXYZRGB>); // REMOVE
+  // if(obj->bounding_box_2d.keypoint_1[0] < 896/2) return; // REMOVE
+  // pcl::io::loadPCDFile("test_pcd.pcd",*point_cloud);
   size_t outliers = point_cloud->size();
   start = std::chrono::high_resolution_clock::now();
   RCLCPP_INFO(this->get_logger(),"Object: %i",obj->label);
@@ -98,13 +98,13 @@ void object_pose_estimator::object_filtering_thread(const pcl::shared_ptr<pcl::P
   std::shared_ptr<sensor_msgs::msg::PointCloud2> segment_cloud_ros(new sensor_msgs::msg::PointCloud2);
 
 
+  // Cloud filtering
   this->box_filter(point_cloud,segment_cloud_pcl,obj);
-
   this->roi_filter(segment_cloud_pcl);
-
   this->pcl_voxelization(segment_cloud_pcl);
-
   this->statistical_outlier_filter(segment_cloud_pcl);
+
+  
 
   stop = std::chrono::high_resolution_clock::now();
   RCLCPP_WARN(this->get_logger(),"pcl_process time %ims | %i points removed (%5.2f%%)",
@@ -114,16 +114,18 @@ void object_pose_estimator::object_filtering_thread(const pcl::shared_ptr<pcl::P
   );
 
 
+
+
   // pcl::toROSMsg(*segment_cloud_pcl_neg,*segment_cloud_ros);
   // this->test_pcl_pub_unfilt->publish(*segment_cloud_ros);
   pcl::toROSMsg(*segment_cloud_pcl,*segment_cloud_ros);
   segment_cloud_ros->header.frame_id = "map"; // REMOVE
   this->test_pcl_pub_filt->publish(*segment_cloud_ros);
 
-  char c = std::cin.get();
-  if(c == 's'){
-    pcl::io::savePCDFileBinary("test_pcd.pcd",*point_cloud);
-  }
+  // char c = std::cin.get();
+  // if(c == 's'){
+  //   pcl::io::savePCDFileBinary("test_pcd.pcd",*point_cloud);
+  // }
 
 
 }
@@ -144,7 +146,8 @@ void object_pose_estimator::detections_callback(const smap_interfaces::msg::Smap
   sensor_msgs::msg::PointCloud2 segment_cloud;
 
   static int z = 0;
-  BOOST_FOREACH(obj, input_msg->objects){
+  for(auto& obj : input_msg->objects){
+  // BOOST_FOREACH(obj, input_msg->objects){
     if(obj.label != 62) continue;
 
     // Block until thread pool is available
@@ -153,7 +156,7 @@ void object_pose_estimator::detections_callback(const smap_interfaces::msg::Smap
     }
 
 
-    this->object_filtering_thread(
+    this->object_estimation_thread(
       pcl_point_cloud,
       std::make_shared<smap_interfaces::msg::SmapObject>(obj)
     );
@@ -162,7 +165,7 @@ void object_pose_estimator::detections_callback(const smap_interfaces::msg::Smap
     //   std::make_shared<std::future<void>>(
     //     std::async(
     //       std::launch::async,
-    //       &smap::object_pose_estimator::object_filtering_thread,this,
+    //       &smap::object_pose_estimator::object_estimation_thread,this,
     //       pcl_point_cloud,
     //       std::make_shared<smap_interfaces::msg::SmapObject>(obj)
     //     )

@@ -250,7 +250,7 @@ public:
     start = std::chrono::high_resolution_clock::now();
     pcl::StatisticalOutlierRemoval<pcl::PointXYZRGB> sor;
     sor.setInputCloud(cloud_segment);
-    sor.setMeanK(1); // Greather values take more time to compute
+    sor.setMeanK(5); // Greather values take more time to compute
     sor.setStddevMulThresh(0.5);
     // sor.setNegative(false);
     sor.filter(*cloud_segment);
@@ -267,12 +267,12 @@ public:
     );
   }
 
-  void object_filtering_thread(
+  void object_estimation_thread(
     const pcl::shared_ptr<pcl::PointCloud<pcl::PointXYZRGB>> point_cloud,
     const smap_interfaces::msg::SmapObject::SharedPtr obj
   );
  
-  void detections_callback(const smap_interfaces::msg::SmapDetections::SharedPtr input_msg);// {
+  void detections_callback(const smap_interfaces::msg::SmapDetections::SharedPtr input_msg);
 
   void on_process(void); // Pooling
 
