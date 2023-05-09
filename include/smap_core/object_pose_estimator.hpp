@@ -36,6 +36,10 @@
 #include "imgui_impl_sdl2.h"
 #include "imgui_impl_opengl3.h"
 
+#include <math.h>
+#include <stdio.h>
+#include <stdlib.h>
+
 // #include <pcl/filters/experimental/functor_filter.h>
 // #include <pcl/filters
 
@@ -388,15 +392,15 @@ public:
     );
   }
 
-  inline void cloud_clustering(const pcl::shared_ptr<cloud_t> cloud_segment) const
-  {
+  // inline void cloud_clustering(const pcl::shared_ptr<cloud_t> cloud_segment) const
+  // {
 
-  }
+  // }
 
-  inline void cloud_segmentation(const pcl::shared_ptr<cloud_t> cloud_segment) const
-  {
+  // inline void cloud_segmentation(const pcl::shared_ptr<cloud_t> cloud_segment) const
+  // {
 
-  }
+  // }
 
   void object_estimation_thread(
     const pcl::shared_ptr<cloud_t> point_cloud,

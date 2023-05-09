@@ -168,9 +168,9 @@ void object_pose_estimator::object_estimation_thread(const pcl::shared_ptr<cloud
   }
 
   // Cloud Segmentation
-  this->min_cut_clustering(segment_cloud_pcl);
+  // this->min_cut_clustering(segment_cloud_pcl);
 
-  this->cloud_segmentation(segment_cloud_pcl);
+  // this->cloud_segmentation(segment_cloud_pcl);
 
   
 
@@ -256,6 +256,12 @@ void object_pose_estimator::detections_callback(const smap_interfaces::msg::Smap
 
 }
 
+// template <typename T>
+// inline T RandomRange(T min, T max) {
+//     T scale = rand() / (T) RAND_MAX;
+//     return min + scale * ( max - min );
+// }
+
 int main(int argc, char ** argv)
 {
   rclcpp::init(argc, argv);
@@ -269,16 +275,13 @@ int main(int argc, char ** argv)
   //   )
   // );
 
-  bool a = false;
-
-  auto lambda = [&node,&a] (void){ // ui lambda function
-    ImGui::Begin("Object_pose_estimator parameters");
+  auto lambda = [&node] (void){ // ui lambda function
+    ImGui::Begin("Object Pose Estimator Parameters");
     // ImGui::Button
 
-    if (ImGui::CollapsingHeader("roi_filter")){ // roi_filter
-
-      static bool check_roi_filter = true;
-      if(ImGui::Checkbox("roi_filter", &check_roi_filter)) node->roi_filt = check_roi_filter;
+    if (ImGui::CollapsingHeader("Region Of Interest Filter")){ // roi_filter
+      static bool roi_filter = true;
+      if(ImGui::Checkbox("ROI Filter", &roi_filter)) node->roi_filt = roi_filter;
 
       ImGui::Text("pcl_lim");
       ImGui::Text("   Distance limits applyed to the cloud.");
@@ -288,17 +291,17 @@ int main(int argc, char ** argv)
     }
 
 
-    if(ImGui::CollapsingHeader("pcl_voxelization")){ // pcl_voxelization
-      static bool check_voxelization = true;
-      if(ImGui::Checkbox("voxelization", &check_voxelization)) node->voxelization = check_voxelization;
+    if(ImGui::CollapsingHeader("PCL Voxelization")){ // pcl_voxelization
+      static bool voxelization = true;
+      if(ImGui::Checkbox("Voxelization", &voxelization)) node->voxelization = voxelization;
       ImGui::Text("LeafSize");
       ImGui::Text("   Greather values increase the size of the voxels (filter more points)");
       ImGui::SliderFloat("LeafSize", &(node->leaf_size), 0.0f, 0.05f);
     }
 
-    if(ImGui::CollapsingHeader("statistical_outlier_filter")){ // statistical_outlier_filter
-      static bool check_sof = true;
-      if(ImGui::Checkbox("statistical_outlier_filter", &check_sof)) node->sof = check_sof;
+    if(ImGui::CollapsingHeader("Statistical Outlier Filter")){ // pcl_voxelization
+      static bool sof = true;
+      if(ImGui::Checkbox("SOF Filter", &sof)) node->sof = sof;
       ImGui::Text("MeanK");
       ImGui::Text("   Number of neighbours to evaluate");
       ImGui::SliderInt("MeanK", &(node->mean_k), 0, 100);
@@ -307,8 +310,6 @@ int main(int argc, char ** argv)
       ImGui::Text("   Local standard deviation");
       ImGui::SliderFloat("Mu", &(node->mu), 0.0f, 2.0f);
     }
-
-    // ImGui::Button("Lock pcl",)
 
     static int clicked = 0;
     if (ImGui::Button("Lock PCL"))
@@ -319,6 +320,47 @@ int main(int argc, char ** argv)
         ImGui::Text("PCL locked!");
         node->pcl_lock = true;
     }else node->pcl_lock = false;
+
+    ImGui::End();
+
+    // ImGui::PlotLines()
+
+
+    ImGui::Begin("Times");
+
+    static float arr[] = { 0.6f, 0.1f, 1.0f, 0.5f, 0.92f, 0.1f, 0.2f };
+    ImGui::PlotLines("Frame Times", arr, IM_ARRAYSIZE(arr));
+    ImGui::PlotHistogram("Histogram", arr, IM_ARRAYSIZE(arr), 0, NULL, 0.0f, 1.0f, ImVec2(0, 80.0f));
+
+    // Fill an array of contiguous float values to plot
+    // Tip: If your float aren't contiguous but part of a structure, you can pass a pointer to your first float
+    // and the sizeof() of your structure in the "stride" parameter.
+    bool animate = true;
+    static float values[90] = {};
+    static int values_offset = 0;
+    static double refresh_time = 0.0;
+    if (!animate || refresh_time == 0.0)
+        refresh_time = ImGui::GetTime();
+    while (refresh_time < ImGui::GetTime()) // Create data at fixed 60 Hz rate for the demo
+    {
+        static float phase = 0.0f;
+        values[values_offset] = cosf(phase);
+        values_offset = (values_offset + 1) % IM_ARRAYSIZE(values);
+        phase += 0.10f * values_offset;
+        refresh_time += 1.0f / 60.0f;
+    }
+
+    // Plots can display overlay texts
+    // (in this example, we will display an average value)
+    {
+        float average = 0.0f;
+        for (int n = 0; n < IM_ARRAYSIZE(values); n++)
+            average += values[n];
+        average /= (float)IM_ARRAYSIZE(values);
+        char overlay[32];
+        sprintf(overlay, "avg %f", average);
+        ImGui::PlotLines("Lines", values, IM_ARRAYSIZE(values), values_offset, overlay, -1.0f, 1.0f, ImVec2(0, 80.0f));
+    }
 
     ImGui::End();
   };

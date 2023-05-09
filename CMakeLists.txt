@@ -140,10 +140,7 @@ set(IMGUI_DIR imgui)
 file(GLOB sources *.cpp)
 include_directories(${IMGUI_DIR} ${IMGUI_DIR}/backends ..)
 
-add_executable(
-  object_pose_estimator 
-  src/object_pose_estimator.cpp
-  # ${IMGUI_DIR}/backends/imgui_impl_sdl2.cpp
+set(IMGUI_SRC
   ${IMGUI_DIR}/imgui.cpp #imgui
   ${IMGUI_DIR}/imgui_demo.cpp #imgui
   ${IMGUI_DIR}/imgui_draw.cpp #imgui
@@ -151,7 +148,12 @@ add_executable(
   ${IMGUI_DIR}/imgui_widgets.cpp #imgui
   ${IMGUI_DIR}/backends/imgui_impl_sdl2.cpp #imgui
   ${IMGUI_DIR}/backends/imgui_impl_opengl3.cpp #imgui
-  
+)
+
+add_executable(
+  object_pose_estimator 
+  src/object_pose_estimator.cpp
+  ${IMGUI_SRC}
 )
 
 find_package(SDL2 REQUIRED) # imgui
