@@ -27,6 +27,18 @@
 #include "smap_interfaces/msg/bounding_box2_d.hpp"
 
 
+#include <pcl/segmentation/min_cut_segmentation.h>
+#include <pcl/segmentation/conditional_euclidean_clustering.h>
+
+#include "../../imgui/imgui.h"
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_opengl.h>
+#include "imgui_impl_sdl2.h"
+#include "imgui_impl_opengl3.h"
+
+// #include <pcl/filters/experimental/functor_filter.h>
+// #include <pcl/filters
+
 using namespace std::chrono_literals;
 
 // TODO: Remove negatives
@@ -53,12 +65,12 @@ class thread_queue : public std::vector<std::tuple<std::shared_ptr<std::future<v
 {
   using element_type = std::tuple<std::shared_ptr<std::future<void>>,std::chrono::_V2::system_clock::time_point,float>;
   private:
-  size_t _max_size;
+  const size_t _max_size;
 
   public:
-  thread_queue(size_t max_size) : std::vector<element_type>(){
-    this->_max_size = max_size;
-  }
+  thread_queue(size_t max_size) : std::vector<element_type>(), _max_size(max_size){}
+    // this->_max_size = max_size;
+  // }
 
   inline bool available(void){ // Return true if the thread queue is not full
     std::vector<element_type>::erase(
@@ -103,6 +115,8 @@ class thread_queue : public std::vector<std::tuple<std::shared_ptr<std::future<v
 
 namespace smap
 {
+  using cloud_point_t = pcl::PointXYZRGB;
+  using cloud_t = pcl::PointCloud<cloud_point_t>;
 
 class object_pose_estimator : public rclcpp::Node
 {
@@ -121,43 +135,71 @@ private:
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr test_pcl_pub_unfilt = this->create_publisher<sensor_msgs::msg::PointCloud2>("pci_unfilt",10);
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr test_pcl_pub_filt = this->create_publisher<sensor_msgs::msg::PointCloud2>("pci_filt",10);
 
-  std::shared_ptr<thread_queue> thread_ctl;
-
-  std::shared_ptr<
-    std::pair<float,float>
-  > pcl_lims; // TODO: Create parameter
+  std::shared_ptr<thread_queue> thread_ctl = std::make_shared<thread_queue>(thread_queue(this->max_threads));
  
-  pcl::ConditionAnd<pcl::PointXYZRGB>::Ptr x_range_condition;
-  // std::shared_ptr<pcl::ConditionAnd<pcl::PointXYZRGB>> x_range_condition;
+  pcl::ConditionAnd<cloud_point_t>::Ptr x_range_condition;
+  // std::shared_ptr<pcl::ConditionAnd<cloud_point_t>> x_range_condition;
 
+  // Range filter function definition
+  //    return sqrt( (x)^2 + (y)^2 + (z)^2 ) <= max_dist;
+  // static auto range_filter = [] () {
+  //   return true;
+  // };
+  // auto range_filter_ = [=](const cloud_t& cloud, pcl::index_t idx) {
+  //     return (
+  //       ((cloud[idx].getVector3fMap()).norm() >= pcl_lims->first) &&
+  //       ((cloud[idx].getVector3fMap()).norm() <= pcl_lims->second)
+  //     );
+  // };
 
 public:
+  // TODO: move to private
+  std::shared_ptr<
+    std::pair<float,float>
+  > pcl_lims = std::make_shared<std::pair<float,float>>(0.4,4); // TODO: Create parameter
+
+  float leaf_size = 0.02f; // 0.00 <= leaf_size <= 0.05 | 0.03
+
+  int mean_k = 20;
+  float mu = 0.2f;
+
+  bool roi_filt = true, voxelization = true, sof = true, pcl_lock = false;
   // Constructor/Destructor
   inline object_pose_estimator()
   : Node("smap_object_pose_estimator")
   {
     RCLCPP_INFO(this->get_logger(), "Initializing smap_object_pose_estimator");
-    this->thread_ctl = std::make_shared<thread_queue>(thread_queue(this->max_threads));
-    this->pcl_lims = std::make_shared<std::pair<float,float>>(0.4,4);
 
-    this->x_range_condition.reset(new pcl::ConditionAnd<pcl::PointXYZRGB>());
-      // ;
-    x_range_condition->addComparison(
-      pcl::FieldComparison<pcl::PointXYZRGB>::ConstPtr (new pcl::FieldComparison<pcl::PointXYZRGB>(
-        "x", pcl::ComparisonOps::GE, this->pcl_lims->first
-    )));
-    x_range_condition->addComparison(
-      pcl::FieldComparison<pcl::PointXYZRGB>::ConstPtr (new pcl::FieldComparison<pcl::PointXYZRGB>(
-        "x", pcl::ComparisonOps::LE, this->pcl_lims->second
-    )));
+
+    // ImGui::Begin("My First Tool", &my_tool_active, ImGuiWindowFlags_MenuBar);
+
+    // ImGui::Text("Hello, world %d", 123);
+    // if (ImGui::Button("Save")){
+    //   //Do something
+    // }
+    // float f;
+    // ImGui::SliderFloat("float", &f, 0.0f, 1.0f);
+    // this->thread_ctl = std::make_shared<thread_queue>(thread_queue(this->max_threads));
+    // this->pcl_lims = std::make_shared<std::pair<float,float>>(0.4,4);
+
+    // this->x_range_condition.reset(new pcl::ConditionAnd<cloud_point_t>());
+    //   // ;
+    // this->x_range_condition->addComparison(
+    //   pcl::FieldComparison<cloud_point_t>::ConstPtr (new pcl::FieldComparison<cloud_point_t>(
+    //     "x", pcl::ComparisonOps::GE, this->pcl_lims->first
+    // )));
+    // this->x_range_condition->addComparison(
+    //   pcl::FieldComparison<cloud_point_t>::ConstPtr (new pcl::FieldComparison<cloud_point_t>(
+    //     "x", pcl::ComparisonOps::LE, this->pcl_lims->second
+    // )));
   }
   inline ~object_pose_estimator()
   {
   }
 
   inline void box_filter(
-    const pcl::shared_ptr<pcl::PointCloud<pcl::PointXYZRGB>> input_cloud,
-    const pcl::shared_ptr<pcl::PointCloud<pcl::PointXYZRGB>> cloud_segment,
+    const pcl::shared_ptr<cloud_t> input_cloud,
+    const pcl::shared_ptr<cloud_t> cloud_segment,
     const smap_interfaces::msg::SmapObject::SharedPtr obj) const
   {
     std::chrono::_V2::system_clock::time_point start, stop;
@@ -165,7 +207,6 @@ public:
     start = std::chrono::high_resolution_clock::now();
     pcl::PointIndices::Ptr inliers (new pcl::PointIndices ());
     inliers->header = input_cloud->header;
-
 
     for(size_t h = obj->bounding_box_2d.keypoint_1[1]; h <= obj->bounding_box_2d.keypoint_2[1]; h++){
       for(size_t w = obj->bounding_box_2d.keypoint_1[0]; w <= obj->bounding_box_2d.keypoint_2[0]; w++){
@@ -175,7 +216,7 @@ public:
       }
     }
 
-    pcl::ExtractIndices<pcl::PointXYZRGB> extract;
+    pcl::ExtractIndices<cloud_point_t> extract;
     extract.setInputCloud(input_cloud);
     extract.setIndices(inliers);
 
@@ -196,7 +237,7 @@ public:
   }
 
   inline void roi_filter(
-    const pcl::shared_ptr<pcl::PointCloud<pcl::PointXYZRGB>> point_cloud) const
+    const pcl::shared_ptr<cloud_t> point_cloud) const
   {
     std::chrono::_V2::system_clock::time_point start, stop;
     size_t outliers = point_cloud->size();
@@ -206,12 +247,35 @@ public:
     // this->pcl_lims->first <= z <= this->pcl_lims->second
     
 
-    pcl::ConditionalRemoval<pcl::PointXYZRGB> cond_filter;
+    // pcl::ConditionalRemoval<cloud_point_t> cond_filter;
     // cond_filter.setIndices()
-    cond_filter.setCondition(this->x_range_condition);
-    cond_filter.setInputCloud(point_cloud);
 
-    cond_filter.filter(*point_cloud);
+    point_cloud->erase(
+      std::remove_if(point_cloud->begin(), point_cloud->end(), 
+        [this](const cloud_point_t& point) {
+          return (
+            ((point.getVector3fMap()).norm() < this->pcl_lims->first) ||
+            ((point.getVector3fMap()).norm() > this->pcl_lims->second)
+          );
+        }
+      ),
+      point_cloud->end()
+    );
+
+
+
+    // for( cloud_point_t point : (*point_cloud) ){
+    //   if (
+    //     ((point.getVector3fMap()).norm() >= pcl_lims->first) &&
+    //     ((point.getVector3fMap()).norm() <= pcl_lims->second)
+    //   ) point
+    // }
+
+
+    // cond_filter.setCondition(this->x_range_condition);
+    // cond_filter.setInputCloud(point_cloud);
+
+    // cond_filter.filter(*point_cloud);
 
 
     stop = std::chrono::high_resolution_clock::now();
@@ -222,16 +286,16 @@ public:
     );
   }
 
-  inline void pcl_voxelization(const pcl::shared_ptr<pcl::PointCloud<pcl::PointXYZRGB>> point_cloud) const
+  inline void pcl_voxelization(const pcl::shared_ptr<cloud_t> point_cloud) const
   {
     std::chrono::_V2::system_clock::time_point start, stop;
     size_t outliers = point_cloud->size();
     start = std::chrono::high_resolution_clock::now();
-    pcl::VoxelGrid<pcl::PointXYZRGB> vox_grid;
+    pcl::VoxelGrid<cloud_point_t> vox_grid;
 
     vox_grid.setInputCloud(point_cloud);
     // vox_grid.setLeafSize (0.01f, 0.01f, 0.01f);
-    vox_grid.setLeafSize (0.02f, 0.02f, 0.02f);
+    vox_grid.setLeafSize (this->leaf_size, this->leaf_size, this->leaf_size);
     vox_grid.setDownsampleAllData(true);
     vox_grid.filter(*point_cloud);
 
@@ -243,15 +307,15 @@ public:
     );
   }
 
-  inline void statistical_outlier_filter(const pcl::shared_ptr<pcl::PointCloud<pcl::PointXYZRGB>> cloud_segment) const
+  inline void statistical_outlier_filter(const pcl::shared_ptr<cloud_t> cloud_segment) const
   {
     std::chrono::_V2::system_clock::time_point start, stop;
     size_t outliers = cloud_segment->size();
     start = std::chrono::high_resolution_clock::now();
-    pcl::StatisticalOutlierRemoval<pcl::PointXYZRGB> sor;
+    pcl::StatisticalOutlierRemoval<cloud_point_t> sor;
     sor.setInputCloud(cloud_segment);
-    sor.setMeanK(5); // Greather values take more time to compute
-    sor.setStddevMulThresh(0.5);
+    sor.setMeanK(this->mean_k); // Greather values take more time to compute
+    sor.setStddevMulThresh(this->mu);
     // sor.setNegative(false);
     sor.filter(*cloud_segment);
 
@@ -267,14 +331,83 @@ public:
     );
   }
 
+  inline void min_cut_clustering(const pcl::shared_ptr<cloud_t> cloud_segment) const
+  {
+    std::chrono::_V2::system_clock::time_point start, stop;
+    size_t outliers = cloud_segment->size();
+    start = std::chrono::high_resolution_clock::now();
+
+    pcl::IndicesPtr indices (new std::vector <int>);
+    // pcl::PointIndices::Ptr inliers (new pcl::PointIndices ());
+    pcl::MinCutSegmentation<cloud_point_t> minCut_seg;
+
+    minCut_seg.setInputCloud(cloud_segment);
+
+    // Assuming that the (x,y) center of cloud belongs to the object
+    cloud_t::Ptr object_points(new cloud_t ());
+    // object_points->push_back(
+    //   cloud_segment->at(
+    //     int(cloud_segment->height/2),
+    //     int(cloud_segment->width/2)
+    //   )
+    // );
+
+    printf("setForegroundPoints\n");
+    minCut_seg.setForegroundPoints(object_points);
+
+    // minCut_seg.set
+    // cloud_segment->at(
+    // );
+    // minCut_seg.
+    stop = std::chrono::high_resolution_clock::now();
+    RCLCPP_WARN(this->get_logger(),"min cut time %ims | %i points removed (%5.2f%%)",
+      (std::chrono::duration_cast<std::chrono::milliseconds>(stop-start)).count(),
+      outliers-cloud_segment->size(),
+      ((outliers-cloud_segment->size())*100.0/outliers)
+    );
+  }
+
+  inline void euclidean_clustering(const pcl::shared_ptr<cloud_t> cloud_segment) const
+  {
+    std::chrono::_V2::system_clock::time_point start, stop;
+    size_t outliers = cloud_segment->size();
+    start = std::chrono::high_resolution_clock::now();
+
+    // TODO: Continue tutorial https://pcl.readthedocs.io/projects/tutorials/en/master/conditional_euclidean_clustering.html#conditional-euclidean-clustering
+    // pcl::ConditionalEuclideanClustering<cloud_point_t> cec(true);
+    // cec.setInputCloud(cloud_segment);
+    // cec.setConditionFunction(&customRegionGrowing);
+    // cec.
+
+
+    stop = std::chrono::high_resolution_clock::now();
+    RCLCPP_WARN(this->get_logger(),"euclidean clustering time %ims | %i points removed (%5.2f%%)",
+      (std::chrono::duration_cast<std::chrono::milliseconds>(stop-start)).count(),
+      outliers-cloud_segment->size(),
+      ((outliers-cloud_segment->size())*100.0/outliers)
+    );
+  }
+
+  inline void cloud_clustering(const pcl::shared_ptr<cloud_t> cloud_segment) const
+  {
+
+  }
+
+  inline void cloud_segmentation(const pcl::shared_ptr<cloud_t> cloud_segment) const
+  {
+
+  }
+
   void object_estimation_thread(
-    const pcl::shared_ptr<pcl::PointCloud<pcl::PointXYZRGB>> point_cloud,
+    const pcl::shared_ptr<cloud_t> point_cloud,
     const smap_interfaces::msg::SmapObject::SharedPtr obj
   );
  
   void detections_callback(const smap_interfaces::msg::SmapDetections::SharedPtr input_msg);
 
-  void on_process(void); // Pooling
+  inline void on_process(void){// Pooling
+
+  } 
 
 private:
 

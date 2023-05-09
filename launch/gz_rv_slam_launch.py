@@ -78,7 +78,7 @@ def generate_launch_description():
         launch_file_gazebo,
         launch_nav2,
         launch_slam,
-        launch_rviz
-        #set_sim_time,
+        launch_rviz,
+        set_sim_time
         #node
     ])

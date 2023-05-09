@@ -135,14 +135,37 @@ install(
 ## object_pose_estimator ##
 ###########################
 
-add_executable(object_pose_estimator src/object_pose_estimator.cpp)
+# Dear ImGui
+set(IMGUI_DIR imgui)
+file(GLOB sources *.cpp)
+include_directories(${IMGUI_DIR} ${IMGUI_DIR}/backends ..)
+
+add_executable(
+  object_pose_estimator 
+  src/object_pose_estimator.cpp
+  # ${IMGUI_DIR}/backends/imgui_impl_sdl2.cpp
+  ${IMGUI_DIR}/imgui.cpp #imgui
+  ${IMGUI_DIR}/imgui_demo.cpp #imgui
+  ${IMGUI_DIR}/imgui_draw.cpp #imgui
+  ${IMGUI_DIR}/imgui_tables.cpp #imgui
+  ${IMGUI_DIR}/imgui_widgets.cpp #imgui
+  ${IMGUI_DIR}/backends/imgui_impl_sdl2.cpp #imgui
+  ${IMGUI_DIR}/backends/imgui_impl_opengl3.cpp #imgui
+  
+)
+
+find_package(SDL2 REQUIRED) # imgui
 
 target_include_directories(object_pose_estimator PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>
+  ${SDL2_INCLUDE_DIRS} # imgui
 )
-
-target_link_libraries(object_pose_estimator ${PCL_LIBRARIES})
+target_link_libraries(object_pose_estimator 
+  ${PCL_LIBRARIES} 
+  GL # imgui
+  ${SDL2_LIBRARIES} # imgui
+)
 #target_link_directories(object_pose_estimator ${PCL_INCLUDE_DIRS})
 
 ament_target_dependencies(
