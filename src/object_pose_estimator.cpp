@@ -16,7 +16,14 @@ namespace smap
 
 void object_pose_estimator::object_estimation_thread(const pcl::shared_ptr<cloud_t> point_cloud, const smap_interfaces::msg::SmapObject::SharedPtr obj){
 
+    if( 
+      ! ((obj->bounding_box_2d.keypoint_1[0] > 240) &&
+      (obj->bounding_box_2d.keypoint_1[0] < 260))
+    ) return;
+
   std::chrono::_V2::system_clock::time_point start, stop;
+
+
   // pcl::shared_ptr<cloud_t> point_cloud (new cloud_t); // REMOVE
   // pcl::io::loadPCDFile("test_pcd.pcd",*point_cloud);
   size_t outliers = point_cloud->size();
@@ -24,6 +31,7 @@ void object_pose_estimator::object_estimation_thread(const pcl::shared_ptr<cloud
   RCLCPP_INFO(this->get_logger(),"Object: %i",obj->label);
   pcl::shared_ptr<cloud_t> point_cloud_vox(new cloud_t);
   pcl::shared_ptr<cloud_t> segment_cloud_pcl(new cloud_t);
+  pcl::shared_ptr<cloud_t> object_cloud_pcl(new cloud_t);
   // pcl::shared_ptr<cloud_t> segment_cloud_pcl_neg(new cloud_t);
 
   std::shared_ptr<sensor_msgs::msg::PointCloud2> segment_cloud_ros(new sensor_msgs::msg::PointCloud2);
@@ -47,12 +55,17 @@ void object_pose_estimator::object_estimation_thread(const pcl::shared_ptr<cloud
   // Cloud Segmentation
   // this->min_cut_clustering(segment_cloud_pcl);
 
+  if(this->euclidean_clust){
+    this->euclidean_clustering(segment_cloud_pcl,object_cloud_pcl);
+  }
   // this->cloud_segmentation(segment_cloud_pcl);
+
+  // printf("Obj_cloud size: %i\n",object_cloud_pcl->size());
 
   
 
   stop = std::chrono::high_resolution_clock::now();
-  RCLCPP_WARN(this->get_logger(),"pcl_process time %ims | %i points removed (%5.2f%%)",
+  RCLCPP_DEBUG(this->get_logger(),"pcl_process time %ims | %i points removed (%5.2f%%)",
     (std::chrono::duration_cast<std::chrono::milliseconds>(stop-start)).count(),
     outliers-segment_cloud_pcl->size(),
     ((outliers-segment_cloud_pcl->size())*100.0/outliers)
@@ -67,12 +80,14 @@ void object_pose_estimator::object_estimation_thread(const pcl::shared_ptr<cloud
 
   // pcl::toROSMsg(*segment_cloud_pcl_neg,*segment_cloud_ros);
   // this->test_pcl_pub_unfilt->publish(*segment_cloud_ros);
-  pcl::toROSMsg(*segment_cloud_pcl,*segment_cloud_ros);
+  if(this->euclidean_clust) pcl::toROSMsg(*object_cloud_pcl,*segment_cloud_ros);
+  else pcl::toROSMsg(*segment_cloud_pcl,*segment_cloud_ros);
   segment_cloud_ros->header.frame_id = "map"; // REMOVE
-  if(
-    (obj->bounding_box_2d.keypoint_1[0] > 240) &&
-    (obj->bounding_box_2d.keypoint_1[0] < 260)
-  ) this->test_pcl_pub_filt->publish(*segment_cloud_ros);
+  // if(
+  //   (obj->bounding_box_2d.keypoint_1[0] > 240) &&
+  //   (obj->bounding_box_2d.keypoint_1[0] < 260)
+  // ) 
+  this->test_pcl_pub_filt->publish(*segment_cloud_ros);
 
   // char c = std::cin.get();
   // if(c == 's'){
@@ -137,12 +152,6 @@ void object_pose_estimator::detections_callback(const smap_interfaces::msg::Smap
 
 }
 
-// template <typename T>
-// inline T RandomRange(T min, T max) {
-//     T scale = rand() / (T) RAND_MAX;
-//     return min + scale * ( max - min );
-// }
-
 int main(int argc, char ** argv)
 {
   rclcpp::init(argc, argv);
@@ -160,17 +169,22 @@ int main(int argc, char ** argv)
     static char overlay[32];
     float vals[128] = {0};
     vec.get_float_arr_av(vals);
-    sprintf(overlay, "avg %4.1fms", vec.get_average());
+    sprintf(overlay, "cur: %4.1f ms| avg %4.1f ms", vals[127], vec.get_average());
     ImGui::PlotLines(
       "Execution time",
       vals,
       IM_ARRAYSIZE(vals),
       0,
-      overlay, 0.0f, 50.0f, ImVec2(0, 100.0f));
+      overlay, 0.0f, 200.0f, ImVec2(0, 100.0f));
   };
 
   auto lambda = [&node,&plot_times_lambda] (void){ // ui lambda function
     ImGui::Begin("Object Pose Estimator Parameters");
+
+    if (ImGui::CollapsingHeader("Box Filter")){ // box filter
+      plot_times_lambda(node->box_filter_plot);
+    }
+
 
     if (ImGui::CollapsingHeader("Region Of Interest Filter")){ // roi_filter
       static bool roi_filter = true;
@@ -183,7 +197,7 @@ int main(int argc, char ** argv)
       ImGui::SliderFloat("max", &(node->pcl_lims->second), node->pcl_lims->first, 10.0f);
 
 
-      plot_times_lambda(node->box_filter_plot);
+      plot_times_lambda(node->roi_filter_plot);
     }
 
     if(ImGui::CollapsingHeader("PCL Voxelization")){ // pcl_voxelization
@@ -193,7 +207,7 @@ int main(int argc, char ** argv)
       ImGui::Text("   Greather values increase the size of the voxels (filter more points)");
       ImGui::SliderFloat("LeafSize", &(node->leaf_size), 0.0f, 0.05f);
 
-      plot_times_lambda(node->roi_filter_plot);
+      plot_times_lambda(node->voxelization_plot);
     }
 
     if(ImGui::CollapsingHeader("Statistical Outlier Filter")){ // pcl_voxelization
@@ -208,6 +222,22 @@ int main(int argc, char ** argv)
       ImGui::SliderFloat("Mu", &(node->mu), 0.0f, 2.0f);
 
       plot_times_lambda(node->sof_filter_plot);
+    }
+
+    if(ImGui::CollapsingHeader("Euclidean Clustering")){ // pcl_voxelization
+      static bool euclidean_clustering = true;
+      if(ImGui::Checkbox("Clustering", &euclidean_clustering)) node->euclidean_clust = euclidean_clustering;
+
+      ImGui::Text("Cluster Tolerance");
+      ImGui::Text("   Max space between points");
+      ImGui::SliderFloat("ClusterTolerance", &(node->ClusterTolerance), 0.0f, 1.0f);
+
+      // ImGui::Text("ClusterSize");
+      // ImGui::Text("   Dimietions of the clusters");
+      // ImGui::SliderInt("minClusterSize", &(node->minClusterSize), 0.0f, 200.0f);
+      // ImGui::SliderInt("maxClusterSize", &(node->maxClusterSize), 50.0f, 5000.0f);
+
+      plot_times_lambda(node->euclidean_clustering_plot);
     }
 
     ImGui::Text("Total execution time");

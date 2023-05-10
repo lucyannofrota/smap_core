@@ -20,6 +20,7 @@
 
 #include <pcl/filters/conditional_removal.h>
 #include <pcl/filters/radius_outlier_removal.h>
+#include <pcl/filters/filter.h>
 
 // SMAP
 #include "smap_interfaces/msg/smap_object.hpp"
@@ -29,6 +30,7 @@
 
 #include <pcl/segmentation/min_cut_segmentation.h>
 #include <pcl/segmentation/conditional_euclidean_clustering.h>
+#include <pcl/segmentation/extract_clusters.h>
 
 #include "../../imgui/imgui.h"
 #include <SDL2/SDL.h>
@@ -40,6 +42,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+// TODO: Convert this node into a ROS component
 
 using namespace std::chrono_literals;
 
@@ -167,9 +170,13 @@ public:
   int mean_k = 10;
   float mu = 0.3f;
 
-  bool roi_filt = true, voxelization = true, sof = true, pcl_lock = false;
+  float ClusterTolerance = 0.021f;
+  int minClusterSize = 100;
+  int maxClusterSize = 25000;
 
-  plot_vec box_filter_plot, roi_filter_plot, voxelization_plot, sof_filter_plot, total_filter_plot;
+  bool roi_filt = true, voxelization = true, sof = true, euclidean_clust = true, pcl_lock = false;
+
+  plot_vec box_filter_plot, roi_filter_plot, voxelization_plot, sof_filter_plot, euclidean_clustering_plot, total_filter_plot;
   // std::list<int> box_filter_times;
   // Constructor/Destructor
   inline object_pose_estimator()
@@ -183,15 +190,15 @@ public:
   }
 
   inline void box_filter(
-    const pcl::shared_ptr<cloud_t> input_cloud,
-    const pcl::shared_ptr<cloud_t> cloud_segment,
-    const smap_interfaces::msg::SmapObject::SharedPtr obj)
+    const pcl::shared_ptr<cloud_t>& input_cloud,
+    const pcl::shared_ptr<cloud_t>& cloud_segment,
+    const smap_interfaces::msg::SmapObject::SharedPtr& obj)
   {
     std::chrono::_V2::system_clock::time_point start, stop;
     size_t outliers = input_cloud->size();
     start = std::chrono::high_resolution_clock::now();
     pcl::PointIndices::Ptr inliers (new pcl::PointIndices ());
-    inliers->header = input_cloud->header;
+    // inliers->header = input_cloud->header;
 
     for(size_t h = obj->bounding_box_2d.keypoint_1[1]; h <= obj->bounding_box_2d.keypoint_2[1]; h++){
       for(size_t w = obj->bounding_box_2d.keypoint_1[0]; w <= obj->bounding_box_2d.keypoint_2[0]; w++){
@@ -214,7 +221,7 @@ public:
     // extract.filter(*cloud_segment_neg);
 
     stop = std::chrono::high_resolution_clock::now();
-    RCLCPP_WARN(this->get_logger(),"box_filter time %ims | %i points removed (%5.2f%%)",
+    RCLCPP_DEBUG(this->get_logger(),"box_filter time %ims | %i points removed (%5.2f%%)",
       (std::chrono::duration_cast<std::chrono::milliseconds>(stop-start)).count(),
       outliers-cloud_segment->size(),
       ((outliers-cloud_segment->size())*100.0/outliers)
@@ -226,7 +233,7 @@ public:
   }
 
   inline void roi_filter(
-    const pcl::shared_ptr<cloud_t> point_cloud)
+    const pcl::shared_ptr<cloud_t>& point_cloud)
   {
     std::chrono::_V2::system_clock::time_point start, stop;
     size_t outliers = point_cloud->size();
@@ -247,7 +254,7 @@ public:
 
 
     stop = std::chrono::high_resolution_clock::now();
-    RCLCPP_WARN(this->get_logger(),"roi_filter time %ims | %i points removed (%5.2f%%)",
+    RCLCPP_DEBUG(this->get_logger(),"roi_filter time %ims | %i points removed (%5.2f%%)",
       (std::chrono::duration_cast<std::chrono::milliseconds>(stop-start)).count(),
       outliers-point_cloud->size(),
       ((outliers-point_cloud->size())*100.0/outliers)
@@ -258,7 +265,7 @@ public:
     );
   }
 
-  inline void pcl_voxelization(const pcl::shared_ptr<cloud_t> point_cloud)
+  inline void pcl_voxelization(const pcl::shared_ptr<cloud_t>& point_cloud)
   {
     std::chrono::_V2::system_clock::time_point start, stop;
     size_t outliers = point_cloud->size();
@@ -272,7 +279,7 @@ public:
     vox_grid.filter(*point_cloud);
 
     stop = std::chrono::high_resolution_clock::now();
-    RCLCPP_WARN(this->get_logger(),"pcl_vox time %ims | %i points removed (%5.2f%%)",
+    RCLCPP_DEBUG(this->get_logger(),"pcl_vox time %ims | %i points removed (%5.2f%%)",
       (std::chrono::duration_cast<std::chrono::milliseconds>(stop-start)).count(),
       outliers-point_cloud->size(),
       ((outliers-point_cloud->size())*100.0/outliers)
@@ -283,7 +290,7 @@ public:
     );
   }
 
-  inline void statistical_outlier_filter(const pcl::shared_ptr<cloud_t> cloud_segment)
+  inline void statistical_outlier_filter(const pcl::shared_ptr<cloud_t>& cloud_segment)
   {
     std::chrono::_V2::system_clock::time_point start, stop;
     size_t outliers = cloud_segment->size();
@@ -300,7 +307,7 @@ public:
     // sor.filter(*cloud_segment_neg);
 
     stop = std::chrono::high_resolution_clock::now();
-    RCLCPP_WARN(this->get_logger(),"statistical_outlier_filter time %ims | %i points removed (%5.2f%%)",
+    RCLCPP_DEBUG(this->get_logger(),"statistical_outlier_filter time %ims | %i points removed (%5.2f%%)",
       (std::chrono::duration_cast<std::chrono::milliseconds>(stop-start)).count(),
       outliers-cloud_segment->size(),
       ((outliers-cloud_segment->size())*100.0/outliers)
@@ -311,72 +318,64 @@ public:
     );
   }
 
-  inline void min_cut_clustering(const pcl::shared_ptr<cloud_t> cloud_segment)
+  inline void euclidean_clustering(const pcl::shared_ptr<cloud_t>& cloud_segment, const pcl::shared_ptr<cloud_t>& object_cloud)
   {
     std::chrono::_V2::system_clock::time_point start, stop;
     size_t outliers = cloud_segment->size();
     start = std::chrono::high_resolution_clock::now();
 
-    pcl::IndicesPtr indices (new std::vector <int>);
-    // pcl::PointIndices::Ptr inliers (new pcl::PointIndices ());
-    pcl::MinCutSegmentation<cloud_point_t> minCut_seg;
+    printf("Height: %i, Width: %i, is_dense: %i, size: %i\n",
+      cloud_segment->height,
+      cloud_segment->width,
+      cloud_segment->is_dense,
+      (int) cloud_segment->size()
+    );
 
-    minCut_seg.setInputCloud(cloud_segment);
+    pcl::search::KdTree<cloud_point_t>::Ptr tree (new pcl::search::KdTree<cloud_point_t>);
+    std::vector<int> indices;
+    pcl::removeNaNFromPointCloud(*cloud_segment,*cloud_segment,indices);
+    tree->setInputCloud (cloud_segment);
 
-    // Assuming that the (x,y) center of cloud belongs to the object
-    cloud_t::Ptr object_points(new cloud_t ());
-    // object_points->push_back(
-    //   cloud_segment->at(
-    //     int(cloud_segment->height/2),
-    //     int(cloud_segment->width/2)
-    //   )
-    // );
+    std::vector<pcl::PointIndices> cluster_idx;
+    pcl::EuclideanClusterExtraction<cloud_point_t> ece;
+    ece.setClusterTolerance(this->ClusterTolerance); // cm
+    ece.setMinClusterSize(25);
+    // ece.setMaxClusterSize(this->max_threads);
+    ece.setSearchMethod(tree);
+    ece.setInputCloud(cloud_segment);
+    ece.extract(cluster_idx);
 
-    printf("setForegroundPoints\n");
-    minCut_seg.setForegroundPoints(object_points);
+    printf("n Clusters: %i\n",(int)cluster_idx.size());
 
-    // minCut_seg.set
-    // cloud_segment->at(
-    // );
-    // minCut_seg.
+    // Idxs of the biggest cluster
+    if(cluster_idx.size() >= 1){
+      for (const auto& idx : cluster_idx[0].indices) object_cloud->push_back((*cloud_segment)[idx]);
+    }
+
+    // for(const auto& cluster : cluster_idx){
+    //     pcl::PointCloud<cloud_point_t>::Ptr cloud_cluster (new pcl::PointCloud<cloud_point_t>);
+    //     for (const auto& idx : cluster.indices) {
+    //       cloud_cluster->push_back((*cloud_segment)[idx]);
+    //     } //*
+    //     cloud_cluster->width = cloud_cluster->size ();
+    //     cloud_cluster->height = 1;
+    //     cloud_cluster->is_dense = true;
+    //     printf("PointCloud representing the Cluster: %i data points.\n", (int) cloud_cluster->size());
+    //     i++;
+    // }
+
+
     stop = std::chrono::high_resolution_clock::now();
-    RCLCPP_WARN(this->get_logger(),"min cut time %ims | %i points removed (%5.2f%%)",
+    RCLCPP_DEBUG(this->get_logger(),"euclidean clustering time %ims | %i points removed (%5.2f%%)",
       (std::chrono::duration_cast<std::chrono::milliseconds>(stop-start)).count(),
       outliers-cloud_segment->size(),
       ((outliers-cloud_segment->size())*100.0/outliers)
     );
-  }
 
-  inline void euclidean_clustering(const pcl::shared_ptr<cloud_t> cloud_segment) const
-  {
-    std::chrono::_V2::system_clock::time_point start, stop;
-    size_t outliers = cloud_segment->size();
-    start = std::chrono::high_resolution_clock::now();
-
-    // TODO: Continue tutorial https://pcl.readthedocs.io/projects/tutorials/en/master/conditional_euclidean_clustering.html#conditional-euclidean-clustering
-    // pcl::ConditionalEuclideanClustering<cloud_point_t> cec(true);
-    // cec.setInputCloud(cloud_segment);
-    // cec.setConditionFunction(&customRegionGrowing);
-    // cec.
-
-
-    stop = std::chrono::high_resolution_clock::now();
-    RCLCPP_WARN(this->get_logger(),"euclidean clustering time %ims | %i points removed (%5.2f%%)",
-      (std::chrono::duration_cast<std::chrono::milliseconds>(stop-start)).count(),
-      outliers-cloud_segment->size(),
-      ((outliers-cloud_segment->size())*100.0/outliers)
+    this->euclidean_clustering_plot.push_back(
+      (std::chrono::duration_cast<std::chrono::milliseconds>(stop-start)).count()
     );
   }
-
-  // inline void cloud_clustering(const pcl::shared_ptr<cloud_t> cloud_segment) const
-  // {
-
-  // }
-
-  // inline void cloud_segmentation(const pcl::shared_ptr<cloud_t> cloud_segment) const
-  // {
-
-  // }
 
   void object_estimation_thread(
     const pcl::shared_ptr<cloud_t> point_cloud,
