@@ -4,130 +4,7 @@ using namespace std::chrono_literals;
 
 #include "../include/smap_core/parameter_tuning.hpp"
 
-// void imgui_thread(std::shared_ptr<smap::object_pose_estimator> obj_ptr){
-//   // GL 3.0 + GLSL 130
-//   const char* glsl_version = "#version 130";
-//   SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, 0);
-//   SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
-//   SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-//   SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
 
-//   // Create window with graphics context
-//   SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
-//   SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
-//   SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
-//   SDL_WindowFlags window_flags = (SDL_WindowFlags)(SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
-//   SDL_Window* window = SDL_CreateWindow("Parameter tuning", 0, 0, 480, 320, window_flags);
-//   SDL_GLContext gl_context = SDL_GL_CreateContext(window);
-//   SDL_GL_MakeCurrent(window, gl_context);
-//   SDL_GL_SetSwapInterval(1); // Enable vsync
-
-//   // Setup Dear ImGui context
-//   IMGUI_CHECKVERSION();
-//   ImGui::CreateContext();
-//   ImGuiIO& io = ImGui::GetIO(); (void)io;
-//   io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
-//   io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
-
-//   // Setup Dear ImGui style
-//   ImGui::StyleColorsDark();
-//   //ImGui::StyleColorsLight();
-
-//   // Setup Platform/Renderer backends
-//   ImGui_ImplSDL2_InitForOpenGL(window, gl_context);
-//   ImGui_ImplOpenGL3_Init(glsl_version);
-
-//   // Our state
-//   ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
-
-//   // Main loop
-//   bool done = false;
-//   while (!done)
-//   {
-//       // Poll and handle events (inputs, window resize, etc.)
-//       // You can read the io.WantCaptureMouse, io.WantCaptureKeyboard flags to tell if dear imgui wants to use your inputs.
-//       // - When io.WantCaptureMouse is true, do not dispatch mouse input data to your main application, or clear/overwrite your copy of the mouse data.
-//       // - When io.WantCaptureKeyboard is true, do not dispatch keyboard input data to your main application, or clear/overwrite your copy of the keyboard data.
-//       // Generally you may always pass all inputs to dear imgui, and hide them from your application based on those two flags.
-//       SDL_Event event;
-//       while (SDL_PollEvent(&event))
-//       {
-//           ImGui_ImplSDL2_ProcessEvent(&event);
-//           if (event.type == SDL_QUIT)
-//               done = true;
-//           if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_CLOSE && event.window.windowID == SDL_GetWindowID(window))
-//               done = true;
-//       }
-
-//       // Start the Dear ImGui frame
-//       ImGui_ImplOpenGL3_NewFrame();
-//       ImGui_ImplSDL2_NewFrame();
-//       ImGui::NewFrame();
-
-//       // 2. Show a simple window that we create ourselves. We use a Begin/End pair to create a named window.
-//       {
-//           // static float f = 0.0f;
-//           // static int counter = 0;
-
-//           ImGui::Begin("Object_pose_estimator parameters");
-
-
-//           if(ImGui::CollapsingHeader("roi_filter")){ // roi_filter
-
-//             ImGui::Checkbox("roi_filter", &(obj_ptr->roi_filt));
-
-//             ImGui::Text("pcl_lim");       
-//             ImGui::Text("   Distance limits applyed to the cloud.");       
-            
-
-//             ImGui::SliderFloat("min", &(obj_ptr->pcl_lims->first), 0.0f, obj_ptr->pcl_lims->second);
-//             ImGui::SliderFloat("max", &(obj_ptr->pcl_lims->second), obj_ptr->pcl_lims->first, 10.0f);
-//           }
-
-//           if(ImGui::CollapsingHeader("pcl_voxelization")){ // pcl_voxelization
-//             ImGui::Checkbox("pcl_voxelization", &(obj_ptr->voxelization));
-//             ImGui::Text("LeafSize");
-//             ImGui::Text("   Greather values increase the size of the voxels (filter more points)");
-//             ImGui::SliderFloat("LeafSize", &(obj_ptr->leaf_size), 0.0f, 0.05f);
-//           }
-
-//           if(ImGui::CollapsingHeader("statistical_outlier_filter")){ // statistical_outlier_filter
-//             ImGui::Checkbox("statistical_outlier_filter", &(obj_ptr->sof));
-//             ImGui::Text("MeanK");
-//             ImGui::Text("   Number of neighbours to evaluate");
-//             ImGui::SliderInt("MeanK", &(obj_ptr->mean_k), 0, 100);
-
-//             ImGui::Text("Mu");
-//             ImGui::Text("   Local standard deviation");
-//             ImGui::SliderFloat("Mu", &(obj_ptr->mu), 0.0f, 2.0f);
-//           }
-
-//           // ImGui::SetNextWindowPos()
-//           ImGui::End();
-//       }
-
-
-//       // Rendering
-//       ImGui::Render();
-//       glViewport(0, 0, (int)io.DisplaySize.x, (int)io.DisplaySize.y);
-//       glClearColor(clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w);
-//       glClear(GL_COLOR_BUFFER_BIT);
-//       ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-//       SDL_GL_SwapWindow(window);
-//   }
-// #ifdef __EMSCRIPTEN__
-//   EMSCRIPTEN_MAINLOOP_END;
-// #endif
-
-//   // Cleanup
-//   ImGui_ImplOpenGL3_Shutdown();
-//   ImGui_ImplSDL2_Shutdown();
-//   ImGui::DestroyContext();
-
-//   SDL_GL_DeleteContext(gl_context);
-//   SDL_DestroyWindow(window);
-//   SDL_Quit();
-// }
 
 
 
@@ -179,6 +56,10 @@ void object_pose_estimator::object_estimation_thread(const pcl::shared_ptr<cloud
     (std::chrono::duration_cast<std::chrono::milliseconds>(stop-start)).count(),
     outliers-segment_cloud_pcl->size(),
     ((outliers-segment_cloud_pcl->size())*100.0/outliers)
+  );
+
+  this->total_filter_plot.push_back(
+    (std::chrono::duration_cast<std::chrono::milliseconds>(stop-start)).count()
   );
 
 
@@ -274,10 +155,22 @@ int main(int argc, char ** argv)
   //     &imgui_thread,
   //   )
   // );
+  auto plot_times_lambda = [] (plot_vec &vec)
+  { // Plot times
+    static char overlay[32];
+    float vals[128] = {0};
+    vec.get_float_arr_av(vals);
+    sprintf(overlay, "avg %4.1fms", vec.get_average());
+    ImGui::PlotLines(
+      "Execution time",
+      vals,
+      IM_ARRAYSIZE(vals),
+      0,
+      overlay, 0.0f, 50.0f, ImVec2(0, 100.0f));
+  };
 
-  auto lambda = [&node] (void){ // ui lambda function
+  auto lambda = [&node,&plot_times_lambda] (void){ // ui lambda function
     ImGui::Begin("Object Pose Estimator Parameters");
-    // ImGui::Button
 
     if (ImGui::CollapsingHeader("Region Of Interest Filter")){ // roi_filter
       static bool roi_filter = true;
@@ -288,8 +181,10 @@ int main(int argc, char ** argv)
 
       ImGui::SliderFloat("min", &(node->pcl_lims->first), 0.0f, node->pcl_lims->second);
       ImGui::SliderFloat("max", &(node->pcl_lims->second), node->pcl_lims->first, 10.0f);
-    }
 
+
+      plot_times_lambda(node->box_filter_plot);
+    }
 
     if(ImGui::CollapsingHeader("PCL Voxelization")){ // pcl_voxelization
       static bool voxelization = true;
@@ -297,6 +192,8 @@ int main(int argc, char ** argv)
       ImGui::Text("LeafSize");
       ImGui::Text("   Greather values increase the size of the voxels (filter more points)");
       ImGui::SliderFloat("LeafSize", &(node->leaf_size), 0.0f, 0.05f);
+
+      plot_times_lambda(node->roi_filter_plot);
     }
 
     if(ImGui::CollapsingHeader("Statistical Outlier Filter")){ // pcl_voxelization
@@ -309,7 +206,12 @@ int main(int argc, char ** argv)
       ImGui::Text("Mu");
       ImGui::Text("   Local standard deviation");
       ImGui::SliderFloat("Mu", &(node->mu), 0.0f, 2.0f);
+
+      plot_times_lambda(node->sof_filter_plot);
     }
+
+    ImGui::Text("Total execution time");
+    plot_times_lambda(node->total_filter_plot);
 
     static int clicked = 0;
     if (ImGui::Button("Lock PCL"))
@@ -323,46 +225,6 @@ int main(int argc, char ** argv)
 
     ImGui::End();
 
-    // ImGui::PlotLines()
-
-
-    ImGui::Begin("Times");
-
-    static float arr[] = { 0.6f, 0.1f, 1.0f, 0.5f, 0.92f, 0.1f, 0.2f };
-    ImGui::PlotLines("Frame Times", arr, IM_ARRAYSIZE(arr));
-    ImGui::PlotHistogram("Histogram", arr, IM_ARRAYSIZE(arr), 0, NULL, 0.0f, 1.0f, ImVec2(0, 80.0f));
-
-    // Fill an array of contiguous float values to plot
-    // Tip: If your float aren't contiguous but part of a structure, you can pass a pointer to your first float
-    // and the sizeof() of your structure in the "stride" parameter.
-    bool animate = true;
-    static float values[90] = {};
-    static int values_offset = 0;
-    static double refresh_time = 0.0;
-    if (!animate || refresh_time == 0.0)
-        refresh_time = ImGui::GetTime();
-    while (refresh_time < ImGui::GetTime()) // Create data at fixed 60 Hz rate for the demo
-    {
-        static float phase = 0.0f;
-        values[values_offset] = cosf(phase);
-        values_offset = (values_offset + 1) % IM_ARRAYSIZE(values);
-        phase += 0.10f * values_offset;
-        refresh_time += 1.0f / 60.0f;
-    }
-
-    // Plots can display overlay texts
-    // (in this example, we will display an average value)
-    {
-        float average = 0.0f;
-        for (int n = 0; n < IM_ARRAYSIZE(values); n++)
-            average += values[n];
-        average /= (float)IM_ARRAYSIZE(values);
-        char overlay[32];
-        sprintf(overlay, "avg %f", average);
-        ImGui::PlotLines("Lines", values, IM_ARRAYSIZE(values), values_offset, overlay, -1.0f, 1.0f, ImVec2(0, 80.0f));
-    }
-
-    ImGui::End();
   };
 
   std::thread ui(
@@ -371,11 +233,6 @@ int main(int argc, char ** argv)
   );
 
   ui.detach();
-
-  // auto ui = std::async(
-  //   std::launch::async,
-  //   &imgui_thread,
-  // );
 
 
   try{

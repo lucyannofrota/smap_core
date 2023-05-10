@@ -40,14 +40,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-// #include <pcl/filters/experimental/functor_filter.h>
-// #include <pcl/filters
 
 using namespace std::chrono_literals;
 
 // TODO: Remove negatives
-
-
 
 inline bool timeout(const std::tuple<std::shared_ptr<std::future<void>>,std::chrono::_V2::system_clock::time_point,float> &element){
   if(std::get<0>(element)){
@@ -73,15 +69,13 @@ class thread_queue : public std::vector<std::tuple<std::shared_ptr<std::future<v
 
   public:
   thread_queue(size_t max_size) : std::vector<element_type>(), _max_size(max_size){}
-    // this->_max_size = max_size;
-  // }
 
   inline bool available(void){ // Return true if the thread queue is not full
     std::vector<element_type>::erase(
       std::remove_if(std::vector<element_type>::begin(),std::vector<element_type>::end(),timeout),
       std::vector<element_type>::end()
     );
-    // printf("vec size: %i\n",(int)std::vector<element_type>::size());
+
     return std::vector<element_type>::size() < this->_max_size;
   }
 
@@ -95,30 +89,51 @@ class thread_queue : public std::vector<std::tuple<std::shared_ptr<std::future<v
   inline bool push_back(const std::shared_ptr<std::future<void>> &element){
 
     // Add a new thread if possible
-    // printf("push\n");
     if(thread_queue::available()){
       std::vector<element_type>::push_back(
         element_type({
           element,
           std::chrono::high_resolution_clock::now(),
           this->__compute_timeout(std::vector<element_type>::size())
-          // std::get<1>(element)
         })
       );
-      // printf("/push T\n");
       return true;
     }
     else{
-      // printf("/push F\n");
       return false;
     } 
   }
 };
 
+class plot_vec : public std::list<int>
+{
+  private:
+  const size_t _max_size = 128;
+  float average;
 
+  public:
+
+  inline void push_back(const int &element){
+    if(std::list<int>::size() >= _max_size) std::list<int>::pop_front();
+    std::list<int>::push_back(element);
+  }
+
+  inline void get_float_arr_av(float *ptr){
+    auto it = this->begin();
+    this->average = 0;
+    for(int i = 0; it != this->end(); ++it, i++){
+      ptr[i] = *it;
+      this->average+=*it;
+    }
+    this->average /= this->size();
+  }
+
+  inline float get_average(void){ return this->average; }
+};
 
 namespace smap
 {
+
   using cloud_point_t = pcl::PointXYZRGB;
   using cloud_t = pcl::PointCloud<cloud_point_t>;
 
@@ -140,21 +155,6 @@ private:
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr test_pcl_pub_filt = this->create_publisher<sensor_msgs::msg::PointCloud2>("pci_filt",10);
 
   std::shared_ptr<thread_queue> thread_ctl = std::make_shared<thread_queue>(thread_queue(this->max_threads));
- 
-  pcl::ConditionAnd<cloud_point_t>::Ptr x_range_condition;
-  // std::shared_ptr<pcl::ConditionAnd<cloud_point_t>> x_range_condition;
-
-  // Range filter function definition
-  //    return sqrt( (x)^2 + (y)^2 + (z)^2 ) <= max_dist;
-  // static auto range_filter = [] () {
-  //   return true;
-  // };
-  // auto range_filter_ = [=](const cloud_t& cloud, pcl::index_t idx) {
-  //     return (
-  //       ((cloud[idx].getVector3fMap()).norm() >= pcl_lims->first) &&
-  //       ((cloud[idx].getVector3fMap()).norm() <= pcl_lims->second)
-  //     );
-  // };
 
 public:
   // TODO: move to private
@@ -164,38 +164,19 @@ public:
 
   float leaf_size = 0.02f; // 0.00 <= leaf_size <= 0.05 | 0.03
 
-  int mean_k = 20;
-  float mu = 0.2f;
+  int mean_k = 10;
+  float mu = 0.3f;
 
   bool roi_filt = true, voxelization = true, sof = true, pcl_lock = false;
+
+  plot_vec box_filter_plot, roi_filter_plot, voxelization_plot, sof_filter_plot, total_filter_plot;
+  // std::list<int> box_filter_times;
   // Constructor/Destructor
   inline object_pose_estimator()
   : Node("smap_object_pose_estimator")
   {
     RCLCPP_INFO(this->get_logger(), "Initializing smap_object_pose_estimator");
 
-
-    // ImGui::Begin("My First Tool", &my_tool_active, ImGuiWindowFlags_MenuBar);
-
-    // ImGui::Text("Hello, world %d", 123);
-    // if (ImGui::Button("Save")){
-    //   //Do something
-    // }
-    // float f;
-    // ImGui::SliderFloat("float", &f, 0.0f, 1.0f);
-    // this->thread_ctl = std::make_shared<thread_queue>(thread_queue(this->max_threads));
-    // this->pcl_lims = std::make_shared<std::pair<float,float>>(0.4,4);
-
-    // this->x_range_condition.reset(new pcl::ConditionAnd<cloud_point_t>());
-    //   // ;
-    // this->x_range_condition->addComparison(
-    //   pcl::FieldComparison<cloud_point_t>::ConstPtr (new pcl::FieldComparison<cloud_point_t>(
-    //     "x", pcl::ComparisonOps::GE, this->pcl_lims->first
-    // )));
-    // this->x_range_condition->addComparison(
-    //   pcl::FieldComparison<cloud_point_t>::ConstPtr (new pcl::FieldComparison<cloud_point_t>(
-    //     "x", pcl::ComparisonOps::LE, this->pcl_lims->second
-    // )));
   }
   inline ~object_pose_estimator()
   {
@@ -204,7 +185,7 @@ public:
   inline void box_filter(
     const pcl::shared_ptr<cloud_t> input_cloud,
     const pcl::shared_ptr<cloud_t> cloud_segment,
-    const smap_interfaces::msg::SmapObject::SharedPtr obj) const
+    const smap_interfaces::msg::SmapObject::SharedPtr obj)
   {
     std::chrono::_V2::system_clock::time_point start, stop;
     size_t outliers = input_cloud->size();
@@ -238,21 +219,19 @@ public:
       outliers-cloud_segment->size(),
       ((outliers-cloud_segment->size())*100.0/outliers)
     );
+
+    this->box_filter_plot.push_back(
+      (std::chrono::duration_cast<std::chrono::milliseconds>(stop-start)).count()
+    );
   }
 
   inline void roi_filter(
-    const pcl::shared_ptr<cloud_t> point_cloud) const
+    const pcl::shared_ptr<cloud_t> point_cloud)
   {
     std::chrono::_V2::system_clock::time_point start, stop;
     size_t outliers = point_cloud->size();
     start = std::chrono::high_resolution_clock::now();
 
-
-    // this->pcl_lims->first <= z <= this->pcl_lims->second
-    
-
-    // pcl::ConditionalRemoval<cloud_point_t> cond_filter;
-    // cond_filter.setIndices()
 
     point_cloud->erase(
       std::remove_if(point_cloud->begin(), point_cloud->end(), 
@@ -267,30 +246,19 @@ public:
     );
 
 
-
-    // for( cloud_point_t point : (*point_cloud) ){
-    //   if (
-    //     ((point.getVector3fMap()).norm() >= pcl_lims->first) &&
-    //     ((point.getVector3fMap()).norm() <= pcl_lims->second)
-    //   ) point
-    // }
-
-
-    // cond_filter.setCondition(this->x_range_condition);
-    // cond_filter.setInputCloud(point_cloud);
-
-    // cond_filter.filter(*point_cloud);
-
-
     stop = std::chrono::high_resolution_clock::now();
     RCLCPP_WARN(this->get_logger(),"roi_filter time %ims | %i points removed (%5.2f%%)",
       (std::chrono::duration_cast<std::chrono::milliseconds>(stop-start)).count(),
       outliers-point_cloud->size(),
       ((outliers-point_cloud->size())*100.0/outliers)
     );
+
+    this->roi_filter_plot.push_back(
+      (std::chrono::duration_cast<std::chrono::milliseconds>(stop-start)).count()
+    );
   }
 
-  inline void pcl_voxelization(const pcl::shared_ptr<cloud_t> point_cloud) const
+  inline void pcl_voxelization(const pcl::shared_ptr<cloud_t> point_cloud)
   {
     std::chrono::_V2::system_clock::time_point start, stop;
     size_t outliers = point_cloud->size();
@@ -309,9 +277,13 @@ public:
       outliers-point_cloud->size(),
       ((outliers-point_cloud->size())*100.0/outliers)
     );
+
+    this->voxelization_plot.push_back(
+      (std::chrono::duration_cast<std::chrono::milliseconds>(stop-start)).count()
+    );
   }
 
-  inline void statistical_outlier_filter(const pcl::shared_ptr<cloud_t> cloud_segment) const
+  inline void statistical_outlier_filter(const pcl::shared_ptr<cloud_t> cloud_segment)
   {
     std::chrono::_V2::system_clock::time_point start, stop;
     size_t outliers = cloud_segment->size();
@@ -333,9 +305,13 @@ public:
       outliers-cloud_segment->size(),
       ((outliers-cloud_segment->size())*100.0/outliers)
     );
+
+    this->sof_filter_plot.push_back(
+      (std::chrono::duration_cast<std::chrono::milliseconds>(stop-start)).count()
+    );
   }
 
-  inline void min_cut_clustering(const pcl::shared_ptr<cloud_t> cloud_segment) const
+  inline void min_cut_clustering(const pcl::shared_ptr<cloud_t> cloud_segment)
   {
     std::chrono::_V2::system_clock::time_point start, stop;
     size_t outliers = cloud_segment->size();
