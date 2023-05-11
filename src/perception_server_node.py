@@ -20,16 +20,17 @@ class perception_server(Node):
         super().__init__("perception_server")
 
         self.reentrant_cb_group = ReentrantCallbackGroup()
+        self.exclusive_cb_group = MutuallyExclusiveCallbackGroup()
 
-        self.sub = self.create_subscription(SmapDetections, '/smap_core/perception/modules/predictions', self.predict, 10, callback_group=self.reentrant_cb_group)
+        self.sub = self.create_subscription(SmapDetections, '/smap_core/perception/modules/predictions', self.predict, 10, callback_group=self.exclusive_cb_group)
 
         #self.pub = self.create_publisher(SmapDetections, '/smap_core/perception/predictions', 10, callback_group=self.reentrant_cb_group)
 
 
-        self.AddPerceptionModule_srv = self.create_service(AddPerceptionModule, '/smap_core/perception_server/add_perception_module', self.AddPerceptionModule_callback,callback_group=self.reentrant_cb_group)
+        self.AddPerceptionModule_srv = self.create_service(AddPerceptionModule, '/smap_core/perception_server/add_perception_module', self.AddPerceptionModule_callback,callback_group=self.exclusive_cb_group)
         self.get_logger().info("add_perception_module server online.")
 
-        self.ListClasses_srv = self.create_service(SmapClasses, '/smap_core/perception_server/list_classes', self.ListClasses_callback,callback_group=self.reentrant_cb_group)
+        self.ListClasses_srv = self.create_service(SmapClasses, '/smap_core/perception_server/list_classes', self.ListClasses_callback,callback_group=self.exclusive_cb_group)
         self.get_logger().info("list_classes server online.")
 
         #SmapClasses
@@ -166,11 +167,6 @@ class perception_server(Node):
                 return response
             
         return response
-
-
-    def train(self,data):
-        print(data)
-        return
         
 
 
