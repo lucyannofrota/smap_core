@@ -14,20 +14,18 @@ namespace smap
 
 
 
-void object_pose_estimator::object_estimation_thread(const pcl::shared_ptr<cloud_t> point_cloud, const smap_interfaces::msg::SmapObject::SharedPtr obj){
+void object_pose_estimator::object_estimation_thread(const pcl::shared_ptr<cloud_t>& point_cloud, const smap_interfaces::msg::SmapObject::SharedPtr& obj){
 
-    if( 
-      ! ((obj->bounding_box_2d.keypoint_1[0] > 240) &&
-      (obj->bounding_box_2d.keypoint_1[0] < 260))
-    ) return;
+  // printf("POS [%i,%i]\n",
+  //   obj->bounding_box_2d.keypoint_1[0],
+  //   obj->bounding_box_2d.keypoint_1[1]
+  // );
+  if( 
+    ! ((obj->bounding_box_2d.keypoint_1[0] > 200) &&
+    (obj->bounding_box_2d.keypoint_1[0] < 300))
+  ) return;
 
-  std::chrono::_V2::system_clock::time_point start, stop;
-
-
-  // pcl::shared_ptr<cloud_t> point_cloud (new cloud_t); // REMOVE
-  // pcl::io::loadPCDFile("test_pcd.pcd",*point_cloud);
-  size_t outliers = point_cloud->size();
-  start = std::chrono::high_resolution_clock::now();
+  count_time timer;
   RCLCPP_INFO(this->get_logger(),"Object: %i",obj->label);
   pcl::shared_ptr<cloud_t> point_cloud_vox(new cloud_t);
   pcl::shared_ptr<cloud_t> segment_cloud_pcl(new cloud_t);
@@ -38,6 +36,7 @@ void object_pose_estimator::object_estimation_thread(const pcl::shared_ptr<cloud
 
 
   // Cloud filtering
+  count_time filter_timer;
   this->box_filter(point_cloud,segment_cloud_pcl,obj);
 
   if(this->roi_filt){
@@ -53,33 +52,34 @@ void object_pose_estimator::object_estimation_thread(const pcl::shared_ptr<cloud
   }
 
   // Cloud Segmentation
-  // this->min_cut_clustering(segment_cloud_pcl);
-
   if(this->euclidean_clust){
     this->euclidean_clustering(segment_cloud_pcl,object_cloud_pcl);
   }
-  // this->cloud_segmentation(segment_cloud_pcl);
-
-  // printf("Obj_cloud size: %i\n",object_cloud_pcl->size());
-
+  const char str_filtering[] = "filtering_time";
+  filter_timer.get_time(this->get_logger(), str_filtering, this->total_filter_plot);
   
 
-  stop = std::chrono::high_resolution_clock::now();
-  RCLCPP_DEBUG(this->get_logger(),"pcl_process time %ims | %i points removed (%5.2f%%)",
-    (std::chrono::duration_cast<std::chrono::milliseconds>(stop-start)).count(),
-    outliers-segment_cloud_pcl->size(),
-    ((outliers-segment_cloud_pcl->size())*100.0/outliers)
-  );
 
-  this->total_filter_plot.push_back(
-    (std::chrono::duration_cast<std::chrono::milliseconds>(stop-start)).count()
-  );
+
+  // Parameter Estimation
+  count_time estimation_timer;
+  this->estimate_object_3D_AABB(object_cloud_pcl,obj);
+
+  const char str_estimation_time[] = "estimation_time";
+  estimation_timer.get_time(this->get_logger(), str_estimation_time, this->total_estimation_plot);
 
 
 
 
-  // pcl::toROSMsg(*segment_cloud_pcl_neg,*segment_cloud_ros);
-  // this->test_pcl_pub_unfilt->publish(*segment_cloud_ros);
+
+
+  const char str_process_time[] = "pcl_process";
+  timer.get_time(this->get_logger(), str_process_time, this->total_thread_time);
+  // plot_vec centroid_plot, boundaries_plot, total_estimation_plot;
+
+
+
+
   if(this->euclidean_clust) pcl::toROSMsg(*object_cloud_pcl,*segment_cloud_ros);
   else pcl::toROSMsg(*segment_cloud_pcl,*segment_cloud_ros);
   segment_cloud_ros->header.frame_id = "map"; // REMOVE
@@ -181,67 +181,96 @@ int main(int argc, char ** argv)
   auto lambda = [&node,&plot_times_lambda] (void){ // ui lambda function
     ImGui::Begin("Object Pose Estimator Parameters");
 
-    if (ImGui::CollapsingHeader("Box Filter")){ // box filter
-      plot_times_lambda(node->box_filter_plot);
+    if (ImGui::CollapsingHeader("Filtering")){ // Filtering
+      ImGui::Indent();
+
+      if (ImGui::CollapsingHeader("Box Filter")){ // box filter
+        ImGui::Indent();
+        plot_times_lambda(node->box_filter_plot);
+        ImGui::Unindent();
+      }
+
+
+      if (ImGui::CollapsingHeader("Region Of Interest Filter")){ // roi_filter
+        ImGui::Indent();
+        static bool roi_filter = true;
+        if(ImGui::Checkbox("ROI Filter", &roi_filter)) node->roi_filt = roi_filter;
+
+        ImGui::Text("pcl_lim");
+        ImGui::Text("   Distance limits applyed to the cloud.");
+
+        ImGui::SliderFloat("min", &(node->pcl_lims->first), 0.0f, node->pcl_lims->second);
+        ImGui::SliderFloat("max", &(node->pcl_lims->second), node->pcl_lims->first, 10.0f);
+
+
+        plot_times_lambda(node->roi_filter_plot);
+        ImGui::Unindent();
+      }
+
+      if(ImGui::CollapsingHeader("PCL Voxelization")){ // pcl_voxelization
+        ImGui::Indent();
+        static bool voxelization = true;
+        if(ImGui::Checkbox("Voxelization", &voxelization)) node->voxelization = voxelization;
+        ImGui::Text("LeafSize");
+        ImGui::Text("   Greather values increase the size of the voxels (filter more points)");
+        ImGui::SliderFloat("LeafSize", &(node->leaf_size), 0.0f, 0.05f);
+
+        plot_times_lambda(node->voxelization_plot);
+        ImGui::Unindent();
+      }
+
+      if(ImGui::CollapsingHeader("Statistical Outlier Filter")){ // pcl_voxelization
+        ImGui::Indent();
+        static bool sof = true;
+        if(ImGui::Checkbox("SOF Filter", &sof)) node->sof = sof;
+        ImGui::Text("MeanK");
+        ImGui::Text("   Number of neighbours to evaluate");
+        ImGui::SliderInt("MeanK", &(node->mean_k), 0, 100);
+
+        ImGui::Text("Mu");
+        ImGui::Text("   Local standard deviation");
+        ImGui::SliderFloat("Mu", &(node->mu), 0.0f, 2.0f);
+
+        plot_times_lambda(node->sof_filter_plot);
+        ImGui::Unindent();
+      }
+
+      if(ImGui::CollapsingHeader("Euclidean Clustering")){ // pcl_voxelization
+        ImGui::Indent();
+        static bool euclidean_clustering = true;
+        if(ImGui::Checkbox("Clustering", &euclidean_clustering)) node->euclidean_clust = euclidean_clustering;
+
+        ImGui::Text("Cluster Tolerance");
+        ImGui::Text("   Max space between points");
+        ImGui::SliderFloat("ClusterTolerance", &(node->ClusterTolerance), 0.0f, 1.0f);
+
+        plot_times_lambda(node->euclidean_clustering_plot);
+        ImGui::Unindent();
+      }
+
+      plot_times_lambda(node->total_filter_plot);
+
+      ImGui::Unindent();
     }
 
+    if (ImGui::CollapsingHeader("Parameter Estimation")){ // Parameter estimation
+      ImGui::Indent();
 
-    if (ImGui::CollapsingHeader("Region Of Interest Filter")){ // roi_filter
-      static bool roi_filter = true;
-      if(ImGui::Checkbox("ROI Filter", &roi_filter)) node->roi_filt = roi_filter;
+      if (ImGui::CollapsingHeader("Centroid")){ // Parameter estimation
+        ImGui::Indent();
 
-      ImGui::Text("pcl_lim");
-      ImGui::Text("   Distance limits applyed to the cloud.");
+        plot_times_lambda(node->centroid_plot);
 
-      ImGui::SliderFloat("min", &(node->pcl_lims->first), 0.0f, node->pcl_lims->second);
-      ImGui::SliderFloat("max", &(node->pcl_lims->second), node->pcl_lims->first, 10.0f);
+        ImGui::Unindent();
+      }
 
+      plot_times_lambda(node->total_estimation_plot);
 
-      plot_times_lambda(node->roi_filter_plot);
-    }
-
-    if(ImGui::CollapsingHeader("PCL Voxelization")){ // pcl_voxelization
-      static bool voxelization = true;
-      if(ImGui::Checkbox("Voxelization", &voxelization)) node->voxelization = voxelization;
-      ImGui::Text("LeafSize");
-      ImGui::Text("   Greather values increase the size of the voxels (filter more points)");
-      ImGui::SliderFloat("LeafSize", &(node->leaf_size), 0.0f, 0.05f);
-
-      plot_times_lambda(node->voxelization_plot);
-    }
-
-    if(ImGui::CollapsingHeader("Statistical Outlier Filter")){ // pcl_voxelization
-      static bool sof = true;
-      if(ImGui::Checkbox("SOF Filter", &sof)) node->sof = sof;
-      ImGui::Text("MeanK");
-      ImGui::Text("   Number of neighbours to evaluate");
-      ImGui::SliderInt("MeanK", &(node->mean_k), 0, 100);
-
-      ImGui::Text("Mu");
-      ImGui::Text("   Local standard deviation");
-      ImGui::SliderFloat("Mu", &(node->mu), 0.0f, 2.0f);
-
-      plot_times_lambda(node->sof_filter_plot);
-    }
-
-    if(ImGui::CollapsingHeader("Euclidean Clustering")){ // pcl_voxelization
-      static bool euclidean_clustering = true;
-      if(ImGui::Checkbox("Clustering", &euclidean_clustering)) node->euclidean_clust = euclidean_clustering;
-
-      ImGui::Text("Cluster Tolerance");
-      ImGui::Text("   Max space between points");
-      ImGui::SliderFloat("ClusterTolerance", &(node->ClusterTolerance), 0.0f, 1.0f);
-
-      // ImGui::Text("ClusterSize");
-      // ImGui::Text("   Dimietions of the clusters");
-      // ImGui::SliderInt("minClusterSize", &(node->minClusterSize), 0.0f, 200.0f);
-      // ImGui::SliderInt("maxClusterSize", &(node->maxClusterSize), 50.0f, 5000.0f);
-
-      plot_times_lambda(node->euclidean_clustering_plot);
+      ImGui::Unindent();
     }
 
     ImGui::Text("Total execution time");
-    plot_times_lambda(node->total_filter_plot);
+    plot_times_lambda(node->total_thread_time);
 
     static int clicked = 0;
     if (ImGui::Button("Lock PCL"))

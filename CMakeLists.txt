@@ -176,6 +176,7 @@ ament_target_dependencies(
   PCL
   pcl_conversions
   smap_interfaces
+  visualization_msgs
 )
 
 install(TARGETS object_pose_estimator
