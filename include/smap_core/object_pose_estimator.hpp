@@ -11,6 +11,10 @@
 #include "../include/smap_core/macros.hpp"
 #include "visualization_msgs/msg/marker.hpp"
 
+#include "tf2/convert.h"
+#include "tf2_geometry_msgs/tf2_geometry_msgs.h"
+#include "tf2_sensor_msgs/tf2_sensor_msgs.h"
+
 
 // PCL
 #include <pcl/point_cloud.h>
@@ -24,7 +28,7 @@
 #include <pcl/filters/radius_outlier_removal.h>
 #include <pcl/filters/filter.h>
 #include <pcl/common/centroid.h>
-#include <pcl/features/gasd.h>
+// #include <pcl/features/gasd.h>
 #include <pcl/visualization/cloud_viewer.h>
 
 #include <pcl/features/moment_of_inertia_estimation.h>
@@ -169,13 +173,12 @@ class count_time{
 
 };
 
+plot_vec total_thread_time;
+plot_vec box_filter_plot, roi_filter_plot, voxelization_plot, sof_filter_plot, euclidean_clustering_plot, total_filter_plot;
+plot_vec centroid_plot, transform_plot, total_estimation_plot;
+
 namespace smap
 {
-
-// struct object_parameters{
-//   pcl::PointXYZ centroid = {0,0,0};
-//   std::pair<pcl::PointXYZ,pcl::PointXYZ> boundaries = {{0,0,0},{0,0,0}}; // first -> min, second -> max
-// };
 
   using cloud_point_t = pcl::PointXYZRGB;
   using cloud_t = pcl::PointCloud<cloud_point_t>;
@@ -218,10 +221,6 @@ public:
 
   bool roi_filt = true, voxelization = true, sof = true, euclidean_clust = true, pcl_lock = false;
 
-  plot_vec total_thread_time;
-  plot_vec box_filter_plot, roi_filter_plot, voxelization_plot, sof_filter_plot, euclidean_clustering_plot, total_filter_plot;
-  plot_vec centroid_plot, boundaries_plot, total_estimation_plot;
-
   // pcl::visualization::PCLVisualizer visu;
   // std::list<int> box_filter_times;
   // Constructor/Destructor
@@ -235,144 +234,32 @@ public:
   {
   }
 
-  inline void box_filter(
+  void box_filter(
     const pcl::shared_ptr<cloud_t>& input_cloud,
     const pcl::shared_ptr<cloud_t>& cloud_segment,
-    const smap_interfaces::msg::SmapObject::SharedPtr& obj)
-  {
-    count_time timer;
-    pcl::PointIndices::Ptr inliers (new pcl::PointIndices ());
+    const smap_interfaces::msg::SmapObject::SharedPtr& obj
+  ) const;
 
-    for(size_t h = obj->bounding_box_2d.keypoint_1[1]; h <= obj->bounding_box_2d.keypoint_2[1]; h++){
-      for(size_t w = obj->bounding_box_2d.keypoint_1[0]; w <= obj->bounding_box_2d.keypoint_2[0]; w++){
-        inliers->indices.push_back(
-          (w)+input_cloud->width*(h)-1
-        );
-      }
-    }
+  void roi_filter(const pcl::shared_ptr<cloud_t>& point_cloud) const;
 
-    pcl::ExtractIndices<cloud_point_t> extract;
-    extract.setInputCloud(input_cloud);
-    extract.setIndices(inliers);
+  void pcl_voxelization(const pcl::shared_ptr<cloud_t>& point_cloud) const;
 
-    extract.filter(*cloud_segment);
+  void statistical_outlier_filter(const pcl::shared_ptr<cloud_t>& cloud_segment) const;
 
+  void euclidean_clustering(
+    const pcl::shared_ptr<cloud_t>& cloud_segment,
+    const pcl::shared_ptr<cloud_t>& object_cloud
+  ) const;
 
-    const char str[] = "box_filter";
-    timer.get_time(this->get_logger(), str, this->box_filter_plot);
-  }
+  void estimate_object_3D_AABB(
+    const pcl::shared_ptr<cloud_t>& object_cloud,
+    const smap_interfaces::msg::SmapObject::SharedPtr& obj
+  ) const;
 
-  inline void roi_filter(
-    const pcl::shared_ptr<cloud_t>& point_cloud)
-  {
-    count_time timer;
-
-
-    point_cloud->erase(
-      std::remove_if(point_cloud->begin(), point_cloud->end(), 
-        [this](const cloud_point_t& point) {
-          return (
-            ((point.getVector3fMap()).norm() < this->pcl_lims->first) ||
-            ((point.getVector3fMap()).norm() > this->pcl_lims->second)
-          );
-        }
-      ),
-      point_cloud->end()
-    );
-
-    const char str[] = "roi_filter";
-    timer.get_time(this->get_logger(), str, this->roi_filter_plot);
-  }
-
-  inline void pcl_voxelization(const pcl::shared_ptr<cloud_t>& point_cloud)
-  {
-    count_time timer;
-    pcl::VoxelGrid<cloud_point_t> vox_grid;
-
-    vox_grid.setInputCloud(point_cloud);
-    // vox_grid.setLeafSize (0.01f, 0.01f, 0.01f);
-    vox_grid.setLeafSize (this->leaf_size, this->leaf_size, this->leaf_size);
-    vox_grid.setDownsampleAllData(true);
-    vox_grid.filter(*point_cloud);
-
-    const char str[] = "pcl_vox";
-    timer.get_time(this->get_logger(), str, this->voxelization_plot);
-  }
-
-  inline void statistical_outlier_filter(const pcl::shared_ptr<cloud_t>& cloud_segment)
-  {
-    count_time timer;
-    pcl::StatisticalOutlierRemoval<cloud_point_t> sor;
-    sor.setInputCloud(cloud_segment);
-    sor.setMeanK(this->mean_k); // Greather values take more time to compute
-    sor.setStddevMulThresh(this->mu);
-
-    sor.filter(*cloud_segment);
-
-
-    const char str[] = "statistical_outlier_filter";
-    timer.get_time(this->get_logger(), str, this->sof_filter_plot);
-  }
-
-  inline void euclidean_clustering(const pcl::shared_ptr<cloud_t>& cloud_segment, const pcl::shared_ptr<cloud_t>& object_cloud)
-  {
-    count_time timer;
-
-    pcl::search::KdTree<cloud_point_t>::Ptr tree (new pcl::search::KdTree<cloud_point_t>);
-    std::vector<int> indices;
-    pcl::removeNaNFromPointCloud(*cloud_segment,*cloud_segment,indices);
-    tree->setInputCloud (cloud_segment);
-
-    std::vector<pcl::PointIndices> cluster_idx;
-    pcl::EuclideanClusterExtraction<cloud_point_t> ece;
-    ece.setClusterTolerance(this->ClusterTolerance); // cm
-    ece.setMinClusterSize(25);
-    // ece.setMaxClusterSize(this->max_threads);
-    ece.setSearchMethod(tree);
-    ece.setInputCloud(cloud_segment);
-    ece.extract(cluster_idx);
-
-    // Idxs of the biggest cluster
-    if(cluster_idx.size() >= 1){
-      for (const auto& idx : cluster_idx[0].indices) object_cloud->push_back((*cloud_segment)[idx]);
-    }
-
-
-    const char str[] = "euclidean_clustering";
-    timer.get_time(this->get_logger(), str, this->euclidean_clustering_plot);
-  }
-
-  inline void estimate_object_3D_AABB(const pcl::shared_ptr<cloud_t>& object_cloud, const smap_interfaces::msg::SmapObject::SharedPtr& obj){
-    count_time timer;
-
-    obj->aabb.min.x = object_cloud->points[0].x;
-    obj->aabb.min.y = object_cloud->points[0].y;
-    obj->aabb.min.z = object_cloud->points[0].z;
-
-    obj->aabb.max.x = object_cloud->points[0].x;
-    obj->aabb.max.y = object_cloud->points[0].y;
-    obj->aabb.max.z = object_cloud->points[0].z;
-
-    for(cloud_point_t& point : *object_cloud){
-      if(point.x < obj->aabb.min.x) obj->aabb.min.x = point.x;
-      if(point.y < obj->aabb.min.y) obj->aabb.min.y = point.y;
-      if(point.z < obj->aabb.min.y) obj->aabb.min.z = point.z;
-
-      if(point.x > obj->aabb.max.x) obj->aabb.max.x = point.x;
-      if(point.y > obj->aabb.max.y) obj->aabb.max.y = point.y;
-      if(point.z > obj->aabb.max.z) obj->aabb.max.z = point.z;
-    }
-
-
-    obj->obj_pose.position.x = (obj->aabb.min.x + obj->aabb.max.x)/2;
-    obj->obj_pose.position.y = (obj->aabb.min.y + obj->aabb.max.y)/2;
-    obj->obj_pose.position.z = (obj->aabb.min.z + obj->aabb.max.z)/2;
-
-    this->puiblish_bb(0,obj);
-
-    const char str[] = "3D_AABB";
-    timer.get_time(this->get_logger(), str, this->centroid_plot);
-  }
+  void transform_object_param(
+    const smap_interfaces::msg::SmapObject::SharedPtr& obj,
+    const std::shared_ptr<geometry_msgs::msg::TransformStamped> &transform
+  ) const;
 
   inline void puiblish_bb(int32_t id, const smap_interfaces::msg::SmapObject::SharedPtr& obj){
     visualization_msgs::msg::Marker bbx_marker;
@@ -381,14 +268,14 @@ public:
     bbx_marker.header.stamp = this->get_clock()->now();
     bbx_marker.type = visualization_msgs::msg::Marker::CUBE;
     bbx_marker.action = visualization_msgs::msg::Marker::ADD;
-    bbx_marker.pose.position = obj->obj_pose.position;
+    bbx_marker.pose.position = obj->obj_pose.pose.position;
     bbx_marker.pose.orientation.x = 0;
     bbx_marker.pose.orientation.y = 0;
     bbx_marker.pose.orientation.z = 0;
     bbx_marker.pose.orientation.w = 1;
-    bbx_marker.scale.x = (obj->aabb.max.x - obj->aabb.min.x);
-    bbx_marker.scale.y = (obj->aabb.max.y - obj->aabb.min.y);
-    bbx_marker.scale.z = (obj->aabb.max.z - obj->aabb.min.z);
+    bbx_marker.scale.x = (obj->aabb.max.point.x - obj->aabb.min.point.x);
+    bbx_marker.scale.y = (obj->aabb.max.point.y - obj->aabb.min.point.y);
+    bbx_marker.scale.z = (obj->aabb.max.point.z - obj->aabb.min.point.z);
     bbx_marker.color.b = 0;
     bbx_marker.color.g = 0;
     bbx_marker.color.r = 255;
@@ -447,10 +334,13 @@ public:
 
   void object_estimation_thread(
     const pcl::shared_ptr<cloud_t>& point_cloud,
+    const std::shared_ptr<geometry_msgs::msg::TransformStamped>& transform,
     const smap_interfaces::msg::SmapObject::SharedPtr& obj
   );
  
-  void detections_callback(const smap_interfaces::msg::SmapDetections::SharedPtr input_msg);
+  void detections_callback(
+    const smap_interfaces::msg::SmapDetections::SharedPtr input_msg
+  );
 
   inline void on_process(void){// Pooling
 

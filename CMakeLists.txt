@@ -135,6 +135,10 @@ install(
 ## object_pose_estimator ##
 ###########################
 
+find_package(tf2 REQUIRED)
+find_package(tf2_geometry_msgs REQUIRED)
+find_package(tf2_sensor_msgs REQUIRED)
+
 # Dear ImGui
 set(IMGUI_DIR imgui)
 file(GLOB sources *.cpp)
@@ -177,6 +181,9 @@ ament_target_dependencies(
   pcl_conversions
   smap_interfaces
   visualization_msgs
+  tf2
+  tf2_geometry_msgs
+  tf2_sensor_msgs
 )
 
 install(TARGETS object_pose_estimator
