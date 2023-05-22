@@ -49,6 +49,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include <mutex>
+
 // TODO: Convert this node into a ROS component
 
 using namespace std::chrono_literals;
@@ -193,9 +195,11 @@ private:
       &smap::object_pose_estimator::detections_callback, this, std::placeholders::_1)
   );
 
-  rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr debug_object_pcl_pub = this->create_publisher<sensor_msgs::msg::PointCloud2>("/smap/core/object_pose_estimation/debug/object_pcl",10);
 
+  rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr debug_object_pcl_pub = this->create_publisher<sensor_msgs::msg::PointCloud2>("/smap/core/object_pose_estimation/debug/object_pcl",10);
   rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr object_bb_pub = this->create_publisher<visualization_msgs::msg::Marker>("/smap/core/object_pose_estimation/debug/object_bb",10);
+  rclcpp::Publisher<smap_interfaces::msg::SmapObject>::SharedPtr object_pub = this->create_publisher<smap_interfaces::msg::SmapObject>("/smap/core/object_pose_estimation/objects",10);
+  std::mutex object_bb_pub_mutex, object_pub_mutex, debug_object_pcl_pub_mutex;
 
   std::shared_ptr<thread_queue> thread_ctl = std::make_shared<thread_queue>(thread_queue(this->max_threads));
 

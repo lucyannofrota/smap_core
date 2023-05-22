@@ -257,22 +257,16 @@ void object_pose_estimator::object_estimation_thread(
   timer.get_time(this->get_logger(), str_process_time, total_thread_time);
   // plot_vec centroid_plot, boundaries_plot, total_estimation_plot;
 
+  obj->obj_pointcloud.header.frame_id = "map"; // TODO: Check if can be removed
+
+  const std::lock_guard<std::mutex> object_pub_lock(this->object_pub_mutex);
+  this->object_pub->publish(*obj);
+
+  const std::lock_guard<std::mutex> object_bb_pub_lock(this->object_bb_pub_mutex);
   this->puiblish_bb(0,obj);
-
-  // if(this->euclidean_clust) pcl::toROSMsg(*object_cloud_pcl,obj->obj_pointcloud);
-  // else pcl::toROSMsg(*segment_cloud_pcl,obj->obj_pointcloud);
-  obj->obj_pointcloud.header.frame_id = "map"; // REMOVE
+  
+  const std::lock_guard<std::mutex> debug_object_pcl_pub_lock(this->debug_object_pcl_pub_mutex);
   this->debug_object_pcl_pub->publish(obj->obj_pointcloud);
-  // if(
-  //   (obj->bounding_box_2d.keypoint_1[0] > 240) &&
-  //   (obj->bounding_box_2d.keypoint_1[0] < 260)
-  // ) 
-
-  // char c = std::cin.get();
-  // if(c == 's'){
-  //   pcl::io::savePCDFileBinary("test_pcd.pcd",*point_cloud);
-  // }
-
 
 }
 
@@ -294,9 +288,11 @@ void object_pose_estimator::detections_callback(
   static int z = 0;
   for(auto& obj : input_msg->objects){
   // BOOST_FOREACH(obj, input_msg->objects){
-    if(obj.confidence < 70) continue;
+    if(obj.confidence < 70) continue; // TODO: Remove DEBUG
 
-    if(obj.label != 62) continue;
+    if(obj.label != 62) continue; // TODO: Remove DEBUG
+
+    obj.module_id = input_msg->module_id;
 
     // Block until thread pool is available
     while(!this->thread_ctl->available()){
