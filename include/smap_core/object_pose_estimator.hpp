@@ -8,6 +8,7 @@
 #include <thread>
 
 #include "rclcpp/rclcpp.hpp"
+#include "rclcpp_components/register_node_macro.hpp"
 #include "../include/smap_core/macros.hpp"
 #include "visualization_msgs/msg/marker.hpp"
 
@@ -28,10 +29,7 @@
 #include <pcl/filters/radius_outlier_removal.h>
 #include <pcl/filters/filter.h>
 #include <pcl/common/centroid.h>
-// #include <pcl/features/gasd.h>
-#include <pcl/visualization/cloud_viewer.h>
 
-#include <pcl/features/moment_of_inertia_estimation.h>
 #include <pcl/segmentation/extract_clusters.h>
 
 
@@ -195,12 +193,9 @@ private:
       &smap::object_pose_estimator::detections_callback, this, std::placeholders::_1)
   );
 
-  rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr debug_pcl_pub = this->create_publisher<sensor_msgs::msg::PointCloud2>("/smap_core/perception/cpp",10);
+  rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr debug_object_pcl_pub = this->create_publisher<sensor_msgs::msg::PointCloud2>("/smap/core/object_pose_estimation/debug/object_pcl",10);
 
-  rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr test_pcl_pub_unfilt = this->create_publisher<sensor_msgs::msg::PointCloud2>("pci_unfilt",10);
-  rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr test_pcl_pub_filt = this->create_publisher<sensor_msgs::msg::PointCloud2>("pci_filt",10);
-
-  rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr marker_pub = this->create_publisher<visualization_msgs::msg::Marker>("/smap_core/pose_estimation/marker",10);
+  rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr object_bb_pub = this->create_publisher<visualization_msgs::msg::Marker>("/smap/core/object_pose_estimation/debug/object_bb",10);
 
   std::shared_ptr<thread_queue> thread_ctl = std::make_shared<thread_queue>(thread_queue(this->max_threads));
 
@@ -230,6 +225,14 @@ public:
     RCLCPP_INFO(this->get_logger(), "Initializing smap_object_pose_estimator");
     // this->viewer = std::make_shared<pcl::visualization::PCLVisualizer>(new pcl::visualization::PCLVisualizer ("3D Viewer"));
   }
+
+  inline object_pose_estimator(const rclcpp::NodeOptions& options)
+  : Node("smap_object_pose_estimator", options)
+  {
+    RCLCPP_INFO(this->get_logger(), "Initializing smap_object_pose_estimator");
+    // this->viewer = std::make_shared<pcl::visualization::PCLVisualizer>(new pcl::visualization::PCLVisualizer ("3D Viewer"));
+  }
+
   inline ~object_pose_estimator()
   {
   }
@@ -280,7 +283,7 @@ public:
     bbx_marker.color.g = 0;
     bbx_marker.color.r = 255;
     bbx_marker.color.a = 0.5;
-    this->marker_pub->publish(bbx_marker);
+    this->object_bb_pub->publish(bbx_marker);
   }
 
   /*inline void estimate_object_3D_OBB(const pcl::shared_ptr<cloud_t>& object_cloud, smap_interfaces::msg::SmapObject::SharedPtr obj){
@@ -351,5 +354,7 @@ private:
 };
 
 }  // namespace smap
+
+RCLCPP_COMPONENTS_REGISTER_NODE(smap::object_pose_estimator)
 
 #endif  // SMAP_CORE__OBJECT_POSE_ESTIMATOR_HPP_

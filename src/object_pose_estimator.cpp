@@ -262,7 +262,7 @@ void object_pose_estimator::object_estimation_thread(
   // if(this->euclidean_clust) pcl::toROSMsg(*object_cloud_pcl,obj->obj_pointcloud);
   // else pcl::toROSMsg(*segment_cloud_pcl,obj->obj_pointcloud);
   obj->obj_pointcloud.header.frame_id = "map"; // REMOVE
-  this->test_pcl_pub_filt->publish(obj->obj_pointcloud);
+  this->debug_object_pcl_pub->publish(obj->obj_pointcloud);
   // if(
   //   (obj->bounding_box_2d.keypoint_1[0] > 240) &&
   //   (obj->bounding_box_2d.keypoint_1[0] < 260)

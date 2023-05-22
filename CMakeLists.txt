@@ -32,68 +32,60 @@ find_package(smap_interfaces REQUIRED)
 find_package(rmw_implementation_cmake REQUIRED)
 
 
-#########
-## PCL ##
-#########
+#################
+## ADD PCL LIB ##
+#################
 
-cmake_minimum_required(VERSION 2.6 FATAL_ERROR)
+  cmake_minimum_required(VERSION 2.6 FATAL_ERROR)
 
-find_package(PCL 1.1 REQUIRED)
-find_package(pcl_conversions REQUIRED)
-
-
-include_directories(${PCL_INCLUDE_DIRS})
-link_directories(${PCL_LIBRARY_DIRS})
-add_definitions(${PCL_DEFINITIONS})
+  find_package(PCL 1.1 REQUIRED)
+  find_package(pcl_conversions REQUIRED)
 
 
-#include_directories(${PCL_INCLUDE_DIRS})
-#link_directories(${PCL_LIBRARY_DIRS})
-#add_definitions(${PCL_DEFINITIONS})
+  include_directories(${PCL_INCLUDE_DIRS})
+  link_directories(${PCL_LIBRARY_DIRS})
+  add_definitions(${PCL_DEFINITIONS})
 
+##################
+## /ADD PCL LIB ##
+##################
 
-##########
-## /PCL ##
-##########
+###################
+## ADD BOOST LIB ##
+###################
+
+  set(Boost_USE_MULTITHREADED ON)  
+  find_package(Boost REQUIRED system serialization) 
+
+####################
+## /ADD BOOST LIB ##
+####################
 
 ###########
-## BOOST ##
-###########
-
-#set(Boost_USE_STATIC_LIBS OFF) 
-set(Boost_USE_MULTITHREADED ON)  
-#set(Boost_USE_STATIC_RUNTIME OFF) 
-find_package(Boost REQUIRED system serialization) 
-
-############
-## /BOOST ##
-############
-
-#############
 ## thing ##
-#############
+###########
 
-add_library(thing src/thing.cpp)
-target_include_directories(thing PUBLIC
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-  $<INSTALL_INTERFACE:include>)
+  add_library(thing src/thing.cpp)
+  target_include_directories(thing PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>)
 
-ament_target_dependencies(
-  thing
-  rclcpp
-)
+  ament_target_dependencies(
+    thing
+    rclcpp
+  )
 
-# Causes the visibility macros to use dllexp<depend>smap_interfaces</depend>ort rather than dllimport,
-# which is appropriate when building the dll but not consuming it.
-target_compile_definitions(thing PRIVATE "SMAP_BUILDING_LIBRARY")
+  # Causes the visibility macros to use dllexp<depend>smap_interfaces</depend>ort rather than dllimport,
+  # which is appropriate when building the dll but not consuming it.
+  target_compile_definitions(thing PRIVATE "SMAP_BUILDING_LIBRARY")
 
-install(
-  TARGETS thing
-  EXPORT export_${PROJECT_NAME}
-  ARCHIVE DESTINATION lib
-  LIBRARY DESTINATION lib
-  RUNTIME DESTINATION bin
-)
+  install(
+    TARGETS thing
+    EXPORT export_${PROJECT_NAME}
+    ARCHIVE DESTINATION lib
+    LIBRARY DESTINATION lib
+    RUNTIME DESTINATION bin
+  )
 
 ############
 ## /thing ##
@@ -103,29 +95,29 @@ install(
 ## Topological_Map ##
 #####################
 
-add_library(topological_map src/topological_map.cpp src/thing.cpp)
-target_include_directories(topological_map PUBLIC
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-  $<INSTALL_INTERFACE:include>)
+  add_library(topological_map src/topological_map.cpp src/thing.cpp)
+  target_include_directories(topological_map PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>)
 
-ament_target_dependencies(
-  topological_map
-  geometry_msgs
-  smap_interfaces
-  visualization_msgs
-)
+  ament_target_dependencies(
+    topological_map
+    geometry_msgs
+    smap_interfaces
+    visualization_msgs
+  )
 
-# Causes the visibility macros to use dllexport rather than dllimport,
-# which is appropriate when building the dll but not consuming it.
-target_compile_definitions(topological_map PRIVATE "SMAP_BUILDING_LIBRARY")
+  # Causes the visibility macros to use dllexport rather than dllimport,
+  # which is appropriate when building the dll but not consuming it.
+  target_compile_definitions(topological_map PRIVATE "SMAP_BUILDING_LIBRARY")
 
-install(
-  TARGETS topological_map
-  EXPORT export_${PROJECT_NAME}
-  ARCHIVE DESTINATION lib
-  LIBRARY DESTINATION lib
-  RUNTIME DESTINATION bin
-)
+  install(
+    TARGETS topological_map
+    EXPORT export_${PROJECT_NAME}
+    ARCHIVE DESTINATION lib
+    LIBRARY DESTINATION lib
+    RUNTIME DESTINATION bin
+  )
 
 ######################
 ## /Topological_Map ##
@@ -135,97 +127,110 @@ install(
 ## object_pose_estimator ##
 ###########################
 
-find_package(tf2 REQUIRED)
-find_package(tf2_geometry_msgs REQUIRED)
-find_package(tf2_sensor_msgs REQUIRED)
+  find_package(tf2 REQUIRED)
+  find_package(tf2_geometry_msgs REQUIRED)
+  find_package(tf2_sensor_msgs REQUIRED)
 
-# Dear ImGui
-set(IMGUI_DIR imgui)
-file(GLOB sources *.cpp)
-include_directories(${IMGUI_DIR} ${IMGUI_DIR}/backends ..)
+  # Dear ImGui
+  set(IMGUI_DIR imgui)
+  find_package(SDL2 REQUIRED) # imgui
 
-set(IMGUI_SRC
-  ${IMGUI_DIR}/imgui.cpp #imgui
-  ${IMGUI_DIR}/imgui_demo.cpp #imgui
-  ${IMGUI_DIR}/imgui_draw.cpp #imgui
-  ${IMGUI_DIR}/imgui_tables.cpp #imgui
-  ${IMGUI_DIR}/imgui_widgets.cpp #imgui
-  ${IMGUI_DIR}/backends/imgui_impl_sdl2.cpp #imgui
-  ${IMGUI_DIR}/backends/imgui_impl_opengl3.cpp #imgui
-)
+  file(GLOB sources *.cpp)
+  include_directories(${IMGUI_DIR} ${IMGUI_DIR}/backends ..)
 
-add_executable(
-  object_pose_estimator 
-  src/object_pose_estimator.cpp
-  ${IMGUI_SRC}
-)
+  set(IMGUI_SRC
+    ${IMGUI_DIR}/imgui.cpp #imgui
+    ${IMGUI_DIR}/imgui_demo.cpp #imgui
+    ${IMGUI_DIR}/imgui_draw.cpp #imgui
+    ${IMGUI_DIR}/imgui_tables.cpp #imgui
+    ${IMGUI_DIR}/imgui_widgets.cpp #imgui
+    ${IMGUI_DIR}/backends/imgui_impl_sdl2.cpp #imgui
+    ${IMGUI_DIR}/backends/imgui_impl_opengl3.cpp #imgui
+  )
 
-find_package(SDL2 REQUIRED) # imgui
+  ## Component ##
 
-target_include_directories(object_pose_estimator PUBLIC
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-  $<INSTALL_INTERFACE:include>
-  ${SDL2_INCLUDE_DIRS} # imgui
-)
-target_link_libraries(object_pose_estimator 
-  ${PCL_LIBRARIES} 
-  GL # imgui
-  ${SDL2_LIBRARIES} # imgui
-)
-#target_link_directories(object_pose_estimator ${PCL_INCLUDE_DIRS})
+    add_library(
+      object_pose_estimator_comp
+      src/object_pose_estimator.cpp
+      ${IMGUI_SRC}
+    )
 
-ament_target_dependencies(
-  object_pose_estimator
-  rclcpp
-  PCL
-  pcl_conversions
-  smap_interfaces
-  visualization_msgs
-  tf2
-  tf2_geometry_msgs
-  tf2_sensor_msgs
-)
+    target_include_directories(object_pose_estimator_comp PUBLIC
+      $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+      $<INSTALL_INTERFACE:include>
+      ${SDL2_INCLUDE_DIRS} # imgui
+    )
 
-install(TARGETS object_pose_estimator
-  DESTINATION lib/${PROJECT_NAME}
-)
+    target_link_libraries(object_pose_estimator_comp 
+      ${PCL_LIBRARIES} 
+      GL # imgui
+      ${SDL2_LIBRARIES} # imgui
+    )
 
+    ament_target_dependencies(
+      object_pose_estimator_comp
+      rclcpp
+      PCL
+      pcl_conversions
+      smap_interfaces
+      visualization_msgs
+      tf2
+      tf2_geometry_msgs
+      tf2_sensor_msgs
+      rclcpp_components
+    )
 
+    install(TARGETS object_pose_estimator_comp
+      DESTINATION lib
+    )
 
+    rclcpp_components_register_node(
+      object_pose_estimator_comp
+      PLUGIN "smap::object_pose_estimator"
+      EXECUTABLE object_pose_estimator_component
+    )
 
-# target_include_directories(object_pose_estimator PUBLIC
-#   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-#   $<INSTALL_INTERFACE:include>
-#   ${PCL_INCLUDE_DIRS}
-# )
+  ## Component ##
 
-# target_link_libraries(object_pose_estimator ${PCL_LIBRARY_DIRS})
+  ## Node ##
 
+    add_executable(
+      object_pose_estimator_node
+      src/object_pose_estimator.cpp
+      ${IMGUI_SRC}
+    )
 
-# add_definitions(${PCL_DEFINITIONS})
-# #target_link_directories(object_pose_estimator ${PCL_INCLUDE_DIRS})
+    target_include_directories(object_pose_estimator_node PUBLIC
+      $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+      $<INSTALL_INTERFACE:include>
+      ${SDL2_INCLUDE_DIRS} # imgui
+    )
 
-# ament_target_dependencies(
-#   object_pose_estimator
-#   rclcpp
-#   PCL
-#   pcl_conversions
-# )
+    target_link_libraries(object_pose_estimator_node 
+      ${PCL_LIBRARIES} 
+      GL # imgui
+      ${SDL2_LIBRARIES} # imgui
+    )
 
-# add_executable(object_pose_estimator src/object_pose_estimator.cpp)
+    ament_target_dependencies(
+      object_pose_estimator_node
+      rclcpp
+      PCL
+      pcl_conversions
+      smap_interfaces
+      visualization_msgs
+      tf2
+      tf2_geometry_msgs
+      tf2_sensor_msgs
+      rclcpp_components
+    )
 
-# install(TARGETS object_pose_estimator
-#   DESTINATION lib/${PROJECT_NAME}
-# )
+    install(TARGETS object_pose_estimator_node
+      DESTINATION lib/${PROJECT_NAME}
+    )
 
-
-
-
-
-
-    #include_directories(${Boost_INCLUDE_DIRS}) 
-    #add_executable(progname file1.cxx file2.cxx) 
-    #target_link_libraries(progname ${Boost_LIBRARIES})
+  ## Node ##
 
 ############################
 ## /object_pose_estimator ##
@@ -274,7 +279,7 @@ ament_target_dependencies(
 )
 
 
-target_link_libraries(smap_node thing topological_map ${Boost_LIBRARIES})
+target_link_libraries(smap_node thing topological_map ${Boost_LIBRARIES} object_pose_estimator_comp)
 
 install(TARGETS smap_node
   DESTINATION lib/${PROJECT_NAME})
@@ -304,14 +309,10 @@ ament_export_libraries(
 ## python nodes ##
 ##################
 
-#ament_python_install_package(classifier_importer)
-#ament_python_install_package(src/classification_wrapper/classifiers)
-#ament_python_install
-
-install(PROGRAMS
-  src/perception_server_node.py
-  DESTINATION lib/${PROJECT_NAME}
-)
+  install(PROGRAMS
+    src/perception_server_node.py
+    DESTINATION lib/${PROJECT_NAME}
+  )
 
 ###################
 ## /python nodes ##
