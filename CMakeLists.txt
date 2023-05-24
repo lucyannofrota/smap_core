@@ -328,7 +328,14 @@ ament_target_dependencies(
 )
 
 
-target_link_libraries(smap_node thing topological_map ${Boost_LIBRARIES} object_pose_estimator_comp)
+target_link_libraries(
+  smap_node
+  thing
+  topological_map
+  ${Boost_LIBRARIES}
+  object_pose_estimator_comp
+  perception_server_comp
+)
 
 install(TARGETS smap_node
   DESTINATION lib/${PROJECT_NAME})
