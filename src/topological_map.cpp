@@ -4,69 +4,9 @@
 // #include "rcl/error_handling.h"
 // #include <rmw/types.h>
 
-void a(void){
-  std::cout << "ASdadasd" << std::endl;
-}
-
 namespace smap
 {
 
-
-topological_map::topological_map()
-: Node("topological_map")
-{
-  RCLCPP_INFO(this->get_logger(), "Initializing topological_map");
-
-  if (NEW_EDGE_FACTOR > 1) {
-    RCLCPP_ERROR(this->get_logger(), "NEW_EDGE_FACTOR must be <= 1");
-    rclcpp::exceptions::throw_from_rcl_error( // TODO error handling
-      RCL_RET_INVALID_ARGUMENT,
-      "NEW_EDGE_FACTOR must be <= 1",
-      NULL,
-      NULL
-    );
-  }
-
-  publisher_marker = this->create_publisher<visualization_msgs::msg::Marker>(
-    "semantic_mapper/topological_map/graph_nodes", 10);
-
-  // Marker msg initialization
-  // Vertex
-  vertex_marker.header.frame_id = "/map";
-  vertex_marker.ns = "graph_map_vertices";
-  vertex_marker.type = visualization_msgs::msg::Marker::SPHERE_LIST;
-  vertex_marker.action = visualization_msgs::msg::Marker::ADD;
-  vertex_marker.scale.x = 0.075; vertex_marker.scale.y = 0.075; vertex_marker.scale.z = 0.075;
-  vertex_marker.color.r = 102.0 / (102.0 + 51.0); vertex_marker.color.g = 51.0 / (102.0 + 51.0);
-  vertex_marker.color.b = 0.0;
-  vertex_marker.color.a = 1.0;
-
-  // Edge
-  edge_marker.header.frame_id = "/map";
-  edge_marker.ns = "graph_map_edges";
-  edge_marker.type = visualization_msgs::msg::Marker::LINE_STRIP;
-  edge_marker.action = visualization_msgs::msg::Marker::ADD;
-  edge_marker.scale.x = 0.005; edge_marker.scale.y = 0.005; edge_marker.scale.z = 0.005;
-  edge_marker.color.r = 1.0; edge_marker.color.g = 0.0; edge_marker.color.b = 0.0;
-  edge_marker.pose.orientation.x = 0; edge_marker.pose.orientation.y = 0;
-  edge_marker.pose.orientation.z = 0; edge_marker.pose.orientation.w = 1.0;
-  edge_marker.color.a = 1.0;
-
-
-  // timer = this->create_wall_timer(
-  //   std::chrono::seconds(1),
-  //   std::bind(
-  //     &topological_map::timer_callback,
-  //     this
-  //   )
-  // );
-}
-
-topological_map::~topological_map()
-{
-  // delete initial_point;
-  this->export_TopoGraph("TopoGraph");
-}
 
 void topological_map::on_process(void) // Pooling
 {

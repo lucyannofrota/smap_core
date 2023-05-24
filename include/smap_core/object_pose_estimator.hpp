@@ -191,7 +191,7 @@ private:
     "pcl", 10);
 
   rclcpp::Subscription<smap_interfaces::msg::SmapDetections>::SharedPtr smap_detections_sub = this->create_subscription<smap_interfaces::msg::SmapDetections>(
-    "/smap_core/perception/modules/predictions",10,std::bind(
+    "/smap/perception/predictions",10,std::bind(
       &smap::object_pose_estimator::detections_callback, this, std::placeholders::_1)
   );
 

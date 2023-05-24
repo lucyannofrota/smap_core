@@ -47,26 +47,22 @@ namespace smap
     int n_classes = 0;
 
     // rclcpp::Publisher<smap_interfaces::msg::SmapDetections>::SharedPtr sub = this->create_subscription<smap_interfaces::msg::SmapDetections>(
-    //   "/smap_core/perception/modules/predictions",10,
+    //   "/smap_core/perception/predictions",10,
     //   std::bind(
     //     &smap::perception_server::
     //   )
     // );
 
     rclcpp::Service<smap_interfaces::srv::AddPerceptionModule>::SharedPtr add_perception_module_srv = this->create_service<smap_interfaces::srv::AddPerceptionModule>(
-        "/smap_core/perception_server/add_perception_module", std::bind(
+        "/smap/core/perception_server/add_perception_module", std::bind(
                                                                   &smap::perception_server::AddPerceptionModule_callback, this, std::placeholders::_1, std::placeholders::_2));
 
     rclcpp::Service<smap_interfaces::srv::SmapClasses>::SharedPtr list_classes_srv = this->create_service<smap_interfaces::srv::SmapClasses>(
-        "/smap_core/perception_server/list_classes", std::bind(
+        "/smap/core/perception_server/list_classes", std::bind(
                                                                   &smap::perception_server::ListClasses_callback, this, std::placeholders::_1, std::placeholders::_2));
     // rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr img_publisher = this->create_publisher<sensor_msgs::msg::Image>(
     //   "pcl", 10);
 
-    // rclcpp::Subscription<smap_interfaces::msg::SmapDetections>::SharedPtr smap_detections_sub = this->create_subscription<smap_interfaces::msg::SmapDetections>(
-    //   "/smap_core/perception/modules/predictions",10,std::bind(
-    //     &smap::object_pose_estimator::detections_callback, this, std::placeholders::_1)
-    // );
 
     // rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr debug_object_pcl_pub = this->create_publisher<sensor_msgs::msg::PointCloud2>("/smap/core/object_pose_estimation/debug/object_pcl",10);
     // rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr object_bb_pub = this->create_publisher<visualization_msgs::msg::Marker>("/smap/core/object_pose_estimation/debug/object_bb",10);

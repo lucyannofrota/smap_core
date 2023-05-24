@@ -12,14 +12,10 @@
 // #include <visualization_msgs/msg/marker.hpp>
 
 #include "../include/smap_core/macros.hpp"
-// #include "../include/smap_core/detector.hpp"
 #include "../include/smap_core/topological_map.hpp"
 #include "../include/smap_core/thing.hpp"
 
-#include "std_srvs/srv/trigger.hpp"
 #include "smap_interfaces/msg/smap_data.hpp"
-// #include "smap_interfaces/srv/add_three_ints.hpp"
-// #include "../srv/AddThreeInts.hpp"
 
 #include <string>
 
@@ -42,6 +38,8 @@
 
 // Node
 
+using namespace std::chrono_literals;
+
 namespace smap
 {
 
@@ -51,6 +49,13 @@ private:
 
   // Logger
   rclcpp::Logger logger = this->get_logger();
+
+
+  // Subscriptions
+  rclcpp::Subscription<smap_interfaces::msg::SmapData>::SharedPtr SmapData_sub = this->create_subscription<smap_interfaces::msg::SmapData>(
+    "/smap/sampler/data",10,std::bind(
+      &smap::smap_node::SmapData_callback, this, std::placeholders::_1)
+  );
 
 public:
   // Constructor/Destructor
@@ -64,9 +69,14 @@ public:
   {
   }
 
+  void SmapData_callback(const smap_interfaces::msg::SmapData::SharedPtr input_msg){
+    this->topo_map->add_vertex(input_msg->stamped_pose.pose.position);
+  }
+
   void on_process(void) // Pooling
   {
     // RCLCPP_DEBUG(this->get_logger(),"Process smap::smap_node");
+
   }
 
 private:
