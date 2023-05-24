@@ -59,7 +59,6 @@ void topological_map::add_vertex(const geometry_msgs::msg::Point & pos)
   );
 
   if (dist_current < VERTEX_DISTANCE) {return;}
-  // dist_current >= VERTEX_DISTANCE
   idx = _add_vertex(v_index++, pos);
   previous_vertex = current_vertex;
   current_vertex = &(Graph[idx]);

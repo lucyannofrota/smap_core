@@ -296,7 +296,8 @@ install(DIRECTORY
   launch
   scripts
   config
-  outputs
+  # outputs
+  SemMap
   maps
   DESTINATION share/${PROJECT_NAME}/
 )

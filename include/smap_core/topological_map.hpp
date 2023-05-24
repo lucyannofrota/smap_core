@@ -270,12 +270,12 @@ namespace smap
     {
       RCLCPP_INFO(this->get_logger(), "Initializing topological_map");
 
-      if (NEW_EDGE_FACTOR > 1)
+      if (NEW_EDGE_FACTOR < 1)
       {
-        RCLCPP_ERROR(this->get_logger(), "NEW_EDGE_FACTOR must be <= 1");
+        RCLCPP_ERROR(this->get_logger(), "NEW_EDGE_FACTOR must be >= 1");
         rclcpp::exceptions::throw_from_rcl_error( // TODO error handling
             RCL_RET_INVALID_ARGUMENT,
-            "NEW_EDGE_FACTOR must be <= 1",
+            "NEW_EDGE_FACTOR must be >= 1",
             NULL,
             NULL);
       }
