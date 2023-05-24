@@ -165,7 +165,7 @@ class count_time{
       (std::chrono::duration_cast<std::chrono::milliseconds>(stop-start)).count()
     );
 
-    RCLCPP_WARN(logger,"%s %ims",
+    RCLCPP_DEBUG(logger,"%s %ims",
       str,
       (std::chrono::duration_cast<std::chrono::milliseconds>(stop-start)).count()
     );

@@ -98,7 +98,7 @@ namespace smap
     VertexData *current_vertex = NULL;
     VertexData *previous_vertex = NULL;
 
-    TopoMap Semantic_Graph;
+    TopoMap Graph;
     // rclcpp::Logger * logger;
 
     // rclcpp::TimerBase::SharedPtr timer{nullptr};
@@ -121,16 +121,16 @@ namespace smap
     void serialize(Archive &ar, const unsigned int version)
     {
       (void)version;
-      ar &Semantic_Graph;
+      ar &Graph;
     }
 
     inline size_t _get_TopoMap_index(VertexData *ptr)
     {
-      auto v_pair = boost::vertices(Semantic_Graph);
+      auto v_pair = boost::vertices(Graph);
       auto iter = v_pair.first;
       for (; iter != v_pair.second; iter++)
       {
-        if (Semantic_Graph[*iter].index == ptr->index)
+        if (Graph[*iter].index == ptr->index)
         {
           break;
         }
@@ -140,11 +140,11 @@ namespace smap
 
     inline size_t _get_TopoMap_index(long idx)
     {
-      auto v_pair = boost::vertices(Semantic_Graph);
+      auto v_pair = boost::vertices(Graph);
       auto iter = v_pair.first;
       for (; iter != v_pair.second; iter++)
       {
-        if (Semantic_Graph[*iter].index == idx)
+        if (Graph[*iter].index == idx)
         {
           break;
         }
@@ -217,7 +217,7 @@ namespace smap
            pos,
            thing(semantic_type::LOCATION),
            std::list<thing>()},
-          Semantic_Graph);
+          Graph);
       publish_vertex = true;
       _append_vertex_marker(pos);
       RCLCPP_INFO(this->get_logger(), "Vertex added [%4.1f,%4.1f,%4.1f]", pos.x, pos.y, pos.z);
@@ -227,38 +227,38 @@ namespace smap
     inline void _add_edge(size_t previous, size_t current)
     {
       double distance = sqrt(
-          pow(Semantic_Graph[previous].pos.x - Semantic_Graph[current].pos.x, 2) +
-          pow(Semantic_Graph[previous].pos.y - Semantic_Graph[current].pos.y, 2) +
-          pow(Semantic_Graph[previous].pos.z - Semantic_Graph[current].pos.z, 2));
+          pow(Graph[previous].pos.x - Graph[current].pos.x, 2) +
+          pow(Graph[previous].pos.y - Graph[current].pos.y, 2) +
+          pow(Graph[previous].pos.z - Graph[current].pos.z, 2));
       boost::add_edge(
           previous, current,
           {distance,
            1},
-          Semantic_Graph);
+          Graph);
       publish_edge = true;
-      _append_edge_marker(Semantic_Graph[previous].pos, Semantic_Graph[current].pos);
+      _append_edge_marker(Graph[previous].pos, Graph[current].pos);
       RCLCPP_DEBUG(
           this->get_logger(), "Edge added %i->%i [%4.1f,%4.1f,%4.1f]->[%4.1f,%4.1f,%4.1f]", previous, current,
-          Semantic_Graph[previous].pos.x, Semantic_Graph[previous].pos.y, Semantic_Graph[previous].pos.z,
-          Semantic_Graph[current].pos.x, Semantic_Graph[current].pos.y,
-          Semantic_Graph[current].pos.z);
+          Graph[previous].pos.x, Graph[previous].pos.y, Graph[previous].pos.z,
+          Graph[current].pos.x, Graph[current].pos.y,
+          Graph[current].pos.z);
     }
 
     inline VertexData *_get_valid_close_vertex(const geometry_msgs::msg::Point &pos, double factor)
     {
-      auto pair = boost::vertices(Semantic_Graph);
+      auto pair = boost::vertices(Graph);
       VertexData *ret = NULL;
       double min = DBL_MAX;
       for (auto it = pair.first; it != pair.second; it++)
       {
         double distance = sqrt(
-            pow(pos.x - Semantic_Graph[*it].pos.x, 2) +
-            pow(pos.y - Semantic_Graph[*it].pos.y, 2) +
-            pow(pos.z - Semantic_Graph[*it].pos.z, 2));
+            pow(pos.x - Graph[*it].pos.x, 2) +
+            pow(pos.y - Graph[*it].pos.y, 2) +
+            pow(pos.z - Graph[*it].pos.z, 2));
         if (distance < VERTEX_DISTANCE * factor && distance < min)
         {
           min = distance;
-          ret = &(Semantic_Graph[*it]);
+          ret = &(Graph[*it]);
         }
       }
       return ret;

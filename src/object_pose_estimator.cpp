@@ -195,7 +195,7 @@ void object_pose_estimator::object_estimation_thread(
   // if(obj->confidence <= 70) return;
 
   count_time timer;
-  RCLCPP_INFO(this->get_logger(),"Object: %i",obj->label);
+  // RCLCPP_INFO(this->get_logger(),"Object: %i",obj->label);
   pcl::shared_ptr<cloud_t> point_cloud_vox(new cloud_t);
   pcl::shared_ptr<cloud_t> segment_cloud_pcl(new cloud_t);
   pcl::shared_ptr<cloud_t> object_cloud_pcl(new cloud_t);
@@ -274,7 +274,7 @@ void object_pose_estimator::object_estimation_thread(
 void object_pose_estimator::detections_callback(
   const smap_interfaces::msg::SmapDetections::SharedPtr input_msg
 ){
-  RCLCPP_INFO(this->get_logger(),"detections_callback");
+  // RCLCPP_DEBUG(this->get_logger(),"detections_callback");
 
   pcl::shared_ptr<cloud_t> pcl_point_cloud (new cloud_t);
   pcl::fromROSMsg(input_msg->pointcloud,*pcl_point_cloud);
@@ -285,7 +285,6 @@ void object_pose_estimator::detections_callback(
   smap_interfaces::msg::SmapObject obj;
   sensor_msgs::msg::PointCloud2 segment_cloud;
 
-  static int z = 0;
   for(auto& obj : input_msg->objects){
   // BOOST_FOREACH(obj, input_msg->objects){
     if(obj.confidence < 70) continue; // TODO: Remove DEBUG
@@ -322,11 +321,11 @@ void object_pose_estimator::detections_callback(
     // );
 
 
-    RCLCPP_INFO(this->get_logger(),"Item launched: %i| label: %i | Total: %i",this->thread_ctl->size(),obj.label,++z);
+    RCLCPP_DEBUG(this->get_logger(),"Object detection thread launched! | %i threads running | label: %i",this->thread_ctl->size(),obj.label);
 
 
   }
-  RCLCPP_INFO(this->get_logger(),"---Callback complete---");
+  RCLCPP_DEBUG(this->get_logger(),"---Callback complete---");
 }
 
 }

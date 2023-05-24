@@ -35,7 +35,7 @@ void topological_map::add_vertex(const geometry_msgs::msg::Point & pos)
   if (current_vertex == NULL) {
     if (closest == NULL) {
       idx = this->_add_vertex(v_index++, pos);
-      current_vertex = &(Semantic_Graph[idx]);
+      current_vertex = &(Graph[idx]);
       return;
     } else {
       current_vertex = closest;
@@ -62,7 +62,7 @@ void topological_map::add_vertex(const geometry_msgs::msg::Point & pos)
   // dist_current >= VERTEX_DISTANCE
   idx = _add_vertex(v_index++, pos);
   previous_vertex = current_vertex;
-  current_vertex = &(Semantic_Graph[idx]);
+  current_vertex = &(Graph[idx]);
 
   _add_edge(
     _get_TopoMap_index(previous_vertex),
@@ -75,11 +75,11 @@ void topological_map::export_TopoGraph(const std::string & f_name)
   std::ofstream dotfile(OUTPUT_PATH + f_name + ".dot");
 
   write_graphviz(
-    dotfile, Semantic_Graph,
-    make_vertex_label_writer(boost::get(&VertexData::this_thing, Semantic_Graph)),
+    dotfile, Graph,
+    make_vertex_label_writer(boost::get(&VertexData::this_thing, Graph)),
     make_cost_label_writer(
-      boost::get(&EdgeData::distance, Semantic_Graph),
-      boost::get(&EdgeData::modifier, Semantic_Graph))
+      boost::get(&EdgeData::distance, Graph),
+      boost::get(&EdgeData::modifier, Graph))
   );
 
   if (std::system(

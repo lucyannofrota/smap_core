@@ -367,10 +367,10 @@ ament_export_libraries(
 ## python nodes ##
 ##################
 
-  install(PROGRAMS
-    src/perception_server_node.py
-    DESTINATION lib/${PROJECT_NAME}
-  )
+  # install(PROGRAMS
+  #   src/perception_server_node.py
+  #   DESTINATION lib/${PROJECT_NAME}
+  # )
 
 ###################
 ## /python nodes ##
