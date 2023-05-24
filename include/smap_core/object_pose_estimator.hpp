@@ -1,7 +1,7 @@
 #ifndef SMAP_CORE__OBJECT_POSE_ESTIMATOR_HPP_
 #define SMAP_CORE__OBJECT_POSE_ESTIMATOR_HPP_
 
-#include "../visibility_control.h"
+#include "visibility_control.h"
 #include "../../include/smap_core/macros.hpp"
 
 #include <chrono>
@@ -9,7 +9,7 @@
 #include <thread>
 
 #include "rclcpp/rclcpp.hpp"
-#include "rclcpp_components/register_node_macro.hpp"
+// #include "rclcpp_components/register_node_macro.hpp"
 #include "visualization_msgs/msg/marker.hpp"
 
 #include "tf2/convert.h"
@@ -359,6 +359,6 @@ private:
 
 }  // namespace smap
 
-RCLCPP_COMPONENTS_REGISTER_NODE(smap::object_pose_estimator)
+// RCLCPP_COMPONENTS_REGISTER_NODE(smap::object_pose_estimator)
 
 #endif  // SMAP_CORE__OBJECT_POSE_ESTIMATOR_HPP_

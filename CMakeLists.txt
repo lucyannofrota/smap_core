@@ -15,6 +15,8 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
+# TODO: Refactor cmake_list
+
 # find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(ament_cmake_ros REQUIRED)
@@ -148,28 +150,28 @@ find_package(rmw_implementation_cmake REQUIRED)
     ${IMGUI_DIR}/backends/imgui_impl_opengl3.cpp #imgui
   )
 
-  ## Component ##
+  ## Lib ##
 
     add_library(
-      object_pose_estimator_comp
-      src/components/object_pose_estimator.cpp
+      object_pose_estimator_lib
+      src/object_pose_estimator.cpp
       ${IMGUI_SRC}
     )
 
-    target_include_directories(object_pose_estimator_comp PUBLIC
+    target_include_directories(object_pose_estimator_lib PUBLIC
       $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
       $<INSTALL_INTERFACE:include>
       ${SDL2_INCLUDE_DIRS} # imgui
     )
 
-    target_link_libraries(object_pose_estimator_comp 
+    target_link_libraries(object_pose_estimator_lib 
       ${PCL_LIBRARIES} 
       GL # imgui
       ${SDL2_LIBRARIES} # imgui
     )
 
     ament_target_dependencies(
-      object_pose_estimator_comp
+      object_pose_estimator_lib
       rclcpp
       PCL
       pcl_conversions
@@ -181,23 +183,23 @@ find_package(rmw_implementation_cmake REQUIRED)
       rclcpp_components
     )
 
-    install(TARGETS object_pose_estimator_comp
+    install(TARGETS object_pose_estimator_lib
       DESTINATION lib
     )
 
-    rclcpp_components_register_node(
-      object_pose_estimator_comp
-      PLUGIN "smap::object_pose_estimator"
-      EXECUTABLE object_pose_estimator_component
-    )
+    # rclcpp_components_register_node(
+    #   object_pose_estimator_lib
+    #   PLUGIN "smap::object_pose_estimator"
+    #   EXECUTABLE object_pose_estimator_libonent
+    # )
 
-  ## Component ##
+  ## Lib ##
 
   ## Node ##
 
     add_executable(
       object_pose_estimator_node
-      src/components/object_pose_estimator.cpp
+      src/object_pose_estimator.cpp
       ${IMGUI_SRC}
     )
 
@@ -245,41 +247,41 @@ find_package(rclcpp_components REQUIRED)
 find_package(smap_interfaces REQUIRED)
 find_package(visualization_msgs REQUIRED)
 
-## Component ##
+## Lib ##
 
   add_library(
-    perception_server_comp
-    src/components/perception_server.cpp
+    perception_server_lib
+    src/perception_server.cpp
   )
 
-  target_include_directories(perception_server_comp PUBLIC
+  target_include_directories(perception_server_lib PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>
   )
 
-  # target_link_libraries(perception_server_comp 
+  # target_link_libraries(perception_server_lib 
   #   ${PCL_LIBRARIES} 
   # )
 
   ament_target_dependencies(
-    perception_server_comp
+    perception_server_lib
     rclcpp
     rclcpp_components
     smap_interfaces
     visualization_msgs
   )
 
-  install(TARGETS perception_server_comp
+  install(TARGETS perception_server_lib
     DESTINATION lib
   )
 
-  rclcpp_components_register_node(
-    perception_server_comp
-    PLUGIN "smap::perception_server"
-    EXECUTABLE perception_server_component
-  )
+  # rclcpp_components_register_node(
+  #   perception_server_lib
+  #   PLUGIN "smap::perception_server"
+  #   EXECUTABLE perception_server_libonent
+  # )
 
-## Component ##
+## Lib ##
 
 ########################
 ## /perception_server ##
@@ -333,8 +335,8 @@ target_link_libraries(
   thing
   topological_map
   ${Boost_LIBRARIES}
-  object_pose_estimator_comp
-  perception_server_comp
+  object_pose_estimator_lib
+  perception_server_lib
 )
 
 install(TARGETS smap_node

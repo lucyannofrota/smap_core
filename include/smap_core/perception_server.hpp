@@ -1,14 +1,14 @@
 #ifndef SMAP_CORE__PERCEPTION_SERVER_HPP_
 #define SMAP_CORE__PERCEPTION_SERVER_HPP_
 
-#include "../visibility_control.h"
+#include "visibility_control.h"
 
 // #include <chrono>
 // #include <iostream>
 // #include <thread>
 
 #include "rclcpp/rclcpp.hpp"
-#include "rclcpp_components/register_node_macro.hpp"
+// #include "rclcpp_components/register_node_macro.hpp"
 #include "visualization_msgs/msg/marker.hpp"
 
 // SMAP
@@ -112,6 +112,6 @@ namespace smap
 
 } // namespace smap
 
-RCLCPP_COMPONENTS_REGISTER_NODE(smap::perception_server)
+// RCLCPP_COMPONENTS_REGISTER_NODE(smap::perception_server)
 
 #endif // SMAP_CORE__PERCEPTION_SERVER_HPP_

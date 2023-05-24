@@ -1,4 +1,4 @@
-#include "../include/smap_core/components/object_pose_estimator.hpp"
+#include "../include/smap_core/object_pose_estimator.hpp"
 
 using namespace std::chrono_literals;
 

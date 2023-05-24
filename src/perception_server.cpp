@@ -1,4 +1,4 @@
-#include "../include/smap_core/components/perception_server.hpp"
+#include "../include/smap_core/perception_server.hpp"
 
 namespace smap
 {
