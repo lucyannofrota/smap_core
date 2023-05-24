@@ -22,7 +22,7 @@ class perception_server(Node):
         self.reentrant_cb_group = ReentrantCallbackGroup()
         self.exclusive_cb_group = MutuallyExclusiveCallbackGroup()
 
-        self.sub = self.create_subscription(SmapDetections, '/smap_core/perception/modules/predictions', self.predict, 10, callback_group=self.exclusive_cb_group)
+        # self.sub = self.create_subscription(SmapDetections, '/smap_core/perception/modules/predictions', self.predict, 10, callback_group=self.exclusive_cb_group)
 
         #self.pub = self.create_publisher(SmapDetections, '/smap_core/perception/predictions', 10, callback_group=self.reentrant_cb_group)
 

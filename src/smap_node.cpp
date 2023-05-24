@@ -27,7 +27,7 @@
 #include "std_msgs/msg/string.hpp"
 
 // #include "smap_core/object_pose_estimator.hpp"
-#include "../include/smap_core/object_pose_estimator.hpp"
+#include "../include/smap_core/components/object_pose_estimator.hpp"
 
 
 

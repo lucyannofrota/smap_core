@@ -152,7 +152,7 @@ find_package(rmw_implementation_cmake REQUIRED)
 
     add_library(
       object_pose_estimator_comp
-      src/object_pose_estimator.cpp
+      src/components/object_pose_estimator.cpp
       ${IMGUI_SRC}
     )
 
@@ -197,7 +197,7 @@ find_package(rmw_implementation_cmake REQUIRED)
 
     add_executable(
       object_pose_estimator_node
-      src/object_pose_estimator.cpp
+      src/components/object_pose_estimator.cpp
       ${IMGUI_SRC}
     )
 
@@ -235,6 +235,55 @@ find_package(rmw_implementation_cmake REQUIRED)
 ############################
 ## /object_pose_estimator ##
 ############################
+
+#######################
+## perception_server ##
+#######################
+
+find_package(rclcpp REQUIRED)
+find_package(rclcpp_components REQUIRED)
+find_package(smap_interfaces REQUIRED)
+find_package(visualization_msgs REQUIRED)
+
+## Component ##
+
+  add_library(
+    perception_server_comp
+    src/components/perception_server.cpp
+  )
+
+  target_include_directories(perception_server_comp PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>
+  )
+
+  # target_link_libraries(perception_server_comp 
+  #   ${PCL_LIBRARIES} 
+  # )
+
+  ament_target_dependencies(
+    perception_server_comp
+    rclcpp
+    rclcpp_components
+    smap_interfaces
+    visualization_msgs
+  )
+
+  install(TARGETS perception_server_comp
+    DESTINATION lib
+  )
+
+  rclcpp_components_register_node(
+    perception_server_comp
+    PLUGIN "smap::perception_server"
+    EXECUTABLE perception_server_component
+  )
+
+## Component ##
+
+########################
+## /perception_server ##
+########################
 
 install(
   DIRECTORY include/
