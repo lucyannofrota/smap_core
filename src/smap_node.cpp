@@ -21,8 +21,8 @@
 
 #include "std_msgs/msg/string.hpp"
 
-// #include "smap_core/object_pose_estimator.hpp"
-#include "../include/smap_core/object_pose_estimator.hpp"
+// #include "smap_core/object_estimator.hpp"
+#include "../include/smap_core/object_estimator.hpp"
 #include "../include/smap_core/perception_server.hpp"
 
 
@@ -96,13 +96,13 @@ int main(int argc, char ** argv)
   rclcpp::NodeOptions options;
   std::shared_ptr<smap::smap_node> _smap_node = std::make_shared<smap::smap_node>();
   std::shared_ptr<smap::topological_map> _topological_map_node = std::make_shared<smap::topological_map>();
-  std::shared_ptr<smap::object_pose_estimator> _object_pose_estimator_node = std::make_shared<smap::object_pose_estimator>(options);
+  std::shared_ptr<smap::object_estimator> _object_estimator_node = std::make_shared<smap::object_estimator>(options);
   std::shared_ptr<smap::perception_server> _perception_server_node = std::make_shared<smap::perception_server>(options);
   _smap_node->topo_map = _topological_map_node;
   rclcpp::executors::MultiThreadedExecutor executor;
   executor.add_node(_smap_node);
   executor.add_node(_topological_map_node);
-  executor.add_node(_object_pose_estimator_node);
+  executor.add_node(_object_estimator_node);
   executor.add_node(_perception_server_node);
   // rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr service = _smap_node->create_service<std_srvs::srv::Trigger>("serv_smap", &smap::test_serv);
   while (rclcpp::ok()) {

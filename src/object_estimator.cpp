@@ -1,4 +1,4 @@
-#include "../include/smap_core/object_pose_estimator.hpp"
+#include "../include/smap_core/object_estimator.hpp"
 
 using namespace std::chrono_literals;
 
@@ -7,7 +7,7 @@ using namespace std::chrono_literals;
 namespace smap
 {
 
-void object_pose_estimator::box_filter(
+void object_estimator::box_filter(
   const pcl::shared_ptr<cloud_t>& input_cloud,
   const pcl::shared_ptr<cloud_t>& cloud_segment,
   const smap_interfaces::msg::SmapObject::SharedPtr& obj
@@ -34,7 +34,7 @@ void object_pose_estimator::box_filter(
   timer.get_time(this->get_logger(), str, box_filter_plot);
 }
 
-void object_pose_estimator::roi_filter(
+void object_estimator::roi_filter(
   const pcl::shared_ptr<cloud_t>& point_cloud
 ) const{
   count_time timer;
@@ -56,7 +56,7 @@ void object_pose_estimator::roi_filter(
   timer.get_time(this->get_logger(), str, roi_filter_plot);
 }
 
-void object_pose_estimator::pcl_voxelization(
+void object_estimator::pcl_voxelization(
   const pcl::shared_ptr<cloud_t>& point_cloud
 ) const{
   count_time timer;
@@ -72,7 +72,7 @@ void object_pose_estimator::pcl_voxelization(
   timer.get_time(this->get_logger(), str, voxelization_plot);
 }
 
-void object_pose_estimator::statistical_outlier_filter(
+void object_estimator::statistical_outlier_filter(
   const pcl::shared_ptr<cloud_t>& cloud_segment
 ) const{
   count_time timer;
@@ -87,7 +87,7 @@ void object_pose_estimator::statistical_outlier_filter(
   timer.get_time(this->get_logger(), str, sof_filter_plot);
 }
 
-void object_pose_estimator::euclidean_clustering(
+void object_estimator::euclidean_clustering(
   const pcl::shared_ptr<cloud_t>& cloud_segment,
   const pcl::shared_ptr<cloud_t>& object_cloud
 ) const{
@@ -115,7 +115,7 @@ void object_pose_estimator::euclidean_clustering(
   timer.get_time(this->get_logger(), str, euclidean_clustering_plot);
 }
 
-void object_pose_estimator::estimate_object_3D_AABB(
+void object_estimator::estimate_object_3D_AABB(
   const pcl::shared_ptr<cloud_t>& object_cloud,
   const smap_interfaces::msg::SmapObject::SharedPtr& obj
 ) const{
@@ -147,7 +147,7 @@ void object_pose_estimator::estimate_object_3D_AABB(
   timer.get_time(this->get_logger(), str, centroid_plot);
 }
 
-void object_pose_estimator::transform_object_param(
+void object_estimator::transform_object_param(
   const smap_interfaces::msg::SmapObject::SharedPtr& obj,
   const std::shared_ptr<geometry_msgs::msg::TransformStamped> &transform
 ) const{
@@ -177,7 +177,7 @@ void object_pose_estimator::transform_object_param(
 
 
 
-void object_pose_estimator::object_estimation_thread(
+void object_estimator::object_estimation_thread(
   const pcl::shared_ptr<cloud_t>& point_cloud,
   const std::shared_ptr<geometry_msgs::msg::TransformStamped>& transform,
   const smap_interfaces::msg::SmapObject::SharedPtr& obj
@@ -271,7 +271,7 @@ void object_pose_estimator::object_estimation_thread(
 }
 
 
-void object_pose_estimator::detections_callback(
+void object_estimator::detections_callback(
   const smap_interfaces::msg::SmapDetections::SharedPtr input_msg
 ){
   // RCLCPP_DEBUG(this->get_logger(),"detections_callback");
@@ -313,7 +313,7 @@ void object_pose_estimator::detections_callback(
     //   std::make_shared<std::future<void>>(
     //     std::async(
     //       std::launch::async,
-    //       &smap::object_pose_estimator::object_estimation_thread,this,
+    //       &smap::object_estimator::object_estimation_thread,this,
     //       pcl_point_cloud,
     //       std::make_shared<smap_interfaces::msg::SmapObject>(obj)
     //     )
@@ -334,7 +334,7 @@ int main(int argc, char ** argv)
 {
   rclcpp::init(argc, argv);
 
-  std::shared_ptr<smap::object_pose_estimator> node = std::make_shared<smap::object_pose_estimator>();
+  std::shared_ptr<smap::object_estimator> node = std::make_shared<smap::object_estimator>();
 
   // auto ui = std::make_shared<std::future<void>>(
   //   std::async(

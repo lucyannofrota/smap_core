@@ -1,5 +1,5 @@
-#ifndef SMAP_CORE__OBJECT_POSE_ESTIMATOR_HPP_
-#define SMAP_CORE__OBJECT_POSE_ESTIMATOR_HPP_
+#ifndef SMAP_CORE__OBJECT_ESTIMATOR_HPP_
+#define SMAP_CORE__OBJECT_ESTIMATOR_HPP_
 
 #include "visibility_control.h"
 #include "../../include/smap_core/macros.hpp"
@@ -183,7 +183,7 @@ namespace smap
   using cloud_point_t = pcl::PointXYZRGB;
   using cloud_t = pcl::PointCloud<cloud_point_t>;
 
-class object_pose_estimator : public rclcpp::Node
+class object_estimator : public rclcpp::Node
 {
 private:
   const size_t max_threads = 8; // Should be grathen than 1 because of the function "__compute_timeout"
@@ -192,7 +192,7 @@ private:
 
   rclcpp::Subscription<smap_interfaces::msg::SmapDetections>::SharedPtr smap_detections_sub = this->create_subscription<smap_interfaces::msg::SmapDetections>(
     "/smap/perception/predictions",10,std::bind(
-      &smap::object_pose_estimator::detections_callback, this, std::placeholders::_1)
+      &smap::object_estimator::detections_callback, this, std::placeholders::_1)
   );
 
 
@@ -223,21 +223,21 @@ public:
   // pcl::visualization::PCLVisualizer visu;
   // std::list<int> box_filter_times;
   // Constructor/Destructor
-  inline object_pose_estimator()
-  : Node("smap_object_pose_estimator")
+  inline object_estimator()
+  : Node("smap_object_estimator")
   {
-    RCLCPP_INFO(this->get_logger(), "Initializing smap_object_pose_estimator");
+    RCLCPP_INFO(this->get_logger(), "Initializing smap_object_estimator");
     // this->viewer = std::make_shared<pcl::visualization::PCLVisualizer>(new pcl::visualization::PCLVisualizer ("3D Viewer"));
   }
 
-  inline object_pose_estimator(const rclcpp::NodeOptions& options)
-  : Node("smap_object_pose_estimator", options)
+  inline object_estimator(const rclcpp::NodeOptions& options)
+  : Node("smap_object_estimator", options)
   {
-    RCLCPP_INFO(this->get_logger(), "Initializing smap_object_pose_estimator");
+    RCLCPP_INFO(this->get_logger(), "Initializing smap_object_estimator");
     // this->viewer = std::make_shared<pcl::visualization::PCLVisualizer>(new pcl::visualization::PCLVisualizer ("3D Viewer"));
   }
 
-  inline ~object_pose_estimator()
+  inline ~object_estimator()
   {
   }
 
@@ -359,6 +359,6 @@ private:
 
 }  // namespace smap
 
-// RCLCPP_COMPONENTS_REGISTER_NODE(smap::object_pose_estimator)
+// RCLCPP_COMPONENTS_REGISTER_NODE(smap::object_estimator)
 
-#endif  // SMAP_CORE__OBJECT_POSE_ESTIMATOR_HPP_
+#endif  // SMAP_CORE__OBJECT__ESTIMATOR_HPP_

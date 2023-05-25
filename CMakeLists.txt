@@ -126,7 +126,7 @@ find_package(rmw_implementation_cmake REQUIRED)
 ######################
 
 ###########################
-## object_pose_estimator ##
+## object_estimator ##
 ###########################
 
   find_package(tf2 REQUIRED)
@@ -153,25 +153,25 @@ find_package(rmw_implementation_cmake REQUIRED)
   ## Lib ##
 
     add_library(
-      object_pose_estimator_lib
-      src/object_pose_estimator.cpp
+      object_estimator_lib
+      src/object_estimator.cpp
       ${IMGUI_SRC}
     )
 
-    target_include_directories(object_pose_estimator_lib PUBLIC
+    target_include_directories(object_estimator_lib PUBLIC
       $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
       $<INSTALL_INTERFACE:include>
       ${SDL2_INCLUDE_DIRS} # imgui
     )
 
-    target_link_libraries(object_pose_estimator_lib 
+    target_link_libraries(object_estimator_lib 
       ${PCL_LIBRARIES} 
       GL # imgui
       ${SDL2_LIBRARIES} # imgui
     )
 
     ament_target_dependencies(
-      object_pose_estimator_lib
+      object_estimator_lib
       rclcpp
       PCL
       pcl_conversions
@@ -183,14 +183,14 @@ find_package(rmw_implementation_cmake REQUIRED)
       rclcpp_components
     )
 
-    install(TARGETS object_pose_estimator_lib
+    install(TARGETS object_estimator_lib
       DESTINATION lib
     )
 
     # rclcpp_components_register_node(
-    #   object_pose_estimator_lib
-    #   PLUGIN "smap::object_pose_estimator"
-    #   EXECUTABLE object_pose_estimator_libonent
+    #   object_estimator_lib
+    #   PLUGIN "smap::object_estimator"
+    #   EXECUTABLE object_estimator_libonent
     # )
 
   ## Lib ##
@@ -198,25 +198,25 @@ find_package(rmw_implementation_cmake REQUIRED)
   ## Node ##
 
     add_executable(
-      object_pose_estimator_node
-      src/object_pose_estimator.cpp
+      object_estimator_node
+      src/object_estimator.cpp
       ${IMGUI_SRC}
     )
 
-    target_include_directories(object_pose_estimator_node PUBLIC
+    target_include_directories(object_estimator_node PUBLIC
       $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
       $<INSTALL_INTERFACE:include>
       ${SDL2_INCLUDE_DIRS} # imgui
     )
 
-    target_link_libraries(object_pose_estimator_node 
+    target_link_libraries(object_estimator_node 
       ${PCL_LIBRARIES} 
       GL # imgui
       ${SDL2_LIBRARIES} # imgui
     )
 
     ament_target_dependencies(
-      object_pose_estimator_node
+      object_estimator_node
       rclcpp
       PCL
       pcl_conversions
@@ -228,14 +228,14 @@ find_package(rmw_implementation_cmake REQUIRED)
       rclcpp_components
     )
 
-    install(TARGETS object_pose_estimator_node
+    install(TARGETS object_estimator_node
       DESTINATION lib/${PROJECT_NAME}
     )
 
   ## Node ##
 
 ############################
-## /object_pose_estimator ##
+## /object_estimator ##
 ############################
 
 #######################
@@ -336,7 +336,7 @@ target_link_libraries(
   thing
   topological_map
   ${Boost_LIBRARIES}
-  object_pose_estimator_lib
+  object_estimator_lib
   perception_server_lib
 )
 

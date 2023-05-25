@@ -177,7 +177,7 @@ Visualization Manager:
       Name: Robot
     - Class: rviz_default_plugins/Marker
       Enabled: true
-      Name: Marker
+      Name: Topological Map
       Namespaces:
         {}
       Topic:
@@ -185,26 +185,7 @@ Visualization Manager:
         Durability Policy: Volatile
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: /semantic_mapper/topological_map/graph_nodes
-      Value: true
-    - Alpha: 0.699999988079071
-      Axes Length: 1
-      Axes Radius: 0.10000000149011612
-      Class: rviz_default_plugins/Pose
-      Color: 255; 255; 255
-      Enabled: true
-      Head Length: 0.30000001192092896
-      Head Radius: 0.07999999821186066
-      Name: Pose
-      Shaft Length: 0.20000000298023224
-      Shaft Radius: 0.05000000074505806
-      Shape: Arrow
-      Topic:
-        Depth: 5
-        Durability Policy: Volatile
-        History Policy: Keep Last
-        Reliability Policy: Reliable
-        Value: /smap/sampler/pose
+        Value: /smap/core/topological_map/graph_nodes
       Value: true
     - Alpha: 1
       Autocompute Intensity Bounds: true
@@ -362,18 +343,18 @@ Visualization Manager:
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: -0.2029253989458084
-        Y: 0.7255160212516785
-        Z: 0.2839057147502899
+        X: -0.1114749163389206
+        Y: -0.4520096778869629
+        Z: 0.060818150639534
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.3147963881492615
+      Pitch: 0.3697963058948517
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz_default_plugins)
-      Yaw: 3.722385883331299
+      Yaw: 3.2923834323883057
     Saved: ~
 Window Geometry:
   Detections:
