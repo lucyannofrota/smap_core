@@ -52,10 +52,11 @@ private:
 
 
   // Subscriptions
-  rclcpp::Subscription<smap_interfaces::msg::SmapData>::SharedPtr SmapData_sub = this->create_subscription<smap_interfaces::msg::SmapData>(
-    "/smap/sampler/data",10,std::bind(
-      &smap::smap_node::SmapData_callback, this, std::placeholders::_1)
-  );
+  // rclcpp::Subscription<smap_interfaces::msg::SmapData>::SharedPtr SmapData_sub = this->create_subscription<smap_interfaces::msg::SmapData>(
+  //   std::string(this->get_namespace())+std::string("/sampler/data"),10,std::bind(
+  //     &smap::smap_node::SmapData_callback, this, std::placeholders::_1)
+  // );
+
 
 public:
   // Constructor/Destructor
@@ -63,15 +64,15 @@ public:
   : Node("smap_core")
   {
     RCLCPP_INFO(this->get_logger(), "Initializing smap_core");
-
   }
   ~smap_node()
   {
   }
 
-  void SmapData_callback(const smap_interfaces::msg::SmapData::SharedPtr input_msg){
-    this->topo_map->add_vertex(input_msg->stamped_pose.pose.position);
-  }
+  // void SmapData_callback(const smap_interfaces::msg::SmapData::SharedPtr input_msg){
+  //   // printf("SmapData_callback\n");
+  //   // this->topo_map->add_vertex(input_msg->stamped_pose.pose.position);
+  // }
 
   void on_process(void) // Pooling
   {

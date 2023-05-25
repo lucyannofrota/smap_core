@@ -187,18 +187,18 @@ class object_estimator : public rclcpp::Node
 {
 private:
   const size_t max_threads = 8; // Should be grathen than 1 because of the function "__compute_timeout"
-  rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr img_publisher = this->create_publisher<sensor_msgs::msg::Image>(
-    "pcl", 10);
+  // rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr img_publisher = this->create_publisher<sensor_msgs::msg::Image>(
+  //   "pcl", 10);
 
   rclcpp::Subscription<smap_interfaces::msg::SmapDetections>::SharedPtr smap_detections_sub = this->create_subscription<smap_interfaces::msg::SmapDetections>(
-    "/smap/perception/predictions",10,std::bind(
+    std::string(this->get_namespace())+std::string("/perception/predictions"),10,std::bind(
       &smap::object_estimator::detections_callback, this, std::placeholders::_1)
   );
 
 
-  rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr debug_object_pcl_pub = this->create_publisher<sensor_msgs::msg::PointCloud2>("/smap/core/object_pose_estimation/debug/object_pcl",10);
-  rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr object_bb_pub = this->create_publisher<visualization_msgs::msg::Marker>("/smap/core/object_pose_estimation/debug/object_bb",10);
-  rclcpp::Publisher<smap_interfaces::msg::SmapObject>::SharedPtr object_pub = this->create_publisher<smap_interfaces::msg::SmapObject>("/smap/core/object_pose_estimation/objects",10);
+  rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr debug_object_pcl_pub = this->create_publisher<sensor_msgs::msg::PointCloud2>(std::string(this->get_namespace())+std::string("/object_estimator/debug/object_pcl"),10);
+  rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr object_bb_pub = this->create_publisher<visualization_msgs::msg::Marker>(std::string(this->get_namespace())+std::string("/object_estimator/debug/object_bb"),10);
+  rclcpp::Publisher<smap_interfaces::msg::SmapObject>::SharedPtr object_pub = this->create_publisher<smap_interfaces::msg::SmapObject>(std::string(this->get_namespace())+std::string("/object_estimator/objects"),10);
   std::mutex object_bb_pub_mutex, object_pub_mutex, debug_object_pcl_pub_mutex;
 
   std::shared_ptr<thread_queue> thread_ctl = std::make_shared<thread_queue>(thread_queue(this->max_threads));
@@ -224,16 +224,16 @@ public:
   // std::list<int> box_filter_times;
   // Constructor/Destructor
   inline object_estimator()
-  : Node("smap_object_estimator")
+  : Node("object_estimator")
   {
-    RCLCPP_INFO(this->get_logger(), "Initializing smap_object_estimator");
+    RCLCPP_INFO(this->get_logger(), "Initializing object_estimator");
     // this->viewer = std::make_shared<pcl::visualization::PCLVisualizer>(new pcl::visualization::PCLVisualizer ("3D Viewer"));
   }
 
   inline object_estimator(const rclcpp::NodeOptions& options)
-  : Node("smap_object_estimator", options)
+  : Node("object_estimator", options)
   {
-    RCLCPP_INFO(this->get_logger(), "Initializing smap_object_estimator");
+    RCLCPP_INFO(this->get_logger(), "Initializing object_estimator");
     // this->viewer = std::make_shared<pcl::visualization::PCLVisualizer>(new pcl::visualization::PCLVisualizer ("3D Viewer"));
   }
 

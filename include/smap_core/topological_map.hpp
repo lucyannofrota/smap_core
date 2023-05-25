@@ -104,11 +104,13 @@ namespace smap
     // rclcpp::TimerBase::SharedPtr timer{nullptr};
 
     // Subscriptions
-    // rclcpp::Subscription<smap::msg::SmapData>::SharedPtr SmapData_sub;
+    rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr pose_sub = this->create_subscription<geometry_msgs::msg::PoseStamped>(
+      std::string(this->get_namespace())+std::string("/sampler/pose"), 10, std::bind(&topological_map::pose_callback, this, std::placeholders::_1)
+    );
 
     // Publishers
     rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr publisher_marker = this->create_publisher<visualization_msgs::msg::Marker>(
-        "smap/core/topological_map/graph_nodes", 10);
+        std::string(this->get_namespace())+std::string("/topological_map/graph_nodes"), 10);
     visualization_msgs::msg::Marker vertex_marker;
     visualization_msgs::msg::Marker edge_marker;
 
@@ -264,6 +266,7 @@ namespace smap
       return ret;
     }
 
+
   public:
     topological_map(void)
         : Node("topological_map")
@@ -322,7 +325,7 @@ namespace smap
 
     void on_process(void); // Pooling
 
-    void add_vertex(const geometry_msgs::msg::Point &pos);
+    void pose_callback(const geometry_msgs::msg::PoseStamped::SharedPtr pose);
 
     void export_ThingsGraph(const std::string &f_name);
 

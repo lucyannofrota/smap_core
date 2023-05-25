@@ -22,19 +22,17 @@ void topological_map::on_process(void) // Pooling
   }
 }
 
-void topological_map::add_vertex(const geometry_msgs::msg::Point & pos)
+void topological_map::pose_callback(const geometry_msgs::msg::PoseStamped::SharedPtr pose)
 {
-  // Initialization
-  // static geometry_msgs::msg::Point initial_point;
-  // static bool initialization = true;
+  // add vertex based on the current pose
 
   static double dist_current;
-  VertexData * closest = _get_valid_close_vertex(pos, NEW_EDGE_FACTOR);
+  VertexData * closest = _get_valid_close_vertex(pose->pose.position, NEW_EDGE_FACTOR);
   size_t idx;
   static long v_index = 0;
   if (current_vertex == NULL) {
     if (closest == NULL) {
-      idx = this->_add_vertex(v_index++, pos);
+      idx = this->_add_vertex(v_index++, pose->pose.position);
       current_vertex = &(Graph[idx]);
       return;
     } else {
@@ -53,13 +51,13 @@ void topological_map::add_vertex(const geometry_msgs::msg::Point & pos)
   }
 
   dist_current = sqrt(
-    pow(current_vertex->pos.x - pos.x, 2) +
-    pow(current_vertex->pos.y - pos.y, 2) +
-    pow(current_vertex->pos.z - pos.z, 2)
+    pow(current_vertex->pos.x - pose->pose.position.x, 2) +
+    pow(current_vertex->pos.y - pose->pose.position.y, 2) +
+    pow(current_vertex->pos.z - pose->pose.position.z, 2)
   );
 
   if (dist_current < VERTEX_DISTANCE) {return;}
-  idx = _add_vertex(v_index++, pos);
+  idx = _add_vertex(v_index++, pose->pose.position);
   previous_vertex = current_vertex;
   current_vertex = &(Graph[idx]);
 

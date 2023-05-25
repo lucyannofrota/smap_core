@@ -3,12 +3,8 @@
 
 #include "visibility_control.h"
 
-// #include <chrono>
-// #include <iostream>
-// #include <thread>
 
 #include "rclcpp/rclcpp.hpp"
-// #include "rclcpp_components/register_node_macro.hpp"
 #include "visualization_msgs/msg/marker.hpp"
 
 // SMAP
@@ -16,9 +12,6 @@
 #include "smap_interfaces/srv/add_perception_module.hpp"
 #include "smap_interfaces/srv/smap_classes.hpp"
 #include "smap_interfaces/msg/smap_detections.hpp"
-// #include "smap_interfaces/msg/smap_object.hpp"
-// #include "smap_interfaces/msg/smap_detections.hpp"
-// #include "smap_interfaces/msg/bounding_box2_d.hpp"
 
 enum detector_type
 {
@@ -46,40 +39,30 @@ namespace smap
     std::list<std::pair<int, std::string>> classes;
     int n_classes = 0;
 
-    // rclcpp::Publisher<smap_interfaces::msg::SmapDetections>::SharedPtr sub = this->create_subscription<smap_interfaces::msg::SmapDetections>(
-    //   "/smap_core/perception/predictions",10,
-    //   std::bind(
-    //     &smap::perception_server::
-    //   )
-    // );
-
     rclcpp::Service<smap_interfaces::srv::AddPerceptionModule>::SharedPtr add_perception_module_srv = this->create_service<smap_interfaces::srv::AddPerceptionModule>(
-        "/smap/core/perception_server/add_perception_module", std::bind(
+        std::string(this->get_namespace())+std::string("/perception_server/add_perception_module"), std::bind(
                                                                   &smap::perception_server::AddPerceptionModule_callback, this, std::placeholders::_1, std::placeholders::_2));
 
     rclcpp::Service<smap_interfaces::srv::SmapClasses>::SharedPtr list_classes_srv = this->create_service<smap_interfaces::srv::SmapClasses>(
-        "/smap/core/perception_server/list_classes", std::bind(
+        std::string(this->get_namespace())+std::string("/perception_server/list_classes"), std::bind(
                                                                   &smap::perception_server::ListClasses_callback, this, std::placeholders::_1, std::placeholders::_2));
-    // rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr img_publisher = this->create_publisher<sensor_msgs::msg::Image>(
-    //   "pcl", 10);
 
-
-    // rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr debug_object_pcl_pub = this->create_publisher<sensor_msgs::msg::PointCloud2>("/smap/core/object_pose_estimation/debug/object_pcl",10);
-    // rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr object_bb_pub = this->create_publisher<visualization_msgs::msg::Marker>("/smap/core/object_pose_estimation/debug/object_bb",10);
-    // rclcpp::Publisher<smap_interfaces::msg::SmapObject>::SharedPtr object_pub = this->create_publisher<smap_interfaces::msg::SmapObject>("/smap/core/object_pose_estimation/objects",10);
+    rclcpp::Subscription<smap_interfaces::msg::SmapObject>::SharedPtr objects_sub = this->create_subscription<smap_interfaces::msg::SmapObject>(
+      std::string(this->get_namespace())+std::string("/object_estimator/objects"), 10,std::bind(&perception_server::objects_callback, this, std::placeholders::_1)
+    );
 
   public:
     // Constructor/Destructor
     inline perception_server()
-        : Node("smap_perception_server")
+        : Node("perception_server")
     {
-      RCLCPP_INFO(this->get_logger(), "Initializing smap_perception_server");
+      RCLCPP_INFO(this->get_logger(), "Initializing perception_server");
     }
 
     inline perception_server(const rclcpp::NodeOptions &options)
-        : Node("smap_perception_server", options)
+        : Node("perception_server", options)
     {
-      RCLCPP_INFO(this->get_logger(), "Initializing smap_perception_server");
+      RCLCPP_INFO(this->get_logger(), "Initializing perception_server");
     }
 
     inline ~perception_server() {}

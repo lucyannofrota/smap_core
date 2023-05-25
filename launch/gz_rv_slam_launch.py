@@ -63,14 +63,14 @@ def generate_launch_description():
 
     set_sim_time = launch_ros.actions.SetParameter(name='use_sim_time', value=True)
 
-    node = launch_ros.actions.Node(
-            package='smap_sampler',
-            executable='smap_sampler_node',
-            name='smap_sampler_node',
-            parameters=[params],
-            output='screen',
-            arguments=[('__log_level:=debug')]
-    )
+    # node = launch_ros.actions.Node(
+    #         package='smap_sampler',
+    #         executable='smap_sampler_node',
+    #         name='smap_sampler_node',
+    #         parameters=[params],
+    #         output='screen',
+    #         arguments=[('__log_level:=debug')]
+    # )
 
 
     return LaunchDescription([

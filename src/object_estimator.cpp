@@ -15,8 +15,8 @@ void object_estimator::box_filter(
   count_time timer;
   pcl::PointIndices::Ptr inliers (new pcl::PointIndices ());
 
-  for(size_t h = obj->bounding_box_2d.keypoint_1[1]; h <= obj->bounding_box_2d.keypoint_2[1]; h++){
-    for(size_t w = obj->bounding_box_2d.keypoint_1[0]; w <= obj->bounding_box_2d.keypoint_2[0]; w++){
+  for(size_t h = obj->bb_2d.keypoint_1[1]; h <= obj->bb_2d.keypoint_2[1]; h++){
+    for(size_t w = obj->bb_2d.keypoint_1[0]; w <= obj->bb_2d.keypoint_2[0]; w++){
       inliers->indices.push_back(
         (w)+input_cloud->width*(h)-1
       );
@@ -184,12 +184,12 @@ void object_estimator::object_estimation_thread(
 ){
 
   // printf("POS [%i,%i]\n",
-  //   obj->bounding_box_2d.keypoint_1[0],
-  //   obj->bounding_box_2d.keypoint_1[1]
+  //   obj->bb_2d.keypoint_1[0],
+  //   obj->bb_2d.keypoint_1[1]
   // );
   // if( 
-  //   ! ((obj->bounding_box_2d.keypoint_1[0] > 180) &&
-  //   (obj->bounding_box_2d.keypoint_1[0] < 300))
+  //   ! ((obj->bb_2d.keypoint_1[0] > 180) &&
+  //   (obj->bb_2d.keypoint_1[0] < 300))
   // ) return;
 
   // if(obj->confidence <= 70) return;
@@ -274,7 +274,7 @@ void object_estimator::object_estimation_thread(
 void object_estimator::detections_callback(
   const smap_interfaces::msg::SmapDetections::SharedPtr input_msg
 ){
-  // RCLCPP_DEBUG(this->get_logger(),"detections_callback");
+  RCLCPP_DEBUG(this->get_logger(),"detections_callback");
 
   pcl::shared_ptr<cloud_t> pcl_point_cloud (new cloud_t);
   pcl::fromROSMsg(input_msg->pointcloud,*pcl_point_cloud);
