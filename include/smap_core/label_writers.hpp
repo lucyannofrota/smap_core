@@ -3,22 +3,29 @@
 
 #include <list>
 #include <utility>
+#include <geometry_msgs/msg/pose_stamped.hpp>
 
 namespace smap
 {
 
-template<class Name>
+template<class Name_1, class Name_2>
 class vertex_label_writer
 {
 public:
-  vertex_label_writer(Name vertex_map)
-  : name(vertex_map) {}
+  vertex_label_writer(Name_1 n1, Name_2 n2)
+  : name(n1), pos(n2) {}
   template<class VertexOrEdge>
   void operator()(std::ostream & out, const VertexOrEdge & v)
   {
     std::pair<std::string, std::string> g_pair = get(name, v).get_vertex_representation();
-    out << "[label=" << boost::escape_dot_string(add_cout(g_pair.first)) << ",color=\"" +
-      g_pair.second + "\"]";
+    geometry_msgs::msg::Point point = get(pos, v);
+    // add_pos
+    out << "[label=" << boost::escape_dot_string(
+      add_pos(
+        add_cout(g_pair.first), point
+      )
+    ) << ",color=\"" +
+    g_pair.second + "\"]";
   }
   std::string add_cout(const std::string cname)
   {
@@ -29,6 +36,20 @@ public:
     }
     classes.push_back(std::pair<std::string, int>{cname, 1});
     return cname + std::string("_0");
+  }
+  std::string add_pos(const std::string text, const geometry_msgs::msg::Point point)
+  {
+    char nuns[6*3+2*3];
+    sprintf(nuns,"%6.1f, %6.1f, %6.1f",
+      point.x,
+      point.y,
+      point.z
+    );
+    return text + std::string(
+      "\n["+
+      std::string(nuns)+
+      "]"
+    );
   }
   bool find(const std::string cname, std::list<std::pair<std::string, int>>::iterator & it)
   {
@@ -42,14 +63,16 @@ public:
   }
 
 private:
-  Name name;
+  Name_1 name;
+  Name_2 pos;
   std::list<std::pair<std::string, int>> classes;
 };
-template<class Name>
-inline vertex_label_writer<Name>
-make_vertex_label_writer(Name n)
+
+template<class Name_1, class Name_2>
+inline vertex_label_writer<Name_1, Name_2>
+make_vertex_label_writer(Name_1 n1, Name_2 n2)
 {
-  return vertex_label_writer<Name>(n);
+  return vertex_label_writer<Name_1, Name_2>(n1,n2);
 }
 
 

@@ -67,33 +67,37 @@ void topological_map::pose_callback(const geometry_msgs::msg::PoseStamped::Share
   );
 }
 
-void topological_map::export_TopoGraph(const std::string & f_name)
-{
-  std::ofstream dotfile(OUTPUT_PATH + f_name + ".dot");
-
-  write_graphviz(
-    dotfile, Graph,
-    make_vertex_label_writer(boost::get(&VertexData::this_thing, Graph)),
-    make_cost_label_writer(
-      boost::get(&EdgeData::distance, Graph),
-      boost::get(&EdgeData::modifier, Graph))
-  );
-
-  if (std::system(
-      ("dot -Tpng " + OUTPUT_PATH + f_name + ".dot > " + OUTPUT_PATH + f_name +
-      ".png").c_str()) ==
-    0)
+  void topological_map::export_TopoGraph(const std::string &f_name)
   {
-    if (std::system(("rm " + OUTPUT_PATH + f_name + ".dot").c_str()) == 0) {
-      // https://stackoverflow.com/questions/2616906/how-do-i-output-coloured-text-to-a-linux-terminal
-      RCLCPP_INFO(
-        this->get_logger(),
-        "\033[42m[Export Complete]\033[0m png file successfully exported to: %s.png", std::string(
-          OUTPUT_PATH + f_name).c_str());
+    std::ofstream dotfile(OUTPUT_PATH + f_name + ".dot");
+
+    write_graphviz(
+        dotfile, Graph,
+        make_vertex_label_writer(
+          boost::get(&VertexData::this_thing, Graph),
+          boost::get(&VertexData::pos, Graph)
+        ),
+        make_cost_label_writer(
+            boost::get(&EdgeData::distance, Graph),
+            boost::get(&EdgeData::modifier, Graph)));
+
+    if (std::system(
+            ("dot -Tpng " + OUTPUT_PATH + f_name + ".dot > " + OUTPUT_PATH + f_name +
+             ".png")
+                .c_str()) ==
+        0)
+    {
+      if (std::system(("rm " + OUTPUT_PATH + f_name + ".dot").c_str()) == 0)
+      {
+        // https://stackoverflow.com/questions/2616906/how-do-i-output-coloured-text-to-a-linux-terminal
+        RCLCPP_INFO(
+            this->get_logger(),
+            "\033[42m[Export Complete]\033[0m png file successfully exported to: %s.png", std::string(OUTPUT_PATH + f_name).c_str());
+      }
     }
   }
 
-}
+  void topological_map::save_map(topological_map &obj)
 
 void topological_map::save_map(topological_map & obj)
 {
