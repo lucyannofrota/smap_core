@@ -25,10 +25,10 @@ public:
     std::list<std::pair<std::string, int>>::iterator it;
     if (find(cname, it)) {
       (*it).second++;
-      return cname + "_" + std::to_string((*it).second);
+      return cname + "_" + std::to_string((*it).second-1);
     }
     classes.push_back(std::pair<std::string, int>{cname, 1});
-    return cname + std::string("_1");
+    return cname + std::string("_0");
   }
   bool find(const std::string cname, std::list<std::pair<std::string, int>>::iterator & it)
   {
