@@ -71,7 +71,7 @@ public:
 
   // void SmapData_callback(const smap_interfaces::msg::SmapData::SharedPtr input_msg){
   //   // printf("SmapData_callback\n");
-  //   // this->topo_map->add_vertex(input_msg->stamped_pose.pose.position);
+  //   // this->topological_map->add_vertex(input_msg->stamped_pose.pose.position);
   // }
 
   void on_process(void) // Pooling
@@ -85,7 +85,7 @@ private:
 
 public:
   // Map
-  std::shared_ptr<smap::topological_map> topo_map;
+  // std::shared_ptr<smap::topological_map> topological_map;
 };
 
 
@@ -96,21 +96,21 @@ int main(int argc, char ** argv)
   rclcpp::init(argc, argv);
   rclcpp::NodeOptions options;
   std::shared_ptr<smap::smap_node> _smap_node = std::make_shared<smap::smap_node>();
-  std::shared_ptr<smap::topological_map> _topological_map_node = std::make_shared<smap::topological_map>();
+  // std::shared_ptr<smap::topological_map> _topological_map_node = std::make_shared<smap::topological_map>();
   std::shared_ptr<smap::object_estimator> _object_estimator_node = std::make_shared<smap::object_estimator>(options);
   std::shared_ptr<smap::perception_server> _perception_server_node = std::make_shared<smap::perception_server>(options);
-  _smap_node->topo_map = _topological_map_node;
+  // _smap_node->topological_map = _topological_map_node;
   rclcpp::executors::MultiThreadedExecutor executor;
   executor.add_node(_smap_node);
-  executor.add_node(_topological_map_node);
+  // executor.add_node(_topological_map_node);
   executor.add_node(_object_estimator_node);
   executor.add_node(_perception_server_node);
   // rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr service = _smap_node->create_service<std_srvs::srv::Trigger>("serv_smap", &smap::test_serv);
   while (rclcpp::ok()) {
     try{
       executor.spin_once();
-      _smap_node->on_process(); // Pooling
-      _topological_map_node->on_process(); // Pooling
+      // _smap_node->on_process(); // Pooling
+      // _topological_map_node->on_process(); // Pooling
     }catch (std::exception& e){
       std::cout << "Exception!" << std::endl;
       std::cout << e.what() << std::endl;

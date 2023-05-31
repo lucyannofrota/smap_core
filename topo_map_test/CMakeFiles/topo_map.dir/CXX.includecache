@@ -1,0 +1,30 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/workspace/src/smap/smap_core/topo_map_test/topo_map.cpp
+cmath
+-
+boost/graph/adjacency_list.hpp
+-
+boost/graph/graphviz.hpp
+-
+boost/serialization/list.hpp
+-
+boost/serialization/serialization.hpp
+-
+boost/graph/adj_list_serialize.hpp
+-
+boost/serialization/version.hpp
+-
+boost/archive/text_oarchive.hpp
+-
+boost/archive/text_iarchive.hpp
+-
+boost/graph/graph_utility.hpp
+-
+

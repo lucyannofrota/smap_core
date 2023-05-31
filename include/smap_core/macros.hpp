@@ -15,9 +15,9 @@ namespace smap
 
   #define SAVE_LOAD_PATH std::string("src/smap/smap_core/maps/") // Save/Load path
 
-  #define VERTEX_DISTANCE 0.7 // Minimun distance to create a new vertece
+  #define VERTEX_DISTANCE 1 // Minimun distance to create a new vertece
 
-  #define NEW_EDGE_FACTOR 1.15 // Must be < 1
+  #define NEW_EDGE_FACTOR 0.95 // Must be < 1
 
 
 }  // namespace smap

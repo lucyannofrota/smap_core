@@ -161,6 +161,15 @@ namespace smap
     }
   }
 
+
+
+  void perception_server::objects_callback(const smap_interfaces::msg::SmapObject::SharedPtr object) const{
+    // object->bb_2d
+    
+  }
+
+
+
   void perception_server::print_classes(std::string pref, std::list<std::pair<int,std::string>> &classes)
   {
     for (auto cls : classes)
@@ -202,7 +211,7 @@ namespace smap
     RCLCPP_INFO(this->get_logger(),"Detectors:");
     for (auto detector : this->detectors)
       perception_server::print_detector("\t", detector);
-    RCLCPP_INFO(this->get_logger(),"Clsses:\n");
+    RCLCPP_INFO(this->get_logger(),"Classes:\n");
     perception_server::print_classes("", this->classes);
   }
 

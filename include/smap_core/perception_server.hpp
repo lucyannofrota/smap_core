@@ -78,6 +78,10 @@ namespace smap
       std::shared_ptr<smap_interfaces::srv::SmapClasses::Response> response
     );
 
+    
+
+    void objects_callback(const smap_interfaces::msg::SmapObject::SharedPtr object) const;
+
     // print data
 
     void print_classes(std::string pref, std::list<std::pair<int, std::string>> &classes);

@@ -94,35 +94,70 @@ find_package(rmw_implementation_cmake REQUIRED)
 ############
 
 #####################
-## Topological_Map ##
+## topological_map ##
 #####################
 
-  add_library(topological_map src/topological_map.cpp src/thing.cpp)
-  target_include_directories(topological_map PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:include>)
+  ## Lib ##
 
-  ament_target_dependencies(
-    topological_map
-    geometry_msgs
-    smap_interfaces
-    visualization_msgs
-  )
+    add_library(topological_map src/topological_map.cpp src/thing.cpp)
+    target_include_directories(topological_map PUBLIC
+      $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+      $<INSTALL_INTERFACE:include>)
 
-  # Causes the visibility macros to use dllexport rather than dllimport,
-  # which is appropriate when building the dll but not consuming it.
-  target_compile_definitions(topological_map PRIVATE "SMAP_BUILDING_LIBRARY")
+    ament_target_dependencies(
+      topological_map
+      geometry_msgs
+      smap_interfaces
+      visualization_msgs
+    )
 
-  install(
-    TARGETS topological_map
-    EXPORT export_${PROJECT_NAME}
-    ARCHIVE DESTINATION lib
-    LIBRARY DESTINATION lib
-    RUNTIME DESTINATION bin
-  )
+    # Causes the visibility macros to use dllexport rather than dllimport,
+    # which is appropriate when building the dll but not consuming it.
+    target_compile_definitions(topological_map PRIVATE "SMAP_BUILDING_LIBRARY")
+
+    install(
+      TARGETS topological_map
+      EXPORT export_${PROJECT_NAME}
+      ARCHIVE DESTINATION lib
+      LIBRARY DESTINATION lib
+      RUNTIME DESTINATION bin
+    )
+
+  ## /Lib ##
+
+  ## Node ##
+
+    add_executable(
+      topological_map_node
+      src/topological_map.cpp
+    )
+
+    target_include_directories(topological_map_node PUBLIC
+      $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+      $<INSTALL_INTERFACE:include>
+    )
+
+    target_link_libraries(topological_map_node 
+      thing
+      ${Boost_LIBRARIES}
+    )
+
+    ament_target_dependencies(
+      topological_map_node
+      rclcpp
+      geometry_msgs
+      smap_interfaces
+      visualization_msgs
+    )
+
+    install(TARGETS topological_map_node
+      DESTINATION lib/${PROJECT_NAME}
+    )
+
+  ## Node ##
 
 ######################
-## /Topological_Map ##
+## /topological_map ##
 ######################
 
 ###########################
@@ -242,46 +277,46 @@ find_package(rmw_implementation_cmake REQUIRED)
 ## perception_server ##
 #######################
 
-find_package(rclcpp REQUIRED)
-find_package(rclcpp_components REQUIRED)
-find_package(smap_interfaces REQUIRED)
-find_package(visualization_msgs REQUIRED)
+  find_package(rclcpp REQUIRED)
+  find_package(rclcpp_components REQUIRED)
+  find_package(smap_interfaces REQUIRED)
+  find_package(visualization_msgs REQUIRED)
 
-## Lib ##
+  ## Lib ##
 
-  add_library(
-    perception_server_lib
-    src/perception_server.cpp
-  )
+    add_library(
+      perception_server_lib
+      src/perception_server.cpp
+    )
 
-  target_include_directories(perception_server_lib PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:include>
-  )
+    target_include_directories(perception_server_lib PUBLIC
+      $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+      $<INSTALL_INTERFACE:include>
+    )
 
-  # target_link_libraries(perception_server_lib 
-  #   ${PCL_LIBRARIES} 
-  # )
+    # target_link_libraries(perception_server_lib 
+    #   ${PCL_LIBRARIES} 
+    # )
 
-  ament_target_dependencies(
-    perception_server_lib
-    rclcpp
-    rclcpp_components
-    smap_interfaces
-    visualization_msgs
-  )
+    ament_target_dependencies(
+      perception_server_lib
+      rclcpp
+      rclcpp_components
+      smap_interfaces
+      visualization_msgs
+    )
 
-  install(TARGETS perception_server_lib
-    DESTINATION lib
-  )
+    install(TARGETS perception_server_lib
+      DESTINATION lib
+    )
 
-  # rclcpp_components_register_node(
-  #   perception_server_lib
-  #   PLUGIN "smap::perception_server"
-  #   EXECUTABLE perception_server_libonent
-  # )
+    # rclcpp_components_register_node(
+    #   perception_server_lib
+    #   PLUGIN "smap::perception_server"
+    #   EXECUTABLE perception_server_libonent
+    # )
 
-## Lib ##
+  ## Lib ##
 
 ########################
 ## /perception_server ##
