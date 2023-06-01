@@ -343,8 +343,6 @@ class topo_map : public rclcpp::Node
     inline void pose_callback( const geometry_msgs::msg::PoseStamped::SharedPtr pose )
     {
         this->add_vertex( pose->pose.position );
-
-        std::this_thread::sleep_for( std::chrono::milliseconds( 1000 ) );
     }
 
     inline void object_callback( const smap_interfaces::msg::SmapObject::SharedPtr object )

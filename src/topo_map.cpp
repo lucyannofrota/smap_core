@@ -94,7 +94,41 @@ void topo_map::add_vertex( const geometry_msgs::msg::Point& pos, size_t& current
 
     printf( "\tNew vertex\n" );
 
-    printf( "\t\tadding Vertex\n" );
+    if( dist_current > VERTEX_DISTANCE * NEW_EDGE_FACTOR )
+    {
+        printf( "\t\tadding distant Vertex\n" );
+        int n_new_vertex, count = 1;
+        double t;
+        geometry_msgs::msg::Point new_point, base_point;
+        vertex_data_t pre;
+        previous = current;
+        this->get_vertex( previous, pre );
+        base_point   = pre.pos;
+        new_point    = pre.pos;
+
+        n_new_vertex = floor( dist_current / VERTEX_DISTANCE );
+        t            = ( VERTEX_DISTANCE ) / dist_current;
+        printf( "\t\t\tCreate support nodes\nn: %i|t: %6.1f\n", n_new_vertex, t );
+        while( dist_current > VERTEX_DISTANCE && n_new_vertex > 0 )
+        {
+            new_point.x = ( 1 - t * count ) * base_point.x + t * count * pos.x;
+            new_point.y = ( 1 - t * count ) * base_point.y + t * count * pos.y;
+
+            int idx     = this->_add_vertex( this->v_index++, new_point );
+            current     = this->graph[ idx ].index;
+
+            this->add_edge( previous, current );
+
+            previous = current;
+            this->get_vertex( previous, pre );
+            dist_current = this->_calc_distance( pre.pos, pos );
+            n_new_vertex--;
+            count++;
+        }
+        return;
+    }
+
+    printf( "\t\tadding close Vertex\n" );
     this->print_vertex( std::string( "\t\t\tCurrent: " ), current );
     this->print_vertex( std::string( "\t\t\tPrevious: " ), previous );
     this->print_vertex( std::string( "\t\t\tClosest: " ), closest );
