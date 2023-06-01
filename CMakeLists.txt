@@ -59,6 +59,10 @@ find_package(rmw_implementation_cmake REQUIRED)
   set(Boost_USE_MULTITHREADED ON)  
   find_package(Boost REQUIRED system serialization) 
 
+  # if(Boost_FOUND)
+  #   include_directories(${Boost_INCLUDE_DIRS}) 
+	# endif()
+
 ####################
 ## /ADD BOOST LIB ##
 ####################
@@ -93,76 +97,148 @@ find_package(rmw_implementation_cmake REQUIRED)
 ## /thing ##
 ############
 
-#####################
-## topological_map ##
-#####################
+##############
+## topo_map ##
+##############
 
   ## Lib ##
 
-    add_library(topological_map src/topological_map.cpp src/thing.cpp)
-    target_include_directories(topological_map PUBLIC
-      $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-      $<INSTALL_INTERFACE:include>)
+  add_library(topo_map src/topo_map.cpp src/thing.cpp)
+	target_link_libraries(topo_map ${Boost_LIBRARIES})
+  target_include_directories(topo_map PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>
+		${Boost_INCLUDE_DIRS}
+	)
 
-    ament_target_dependencies(
-      topological_map
-      geometry_msgs
-      smap_interfaces
-      visualization_msgs
-    )
+  ament_target_dependencies(
+    topo_map
+    geometry_msgs
+    smap_interfaces
+    visualization_msgs
+  )
 
-    # Causes the visibility macros to use dllexport rather than dllimport,
-    # which is appropriate when building the dll but not consuming it.
-    target_compile_definitions(topological_map PRIVATE "SMAP_BUILDING_LIBRARY")
+  # Causes the visibility macros to use dllexport rather than dllimport,
+  # which is appropriate when building the dll but not consuming it.
+  target_compile_definitions(topo_map PRIVATE "SMAP_BUILDING_LIBRARY")
 
-    install(
-      TARGETS topological_map
-      EXPORT export_${PROJECT_NAME}
-      ARCHIVE DESTINATION lib
-      LIBRARY DESTINATION lib
-      RUNTIME DESTINATION bin
-    )
+  install(
+    TARGETS topo_map
+    EXPORT export_${PROJECT_NAME}
+    ARCHIVE DESTINATION lib
+    LIBRARY DESTINATION lib
+    RUNTIME DESTINATION bin
+  )
 
-  ## /Lib ##
+## /Lib ##
 
-  ## Node ##
+## Node ##
 
-    add_executable(
-      topological_map_node
-      src/topological_map.cpp
-    )
+  add_executable(
+    topo_map_node
+    src/topo_map.cpp
+  )
 
-    target_include_directories(topological_map_node PUBLIC
-      $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-      $<INSTALL_INTERFACE:include>
-    )
+  target_include_directories(topo_map_node PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>
+		${Boost_INCLUDE_DIRS}
+  )
 
-    target_link_libraries(topological_map_node 
-      thing
-      ${Boost_LIBRARIES}
-    )
+  target_link_libraries(
+		topo_map_node 
+    thing
+    ${Boost_LIBRARIES}
+  )
 
-    ament_target_dependencies(
-      topological_map_node
-      rclcpp
-      geometry_msgs
-      smap_interfaces
-      visualization_msgs
-    )
+  ament_target_dependencies(
+    topo_map_node
+    rclcpp
+    geometry_msgs
+    smap_interfaces
+    visualization_msgs
+  )
 
-    install(TARGETS topological_map_node
-      DESTINATION lib/${PROJECT_NAME}
-    )
+  install(TARGETS topo_map_node
+    DESTINATION lib/${PROJECT_NAME}
+  )
 
-  ## Node ##
+## Node ##
+
+###############
+## /topo_map ##
+###############
+
+# #####################
+# ## topological_map ##
+# #####################
+
+#   ## Lib ##
+
+#     add_library(topological_map src/topological_map.cpp src/thing.cpp)
+#     target_include_directories(topological_map PUBLIC
+#       $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+#       $<INSTALL_INTERFACE:include>)
+
+#     ament_target_dependencies(
+#       topological_map
+#       geometry_msgs
+#       smap_interfaces
+#       visualization_msgs
+#     )
+
+#     # Causes the visibility macros to use dllexport rather than dllimport,
+#     # which is appropriate when building the dll but not consuming it.
+#     target_compile_definitions(topological_map PRIVATE "SMAP_BUILDING_LIBRARY")
+
+#     install(
+#       TARGETS topological_map
+#       EXPORT export_${PROJECT_NAME}
+#       ARCHIVE DESTINATION lib
+#       LIBRARY DESTINATION lib
+#       RUNTIME DESTINATION bin
+#     )
+
+#   ## /Lib ##
+
+#   ## Node ##
+
+#     add_executable(
+#       topological_map_node
+#       src/topological_map.cpp
+#     )
+
+#     target_include_directories(topological_map_node PUBLIC
+#       $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+#       $<INSTALL_INTERFACE:include>
+#     )
+
+#     target_link_libraries(topological_map_node 
+#       thing
+#       ${Boost_LIBRARIES}
+#     )
+
+#     ament_target_dependencies(
+#       topological_map_node
+#       rclcpp
+#       geometry_msgs
+#       smap_interfaces
+#       visualization_msgs
+#     )
+
+#     install(TARGETS topological_map_node
+#       DESTINATION lib/${PROJECT_NAME}
+#     )
+
+#   ## Node ##
+
+# ######################
+# ## /topological_map ##
+# ######################
 
 ######################
-## /topological_map ##
-######################
-
-###########################
 ## object_estimator ##
-###########################
+######################
 
   find_package(tf2 REQUIRED)
   find_package(tf2_geometry_msgs REQUIRED)
@@ -269,9 +345,9 @@ find_package(rmw_implementation_cmake REQUIRED)
 
   ## Node ##
 
-############################
+#######################
 ## /object_estimator ##
-############################
+#######################
 
 #######################
 ## perception_server ##
@@ -369,7 +445,7 @@ ament_target_dependencies(
 target_link_libraries(
   smap_node
   thing
-  topological_map
+  topo_map
   ${Boost_LIBRARIES}
   object_estimator_lib
   perception_server_lib
@@ -395,7 +471,7 @@ ament_export_include_directories(
 
 ament_export_libraries(
   thing
-  topological_map
+  topo_map
 )
 
 

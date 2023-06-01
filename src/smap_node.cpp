@@ -12,7 +12,7 @@
 
 #include "../include/smap_core/macros.hpp"
 #include "../include/smap_core/thing.hpp"
-#include "../include/smap_core/topological_map.hpp"
+#include "../include/smap_core/topo_map.hpp"
 #include "smap_interfaces/msg/smap_data.hpp"
 #include "std_msgs/msg/string.hpp"
 
