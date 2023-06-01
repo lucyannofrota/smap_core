@@ -24,6 +24,7 @@
 #include <list>
 #include <mutex>
 #include <string>
+#include <thread>
 #include <visualization_msgs/msg/marker.hpp>
 
 // #include <boost/graph/properties.hpp>
@@ -139,12 +140,15 @@ class topo_marker
 
   private:
 
-    visualization_msgs::msg::Marker vertex;
-    visualization_msgs::msg::Marker edge;
-    visualization_msgs::msg::Marker label;
+    visualization_msgs::msg::Marker vertex, edge, label;
     std::vector< std::tuple< size_t, geometry_msgs::msg::Point, std::string > > vertex_label;
 
     std::mutex mutex;
+
+    rclcpp::Publisher< visualization_msgs::msg::Marker >::SharedPtr vertex_pub, edge_pub, label_pub;
+    rclcpp::Clock::SharedPtr clock;
+
+    std::future< void > fut;
 
     inline void _append_vertex( const geometry_msgs::msg::Point& pos )
     {
@@ -165,6 +169,8 @@ class topo_marker
         this->vertex_label.push_back(
             std::tuple< size_t, geometry_msgs::msg::Point, std::string >( id, pos_up, label ) );
     }
+
+  protected:
 
   public:
 
@@ -219,8 +225,20 @@ class topo_marker
         this->label.color.a            = 1.0;
     }
 
+    void set_com(
+        rclcpp::Publisher< visualization_msgs::msg::Marker >::SharedPtr vertex_pub,
+        rclcpp::Publisher< visualization_msgs::msg::Marker >::SharedPtr edge_pub,
+        rclcpp::Publisher< visualization_msgs::msg::Marker >::SharedPtr label_pub, rclcpp::Clock::SharedPtr clock )
+    {
+        this->vertex_pub = vertex_pub;
+        this->edge_pub   = edge_pub;
+        this->label_pub  = label_pub;
+        this->clock      = clock;
+    }
+
     inline void append_vertex( const geometry_msgs::msg::Point& pos, const size_t& id, const std::string& label )
     {
+        printf( "append_vertex\n" );
         const std::lock_guard< std::mutex > lock( this->mutex );
         // static size_t marker_idx = 0;
         this->_append_vertex( pos );
@@ -230,6 +248,7 @@ class topo_marker
 
     inline void append_edge( const geometry_msgs::msg::Point& pos1, const geometry_msgs::msg::Point& pos2 )
     {
+        printf( "append_edge\n" );
         const std::lock_guard< std::mutex > lock( this->mutex );
         static int32_t idx = 0;
         // static bool init_flag = true;
@@ -252,23 +271,22 @@ class topo_marker
         const std::lock_guard< std::mutex > lock( this->mutex );
     }
 
-    inline void publish_markers(
-        rclcpp::Publisher< visualization_msgs::msg::Marker >::SharedPtr& pub_vertex,
-        rclcpp::Publisher< visualization_msgs::msg::Marker >::SharedPtr& pub_edge,
-        rclcpp::Publisher< visualization_msgs::msg::Marker >::SharedPtr& pub_label, const rclcpp::Time& timestamp )
+    inline void publish_markers( void )
     {
+
+        // TODO: should run independently
         bool init_flag            = true;
-        this->vertex.header.stamp = timestamp;
-        pub_vertex->publish( this->vertex );
-        this->edge.header.stamp = timestamp;
-        pub_edge->publish( this->edge );
+        this->vertex.header.stamp = clock->now();
+        vertex_pub->publish( this->vertex );
+        this->edge.header.stamp = clock->now();
+        edge_pub->publish( this->edge );
+        this->label.header.stamp = clock->now();
         for( auto e: this->vertex_label )
         {
             this->label.id            = std::get< 0 >( e );
             this->label.pose.position = std::get< 1 >( e );
             this->label.text          = std::get< 2 >( e );
-            this->label.header.stamp  = timestamp;
-            pub_label->publish( this->label );
+            label_pub->publish( this->label );
         }
         if( init_flag )
         {
@@ -276,6 +294,11 @@ class topo_marker
             this->edge.action   = visualization_msgs::msg::Marker::MODIFY;
             init_flag           = false;
         }
+    }
+
+    inline void async_publish_markers( void )
+    {
+        this->fut = std::async( std::launch::async, &topo_marker::publish_markers, this );
     }
 };
 
@@ -321,7 +344,11 @@ class topo_map : public rclcpp::Node
         this->create_publisher< visualization_msgs::msg::Marker >(
             std::string( this->get_namespace() ) + std::string( "/topo_map/markers/edge" ), 10 );
 
+    // Threads
+    // std::thread marker_thread;
     topo_marker markers;
+
+    // topo_marker markers;
 
     // Internal Functions
     template< class Archive >
@@ -332,13 +359,7 @@ class topo_map : public rclcpp::Node
         ar& v_index;
     }
 
-    inline void timer_callback( void )
-    {
-        // TODO: Implement in a separate thread
-        this->markers.publish_markers(
-            this->publisher_marker_vertex, this->publisher_marker_edge, this->publisher_marker_label,
-            this->get_clock()->now() );
-    }
+    inline void timer_callback( void ) { this->markers.async_publish_markers(); }
 
     inline void pose_callback( const geometry_msgs::msg::PoseStamped::SharedPtr pose )
     {
@@ -399,13 +420,17 @@ class topo_map : public rclcpp::Node
 
     topo_map( void ) : Node( "topo_map" )
     {
-        RCLCPP_INFO( this->get_logger(), "Initializing topol_map" );
+        RCLCPP_INFO( this->get_logger(), "Initializing topo_map" );
         if( NEW_EDGE_FACTOR > 1 )
         {
             RCLCPP_ERROR( this->get_logger(), "NEW_EDGE_FACTOR must be >= 1" );
             rclcpp::exceptions::throw_from_rcl_error(  // TODO error handling
                 RCL_RET_INVALID_ARGUMENT, "NEW_EDGE_FACTOR must be <= 1", nullptr, nullptr );
         }
+
+        this->markers.set_com(
+            this->publisher_marker_vertex, this->publisher_marker_edge, this->publisher_marker_label,
+            this->get_clock() );
 
         geometry_msgs::msg::Point point;
         // point.x              = 1;

@@ -40,21 +40,20 @@ size_t topo_map::get_closest_vertex( const geometry_msgs::msg::Point pos, double
 
 void topo_map::add_vertex( const geometry_msgs::msg::Point& pos, size_t& current, size_t& previous )
 {
-    printf( "pos: [%6.1f,%6.1f,%6.1f]\n", pos.x, pos.y, pos.z );
     double dist_current;
 
     size_t idx;
 
-    printf( "add_vertex\n" );
+    // printf( "add_vertex\n" );
     // Initialization
     if( current == (size_t) -1 )
     {
-        printf( "\tInitialization\n" );
-        printf( "\t\tcurrent -1\n" );
-        printf( "\t\tadding Vertex\n" );
+        // printf( "\tInitialization\n" );
+        // printf( "\t\tcurrent -1\n" );
+        // printf( "\t\tadding Vertex\n" );
         idx     = this->_add_vertex( this->v_index++, pos );
         current = this->graph[ idx ].index;
-        this->print_vertex( std::string( "\t\t" ), current );
+        // this->print_vertex( std::string( "\t\t" ), current );
         return;
     }
 
@@ -66,37 +65,37 @@ void topo_map::add_vertex( const geometry_msgs::msg::Point& pos, size_t& current
     if( ( previous != (size_t) -1 ) && ( closest != (size_t) -1 ) && ( closest != current )
         && ( dist_current <= VERTEX_DISTANCE * NEW_EDGE_FACTOR ) )
     {
-        printf( "\tConnection/Relocation\n" );
+        // printf( "\tConnection/Relocation\n" );
         if( ( closest != previous ) )
         {
-            printf( "\tConnection\n" );
-            this->print_vertex( std::string( "\t\tCurrent: " ), current );
-            this->print_vertex( std::string( "\t\tPrevious: " ), previous );
-            this->print_vertex( std::string( "\t\tClosest: " ), closest );
+            // printf( "\tConnection\n" );
+            // this->print_vertex( std::string( "\t\tCurrent: " ), current );
+            // this->print_vertex( std::string( "\t\tPrevious: " ), previous );
+            // this->print_vertex( std::string( "\t\tClosest: " ), closest );
             this->add_edge( current, closest );
         }
-        else printf( "\tRelocation\n" );
+        // else printf( "\tRelocation\n" );
         previous = current;
         current  = closest;
-        this->print_vertex( std::string( "\t\t/Current: " ), current );
-        this->print_vertex( std::string( "\t\t/Previous: " ), previous );
-        this->print_vertex( std::string( "\t\t/Closest: " ), closest );
-        this->export_graph();
+        // this->print_vertex( std::string( "\t\t/Current: " ), current );
+        // this->print_vertex( std::string( "\t\t/Previous: " ), previous );
+        // this->print_vertex( std::string( "\t\t/Closest: " ), closest );
+        // this->export_graph();
         return;
     }
 
     // New vertex
     if( dist_current < VERTEX_DISTANCE * NEW_EDGE_FACTOR )
     {
-        printf( "\tToo Close\n" );
+        // printf( "\tToo Close\n" );
         return;
     }
 
-    printf( "\tNew vertex\n" );
+    // printf( "\tNew vertex\n" );
 
     if( dist_current > VERTEX_DISTANCE * NEW_EDGE_FACTOR )
     {
-        printf( "\t\tadding distant Vertex\n" );
+        // printf( "\t\tadding distant Vertex\n" );
         int n_new_vertex, count = 1;
         double t;
         geometry_msgs::msg::Point new_point, base_point;
@@ -108,7 +107,7 @@ void topo_map::add_vertex( const geometry_msgs::msg::Point& pos, size_t& current
 
         n_new_vertex = floor( dist_current / VERTEX_DISTANCE );
         t            = ( VERTEX_DISTANCE ) / dist_current;
-        printf( "\t\t\tCreate support nodes\nn: %i|t: %6.1f\n", n_new_vertex, t );
+        // printf( "\t\t\tCreate support nodes\nn: %i|t: %6.1f\n", n_new_vertex, t );
         while( dist_current > VERTEX_DISTANCE && n_new_vertex > 0 )
         {
             new_point.x = ( 1 - t * count ) * base_point.x + t * count * pos.x;
@@ -128,32 +127,32 @@ void topo_map::add_vertex( const geometry_msgs::msg::Point& pos, size_t& current
         return;
     }
 
-    printf( "\t\tadding close Vertex\n" );
-    this->print_vertex( std::string( "\t\t\tCurrent: " ), current );
-    this->print_vertex( std::string( "\t\t\tPrevious: " ), previous );
-    this->print_vertex( std::string( "\t\t\tClosest: " ), closest );
+    // printf( "\t\tadding close Vertex\n" );
+    // this->print_vertex( std::string( "\t\t\tCurrent: " ), current );
+    // this->print_vertex( std::string( "\t\t\tPrevious: " ), previous );
+    // this->print_vertex( std::string( "\t\t\tClosest: " ), closest );
     idx      = this->_add_vertex( this->v_index++, pos );
     previous = current;
     current  = this->graph[ idx ].index;
-    this->print_vertex( std::string( "\t\t\t/Current: " ), current );
-    this->print_vertex( std::string( "\t\t\t/Previous: " ), previous );
-    this->print_vertex( std::string( "\t\t\t/Closest: " ), closest );
+    // this->print_vertex( std::string( "\t\t\t/Current: " ), current );
+    // this->print_vertex( std::string( "\t\t\t/Previous: " ), previous );
+    // this->print_vertex( std::string( "\t\t\t/Closest: " ), closest );
 
-    printf( "\t\tadding Edge\n" );
-    this->print_vertex( std::string( "\t\t\tCurrent: " ), current );
-    this->print_vertex( std::string( "\t\t\tPrevious: " ), previous );
-    this->print_vertex( std::string( "\t\t\tClosest: " ), closest );
+    // printf( "\t\tadding Edge\n" );
+    // this->print_vertex( std::string( "\t\t\tCurrent: " ), current );
+    // this->print_vertex( std::string( "\t\t\tPrevious: " ), previous );
+    // this->print_vertex( std::string( "\t\t\tClosest: " ), closest );
     this->add_edge( previous, current );
-    this->print_vertex( std::string( "\t\t\t/Current: " ), current );
-    this->print_vertex( std::string( "\t\t\t/Previous: " ), previous );
-    this->print_vertex( std::string( "\t\t\t/Closest: " ), closest );
-    this->export_graph();
+    // this->print_vertex( std::string( "\t\t\t/Current: " ), current );
+    // this->print_vertex( std::string( "\t\t\t/Previous: " ), previous );
+    // this->print_vertex( std::string( "\t\t\t/Closest: " ), closest );
+    // this->export_graph();
 }
 
 void topo_map::add_object( const geometry_msgs::msg::Pose pose )
 {
     // TODO: create callback group. Should be mutually exclusive
-    printf( "add_object\n" );
+    // printf( "add_object\n" );
     if( boost::num_vertices( this->graph ) == 0 ) return;
 
     size_t current = -1, previous = -1;
@@ -167,7 +166,7 @@ void topo_map::add_object( const geometry_msgs::msg::Pose pose )
     {
         // TODO: Implement method
         // this->append_object();
-        printf( "append_object\n" );
+        // printf( "append_object\n" );
         return;
     }
 
@@ -178,7 +177,7 @@ void topo_map::add_object( const geometry_msgs::msg::Pose pose )
 
     n_new_vertex = floor( distance / VERTEX_DISTANCE );
     t            = ( VERTEX_DISTANCE ) / distance;
-    printf( "Create support nodes\nn: %i|t: %6.1f\n", n_new_vertex, t );
+    // printf( "Create support nodes\nn: %i|t: %6.1f\n", n_new_vertex, t );
     while( distance > VERTEX_DISTANCE && n_new_vertex > 0 )
     {
         new_point.x = ( 1 - t * count ) * base_point.x + t * count * pose.position.x;
