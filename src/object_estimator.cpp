@@ -68,7 +68,7 @@ void object_estimator::statistical_outlier_filter( const pcl::shared_ptr< cloud_
     count_time timer;
     pcl::StatisticalOutlierRemoval< cloud_point_t > sor;
     sor.setInputCloud( cloud_segment );
-    sor.setMeanK( this->mean_k );  // Greather values take more time to compute
+    sor.setMeanK( this->mean_k );  // Greater ther values take more time to compute
     sor.setStddevMulThresh( this->mu );
 
     sor.filter( *cloud_segment );
@@ -220,7 +220,7 @@ void object_estimator::object_estimation_thread(
     this->object_pub->publish( *obj );
 
     const std::lock_guard< std::mutex > object_bb_pub_lock( this->object_bb_pub_mutex );
-    this->puiblish_bb( 0, obj );
+    this->publish_bb( 0, obj );
 
     const std::lock_guard< std::mutex > debug_object_pcl_pub_lock( this->debug_object_pcl_pub_mutex );
     this->debug_object_pcl_pub->publish( obj->obj_pointcloud );
@@ -320,7 +320,7 @@ int main( int argc, char** argv )
                 if( ImGui::Checkbox( "ROI Filter", &roi_filter ) ) node->roi_filt = roi_filter;
 
                 ImGui::Text( "pcl_lim" );
-                ImGui::Text( "   Distance limits applyed to the cloud." );
+                ImGui::Text( "   Distance limits applied to the cloud." );
 
                 ImGui::SliderFloat( "min", &( node->pcl_lims->first ), 0.0f, node->pcl_lims->second );
                 ImGui::SliderFloat( "max", &( node->pcl_lims->second ), node->pcl_lims->first, 10.0f );
@@ -335,7 +335,7 @@ int main( int argc, char** argv )
                 static bool voxelization = true;
                 if( ImGui::Checkbox( "Voxelization", &voxelization ) ) node->voxelization = voxelization;
                 ImGui::Text( "LeafSize" );
-                ImGui::Text( "   Greather values increase the size of the voxels (filter more points)" );
+                ImGui::Text( "   Greater values increase the size of the voxels (filter more points)" );
                 ImGui::SliderFloat( "LeafSize", &( node->leaf_size ), 0.0f, 0.05f );
 
                 plot_times_lambda( voxelization_plot );
@@ -348,7 +348,7 @@ int main( int argc, char** argv )
                 static bool sof = true;
                 if( ImGui::Checkbox( "SOF Filter", &sof ) ) node->sof = sof;
                 ImGui::Text( "MeanK" );
-                ImGui::Text( "   Number of neighbours to evaluate" );
+                ImGui::Text( "   Number of neighbors to evaluate" );
                 ImGui::SliderInt( "MeanK", &( node->mean_k ), 0, 100 );
 
                 ImGui::Text( "Mu" );
