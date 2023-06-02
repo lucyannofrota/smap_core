@@ -9,6 +9,8 @@
 
 // SMAP
 #include "smap_interfaces/msg/smap_detections.hpp"
+#include "smap_interfaces/msg/smap_object.hpp"
+#include "smap_interfaces/msg/smap_observation.hpp"
 #include "smap_interfaces/srv/add_perception_module.hpp"
 #include "smap_interfaces/srv/smap_classes.hpp"
 
@@ -52,10 +54,10 @@ class perception_server : public rclcpp::Node
             std::bind(
                 &smap::perception_server::ListClasses_callback, this, std::placeholders::_1, std::placeholders::_2 ) );
 
-    rclcpp::Subscription< smap_interfaces::msg::SmapObject >::SharedPtr objects_sub =
-        this->create_subscription< smap_interfaces::msg::SmapObject >(
+    rclcpp::Subscription< smap_interfaces::msg::SmapObservation >::SharedPtr objects_sub =
+        this->create_subscription< smap_interfaces::msg::SmapObservation >(
             std::string( this->get_namespace() ) + std::string( "/object_estimator/objects" ), 10,
-            std::bind( &perception_server::objects_callback, this, std::placeholders::_1 ) );
+            std::bind( &perception_server::observations_callback, this, std::placeholders::_1 ) );
 
   public:
 
@@ -82,7 +84,7 @@ class perception_server : public rclcpp::Node
         const std::shared_ptr< smap_interfaces::srv::SmapClasses::Request > request,
         std::shared_ptr< smap_interfaces::srv::SmapClasses::Response > response );
 
-    void objects_callback( const smap_interfaces::msg::SmapObject::SharedPtr object ) const;
+    void observations_callback( const smap_interfaces::msg::SmapObservation::SharedPtr object ) const;
 
     // print data
 

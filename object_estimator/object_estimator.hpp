@@ -37,6 +37,7 @@
 #include "smap_interfaces/msg/bounding_box2_d.hpp"
 #include "smap_interfaces/msg/smap_detections.hpp"
 #include "smap_interfaces/msg/smap_object.hpp"
+#include "smap_interfaces/msg/smap_observation.hpp"
 
 // ImGui
 // #include "imgui/backends/imgui_impl_opengl3.h"
@@ -210,9 +211,9 @@ class object_estimator : public rclcpp::Node
     rclcpp::Publisher< visualization_msgs::msg::Marker >::SharedPtr object_bb_pub =
         this->create_publisher< visualization_msgs::msg::Marker >(
             std::string( this->get_namespace() ) + std::string( "/object_estimator/debug/object_bb" ), 10 );
-    rclcpp::Publisher< smap_interfaces::msg::SmapObject >::SharedPtr object_pub =
-        this->create_publisher< smap_interfaces::msg::SmapObject >(
-            std::string( this->get_namespace() ) + std::string( "/object_estimator/objects" ), 10 );
+    rclcpp::Publisher< smap_interfaces::msg::SmapObservation >::SharedPtr object_pub =
+        this->create_publisher< smap_interfaces::msg::SmapObservation >(
+            std::string( this->get_namespace() ) + std::string( "/object_estimator/observations" ), 10 );
     std::mutex object_bb_pub_mutex, object_pub_mutex, debug_object_pcl_pub_mutex;
 
     std::shared_ptr< thread_queue > thread_ctl = std::make_shared< thread_queue >( thread_queue( this->max_threads ) );
@@ -255,7 +256,7 @@ class object_estimator : public rclcpp::Node
 
     void box_filter(
         const pcl::shared_ptr< cloud_t >& input_cloud, const pcl::shared_ptr< cloud_t >& cloud_segment,
-        const smap_interfaces::msg::SmapObject::SharedPtr& obj ) const;
+        smap_interfaces::msg::SmapObject& obj ) const;
 
     void roi_filter( const pcl::shared_ptr< cloud_t >& point_cloud ) const;
 
@@ -267,13 +268,13 @@ class object_estimator : public rclcpp::Node
         const pcl::shared_ptr< cloud_t >& cloud_segment, const pcl::shared_ptr< cloud_t >& object_cloud ) const;
 
     void estimate_object_3D_AABB(
-        const pcl::shared_ptr< cloud_t >& object_cloud, const smap_interfaces::msg::SmapObject::SharedPtr& obj ) const;
+        const pcl::shared_ptr< cloud_t >& object_cloud, smap_interfaces::msg::SmapObject& obj ) const;
 
     void transform_object_param(
-        const smap_interfaces::msg::SmapObject::SharedPtr& obj,
+        smap_interfaces::msg::SmapObject& obj,
         const std::shared_ptr< geometry_msgs::msg::TransformStamped >& transform ) const;
 
-    inline void publish_bb( int32_t id, const smap_interfaces::msg::SmapObject::SharedPtr& obj )
+    inline void publish_bb( int32_t id, smap_interfaces::msg::SmapObject& obj )
     {
         visualization_msgs::msg::Marker bbx_marker;
         bbx_marker.id                 = id;
@@ -281,14 +282,14 @@ class object_estimator : public rclcpp::Node
         bbx_marker.header.stamp       = this->get_clock()->now();
         bbx_marker.type               = visualization_msgs::msg::Marker::CUBE;
         bbx_marker.action             = visualization_msgs::msg::Marker::ADD;
-        bbx_marker.pose.position      = obj->obj_pose.pose.position;
+        bbx_marker.pose.position      = obj.pose.pose.position;
         bbx_marker.pose.orientation.x = 0;
         bbx_marker.pose.orientation.y = 0;
         bbx_marker.pose.orientation.z = 0;
         bbx_marker.pose.orientation.w = 1;
-        bbx_marker.scale.x            = abs( obj->aabb.max.point.x - obj->aabb.min.point.x );
-        bbx_marker.scale.y            = abs( obj->aabb.max.point.y - obj->aabb.min.point.y );
-        bbx_marker.scale.z            = abs( obj->aabb.max.point.z - obj->aabb.min.point.z );
+        bbx_marker.scale.x            = abs( obj.aabb.max.point.x - obj.aabb.min.point.x );
+        bbx_marker.scale.y            = abs( obj.aabb.max.point.y - obj.aabb.min.point.y );
+        bbx_marker.scale.z            = abs( obj.aabb.max.point.z - obj.aabb.min.point.z );
         bbx_marker.color.b            = 0;
         bbx_marker.color.g            = 0;
         bbx_marker.color.r            = 255;
@@ -344,6 +345,7 @@ class object_estimator : public rclcpp::Node
     void object_estimation_thread(
         const pcl::shared_ptr< cloud_t >& point_cloud,
         const std::shared_ptr< geometry_msgs::msg::TransformStamped >& transform,
+        const std::shared_ptr< geometry_msgs::msg::PoseStamped >& pose,
         const smap_interfaces::msg::SmapObject::SharedPtr& obj );
 
     void detections_callback( const smap_interfaces::msg::SmapDetections::SharedPtr input_msg );

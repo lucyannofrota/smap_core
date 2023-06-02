@@ -11,13 +11,13 @@ namespace smap
 
 void object_estimator::box_filter(
     const pcl::shared_ptr< cloud_t >& input_cloud, const pcl::shared_ptr< cloud_t >& cloud_segment,
-    const smap_interfaces::msg::SmapObject::SharedPtr& obj ) const
+    smap_interfaces::msg::SmapObject& obj ) const
 {
     count_time timer;
     pcl::PointIndices::Ptr inliers( new pcl::PointIndices() );
 
-    for( size_t h = obj->bb_2d.keypoint_1[ 1 ]; h <= obj->bb_2d.keypoint_2[ 1 ]; h++ )
-        for( size_t w = obj->bb_2d.keypoint_1[ 0 ]; w <= obj->bb_2d.keypoint_2[ 0 ]; w++ )
+    for( size_t h = obj.bb_2d.keypoint_1[ 1 ]; h <= obj.bb_2d.keypoint_2[ 1 ]; h++ )
+        for( size_t w = obj.bb_2d.keypoint_1[ 0 ]; w <= obj.bb_2d.keypoint_2[ 0 ]; w++ )
             inliers->indices.push_back( ( w ) + input_cloud->width * (h) -1 );
 
     pcl::ExtractIndices< cloud_point_t > extract;
@@ -104,53 +104,53 @@ void object_estimator::euclidean_clustering(
 }
 
 void object_estimator::estimate_object_3D_AABB(
-    const pcl::shared_ptr< cloud_t >& object_cloud, const smap_interfaces::msg::SmapObject::SharedPtr& obj ) const
+    const pcl::shared_ptr< cloud_t >& object_cloud, smap_interfaces::msg::SmapObject& obj ) const
 {
     // TODO: Try to use medians
     count_time timer;
 
-    obj->aabb.min.point.x = object_cloud->points[ 0 ].x;
-    obj->aabb.min.point.y = object_cloud->points[ 0 ].y;
-    obj->aabb.min.point.z = object_cloud->points[ 0 ].z;
+    obj.aabb.min.point.x = object_cloud->points[ 0 ].x;
+    obj.aabb.min.point.y = object_cloud->points[ 0 ].y;
+    obj.aabb.min.point.z = object_cloud->points[ 0 ].z;
 
-    obj->aabb.max.point.x = object_cloud->points[ 0 ].x;
-    obj->aabb.max.point.y = object_cloud->points[ 0 ].y;
-    obj->aabb.max.point.z = object_cloud->points[ 0 ].z;
+    obj.aabb.max.point.x = object_cloud->points[ 0 ].x;
+    obj.aabb.max.point.y = object_cloud->points[ 0 ].y;
+    obj.aabb.max.point.z = object_cloud->points[ 0 ].z;
 
     for( cloud_point_t& point: *object_cloud )
     {
-        if( point.x < obj->aabb.min.point.x ) obj->aabb.min.point.x = point.x;
-        if( point.y < obj->aabb.min.point.y ) obj->aabb.min.point.y = point.y;
-        if( point.z < obj->aabb.min.point.z ) obj->aabb.min.point.z = point.z;
+        if( point.x < obj.aabb.min.point.x ) obj.aabb.min.point.x = point.x;
+        if( point.y < obj.aabb.min.point.y ) obj.aabb.min.point.y = point.y;
+        if( point.z < obj.aabb.min.point.z ) obj.aabb.min.point.z = point.z;
 
-        if( point.x > obj->aabb.max.point.x ) obj->aabb.max.point.x = point.x;
-        if( point.y > obj->aabb.max.point.y ) obj->aabb.max.point.y = point.y;
-        if( point.z > obj->aabb.max.point.z ) obj->aabb.max.point.z = point.z;
+        if( point.x > obj.aabb.max.point.x ) obj.aabb.max.point.x = point.x;
+        if( point.y > obj.aabb.max.point.y ) obj.aabb.max.point.y = point.y;
+        if( point.z > obj.aabb.max.point.z ) obj.aabb.max.point.z = point.z;
     }
 
-    obj->obj_pose.pose.position.x = ( obj->aabb.min.point.x + obj->aabb.max.point.x ) / 2;
-    obj->obj_pose.pose.position.y = ( obj->aabb.min.point.y + obj->aabb.max.point.y ) / 2;
-    obj->obj_pose.pose.position.z = ( obj->aabb.min.point.z + obj->aabb.max.point.z ) / 2;
+    obj.pose.pose.position.x = ( obj.aabb.min.point.x + obj.aabb.max.point.x ) / 2;
+    obj.pose.pose.position.y = ( obj.aabb.min.point.y + obj.aabb.max.point.y ) / 2;
+    obj.pose.pose.position.z = ( obj.aabb.min.point.z + obj.aabb.max.point.z ) / 2;
 
-    const char str[]              = "3D_AABB";
+    const char str[]         = "3D_AABB";
     timer.get_time( this->get_logger(), str, centroid_plot );
 }
 
 void object_estimator::transform_object_param(
-    const smap_interfaces::msg::SmapObject::SharedPtr& obj,
+    smap_interfaces::msg::SmapObject& obj,
     const std::shared_ptr< geometry_msgs::msg::TransformStamped >& transform ) const
 {
     count_time timer;
 
     // Centroid
-    tf2::doTransform< geometry_msgs::msg::PoseStamped >( obj->obj_pose, obj->obj_pose, *transform );
+    tf2::doTransform< geometry_msgs::msg::PoseStamped >( obj.pose, obj.pose, *transform );
 
     // Limits
-    tf2::doTransform< geometry_msgs::msg::PointStamped >( obj->aabb.min, obj->aabb.min, *transform );
-    tf2::doTransform< geometry_msgs::msg::PointStamped >( obj->aabb.max, obj->aabb.max, *transform );
+    tf2::doTransform< geometry_msgs::msg::PointStamped >( obj.aabb.min, obj.aabb.min, *transform );
+    tf2::doTransform< geometry_msgs::msg::PointStamped >( obj.aabb.max, obj.aabb.max, *transform );
 
     // Point cloud
-    tf2::doTransform< sensor_msgs::msg::PointCloud2 >( obj->obj_pointcloud, obj->obj_pointcloud, *transform );
+    tf2::doTransform< sensor_msgs::msg::PointCloud2 >( obj.pointcloud, obj.pointcloud, *transform );
 
     const char str[] = "transform";
     timer.get_time( this->get_logger(), str, transform_plot );
@@ -159,6 +159,7 @@ void object_estimator::transform_object_param(
 void object_estimator::object_estimation_thread(
     const pcl::shared_ptr< cloud_t >& point_cloud,
     const std::shared_ptr< geometry_msgs::msg::TransformStamped >& transform,
+    const std::shared_ptr< geometry_msgs::msg::PoseStamped >& pose,
     const smap_interfaces::msg::SmapObject::SharedPtr& obj )
 {
 
@@ -173,58 +174,76 @@ void object_estimator::object_estimation_thread(
 
     // if(obj->confidence <= 70) return;
 
-    count_time timer;
-    // RCLCPP_INFO(this->get_logger(),"Object: %i",obj->label);
-    pcl::shared_ptr< cloud_t > point_cloud_vox( new cloud_t );
-    pcl::shared_ptr< cloud_t > segment_cloud_pcl( new cloud_t );
-    pcl::shared_ptr< cloud_t > object_cloud_pcl( new cloud_t );
-    // pcl::shared_ptr<cloud_t> segment_cloud_pcl_neg(new cloud_t);
+    try
+    {
+        count_time timer;
+        smap_interfaces::msg::SmapObservation obs;
+        obs.robot_pose = *pose;
+        obs.object     = *obj;
+        obs.direction  = 0;
 
-    // std::shared_ptr<sensor_msgs::msg::PointCloud2> segment_cloud_ros(new sensor_msgs::msg::PointCloud2);
+        // RCLCPP_INFO(this->get_logger(),"Object: %i",obj->label);
+        pcl::shared_ptr< cloud_t > point_cloud_vox( new cloud_t );
+        pcl::shared_ptr< cloud_t > segment_cloud_pcl( new cloud_t );
+        pcl::shared_ptr< cloud_t > object_cloud_pcl( new cloud_t );
+        // pcl::shared_ptr<cloud_t> segment_cloud_pcl_neg(new cloud_t);
 
-    // Cloud filtering
-    count_time filter_timer;
-    this->box_filter( point_cloud, segment_cloud_pcl, obj );
+        // std::shared_ptr<sensor_msgs::msg::PointCloud2> segment_cloud_ros(new sensor_msgs::msg::PointCloud2);
 
-    if( this->roi_filt ) this->roi_filter( segment_cloud_pcl );
+        // Cloud filtering
+        count_time filter_timer;
+        this->box_filter( point_cloud, segment_cloud_pcl, obs.object );
 
-    if( this->voxelization ) this->pcl_voxelization( segment_cloud_pcl );
+        if( this->roi_filt ) this->roi_filter( segment_cloud_pcl );
 
-    if( this->sof ) this->statistical_outlier_filter( segment_cloud_pcl );
+        if( this->voxelization ) this->pcl_voxelization( segment_cloud_pcl );
 
-    // Cloud Segmentation
-    if( this->euclidean_clust ) this->euclidean_clustering( segment_cloud_pcl, object_cloud_pcl );
-    const char str_filtering[] = "filtering_time";
-    filter_timer.get_time( this->get_logger(), str_filtering, total_filter_plot );
+        if( this->sof ) this->statistical_outlier_filter( segment_cloud_pcl );
 
-    if( this->euclidean_clust ) pcl::toROSMsg( *object_cloud_pcl, obj->obj_pointcloud );
+        // Cloud Segmentation
+        if( this->euclidean_clust ) this->euclidean_clustering( segment_cloud_pcl, object_cloud_pcl );
+        const char str_filtering[] = "filtering_time";
+        filter_timer.get_time( this->get_logger(), str_filtering, total_filter_plot );
 
-    // Parameter Estimation
-    count_time estimation_timer;
-    if( this->euclidean_clust ) this->estimate_object_3D_AABB( object_cloud_pcl, obj );
-    else this->estimate_object_3D_AABB( segment_cloud_pcl, obj );
+        if( this->euclidean_clust ) pcl::toROSMsg( *object_cloud_pcl, obs.object.pointcloud );
 
-    const char str_estimation_time[] = "estimation_time";
-    estimation_timer.get_time( this->get_logger(), str_estimation_time, total_estimation_plot );
+        // Parameter Estimation
+        count_time estimation_timer;
+        if( this->euclidean_clust ) this->estimate_object_3D_AABB( object_cloud_pcl, obs.object );
+        else this->estimate_object_3D_AABB( segment_cloud_pcl, obs.object );
 
-    // Transform
-    pcl::toROSMsg( *object_cloud_pcl, obj->obj_pointcloud );
-    this->transform_object_param( obj, transform );
+        const char str_estimation_time[] = "estimation_time";
+        estimation_timer.get_time( this->get_logger(), str_estimation_time, total_estimation_plot );
 
-    const char str_process_time[] = "pcl_process";
-    timer.get_time( this->get_logger(), str_process_time, total_thread_time );
-    // plot_vec centroid_plot, boundaries_plot, total_estimation_plot;
+        // Transform
+        pcl::toROSMsg( *object_cloud_pcl, obs.object.pointcloud );
+        this->transform_object_param( obs.object, transform );
 
-    obj->obj_pointcloud.header.frame_id = "map";  // TODO: Check if can be removed
+        const char str_process_time[] = "pcl_process";
+        timer.get_time( this->get_logger(), str_process_time, total_thread_time );
+        // plot_vec centroid_plot, boundaries_plot, total_estimation_plot;
 
-    const std::lock_guard< std::mutex > object_pub_lock( this->object_pub_mutex );
-    this->object_pub->publish( *obj );
+        obj->pointcloud.header.frame_id = "map";  // TODO: Check if can be removed
 
-    const std::lock_guard< std::mutex > object_bb_pub_lock( this->object_bb_pub_mutex );
-    this->publish_bb( 0, obj );
+        // Direction of observation
+        obs.direction = atan2(
+            obs.robot_pose.pose.position.y - obs.object.pose.pose.position.y,
+            obs.robot_pose.pose.position.x - obs.object.pose.pose.position.x );
 
-    const std::lock_guard< std::mutex > debug_object_pcl_pub_lock( this->debug_object_pcl_pub_mutex );
-    this->debug_object_pcl_pub->publish( obj->obj_pointcloud );
+        const std::lock_guard< std::mutex > object_pub_lock( this->object_pub_mutex );
+        this->object_pub->publish( obs );
+
+        const std::lock_guard< std::mutex > object_bb_pub_lock( this->object_bb_pub_mutex );
+        this->publish_bb( 0, obs.object );
+
+        const std::lock_guard< std::mutex > debug_object_pcl_pub_lock( this->debug_object_pcl_pub_mutex );
+        this->debug_object_pcl_pub->publish( obs.object.pointcloud );
+    }
+    catch( std::exception& e )
+    {
+        std::cout << "object_estimation_thread error!" << std::endl;
+        std::cout << e.what() << std::endl;
+    }
 }
 
 void object_estimator::detections_callback( const smap_interfaces::msg::SmapDetections::SharedPtr input_msg )
@@ -256,6 +275,7 @@ void object_estimator::detections_callback( const smap_interfaces::msg::SmapDete
 
         this->object_estimation_thread(
             lock_cloud, std::make_shared< geometry_msgs::msg::TransformStamped >( input_msg->robot_to_map ),
+            std::make_shared< geometry_msgs::msg::PoseStamped >( input_msg->stamped_pose ),
             std::make_shared< smap_interfaces::msg::SmapObject >( obj ) );
 
         // TODO: Activate multi threading

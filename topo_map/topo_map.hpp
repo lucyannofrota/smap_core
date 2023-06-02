@@ -23,6 +23,7 @@
 // SMAP
 #include "label_writers.hpp"
 #include "smap_interfaces/msg/smap_object.hpp"
+#include "smap_interfaces/msg/smap_observation.hpp"
 
 // BOOST
 #include <boost/archive/text_iarchive.hpp>
@@ -43,12 +44,10 @@
         acquired, vertex creation will gonna be blocked
 */
 
-struct point_t
-{
-    double x;
-    double y;
-    double z;
-};
+// struct observation_t
+// {
+//     std::array<>
+// };
 
 struct vertex_data_t
 
@@ -331,9 +330,9 @@ class topo_map : public rclcpp::Node
         this->create_subscription< geometry_msgs::msg::PoseStamped >(
             std::string( this->get_namespace() ) + std::string( "/sampler/pose" ), 10,
             std::bind( &topo_map::pose_callback, this, std::placeholders::_1 ) );
-    rclcpp::Subscription< smap_interfaces::msg::SmapObject >::SharedPtr object_sub =
-        this->create_subscription< smap_interfaces::msg::SmapObject >(
-            std::string( this->get_namespace() ) + std::string( "/object_estimator/objects" ), 10,
+    rclcpp::Subscription< smap_interfaces::msg::SmapObservation >::SharedPtr object_sub =
+        this->create_subscription< smap_interfaces::msg::SmapObservation >(
+            std::string( this->get_namespace() ) + std::string( "/object_estimator/observations" ), 10,
             std::bind( &topo_map::object_callback, this, std::placeholders::_1 ) );
 
     // Publishers
@@ -373,11 +372,21 @@ class topo_map : public rclcpp::Node
         this->add_vertex( pose->pose.position, true );
     }
 
-    inline void object_callback( const smap_interfaces::msg::SmapObject::SharedPtr object )
+    inline void object_callback( const smap_interfaces::msg::SmapObservation::SharedPtr observation )
     {
         // (void) object;
-        this->add_object( object->obj_pose.pose );
+        this->add_object( observation->object );
     }
+
+    inline void add_vertex( const geometry_msgs::msg::Point& pos, bool strong_vertex )
+    {
+
+        this->add_vertex( pos, this->current_idx, this->previous_idx, strong_vertex );
+    }
+
+    void add_vertex( const geometry_msgs::msg::Point& pos, size_t& current, size_t& previous, bool strong_vertex );
+
+    void add_object( const smap_interfaces::msg::SmapObject& object );
 
     inline size_t _add_vertex( size_t v_index, const geometry_msgs::msg::Point& pos, bool strong_vertex )
     {
@@ -441,16 +450,6 @@ class topo_map : public rclcpp::Node
     }
 
     ~topo_map( void ) { this->export_graph( "TopoGraph" ); }
-
-    inline void add_vertex( const geometry_msgs::msg::Point& pos, bool strong_vertex )
-    {
-
-        this->add_vertex( pos, this->current_idx, this->previous_idx, strong_vertex );
-    }
-
-    void add_vertex( const geometry_msgs::msg::Point& pos, size_t& current, size_t& previous, bool strong_vertex );
-
-    void add_object( const geometry_msgs::msg::Pose pose );
 
     inline void print_vertex( const std::string& prefix, const size_t& idx )
     {

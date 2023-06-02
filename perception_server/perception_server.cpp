@@ -162,7 +162,7 @@ void perception_server::ListClasses_callback(
     }
 }
 
-void perception_server::objects_callback( const smap_interfaces::msg::SmapObject::SharedPtr object ) const
+void perception_server::observations_callback( const smap_interfaces::msg::SmapObservation::SharedPtr object ) const
 {
     // object->bb_2d
     (void) object;

@@ -149,7 +149,7 @@ void topo_map::add_vertex( const geometry_msgs::msg::Point& pos, size_t& current
     // this->export_graph();
 }
 
-void topo_map::add_object( const geometry_msgs::msg::Pose pose )
+void topo_map::add_object( const smap_interfaces::msg::SmapObject& object )
 {
     // TODO: create callback group. Should be mutually exclusive
     // printf( "add_object\n" );
@@ -158,7 +158,7 @@ void topo_map::add_object( const geometry_msgs::msg::Pose pose )
     size_t current = -1, previous = -1;
     double distance, t;
     // previous will be the closest point in this case
-    previous = this->get_closest_vertex( pose.position, distance );
+    previous = this->get_closest_vertex( object.pose.pose.position, distance );
     vertex_data_t pre;
     this->get_vertex( previous, pre );
 
@@ -180,8 +180,8 @@ void topo_map::add_object( const geometry_msgs::msg::Pose pose )
     // printf( "Create support nodes\nn: %i|t: %6.1f\n", n_new_vertex, t );
     while( distance > VERTEX_DISTANCE && n_new_vertex > 0 )
     {
-        new_point.x = ( 1 - t * count ) * base_point.x + t * count * pose.position.x;
-        new_point.y = ( 1 - t * count ) * base_point.y + t * count * pose.position.y;
+        new_point.x = ( 1 - t * count ) * base_point.x + t * count * object.pose.pose.position.x;
+        new_point.y = ( 1 - t * count ) * base_point.y + t * count * object.pose.pose.position.y;
 
         int idx     = this->_add_vertex( this->v_index++, new_point, false );
         current     = this->graph[ idx ].index;
@@ -190,7 +190,7 @@ void topo_map::add_object( const geometry_msgs::msg::Pose pose )
 
         previous = current;
         this->get_vertex( previous, pre );
-        distance = this->_calc_distance( pre.pos, pose.position );
+        distance = this->_calc_distance( pre.pos, object.pose.pose.position );
         n_new_vertex--;
         count++;
     }
