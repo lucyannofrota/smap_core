@@ -1,4 +1,4 @@
-#include "../include/smap_core/topo_map.hpp"
+#include "topo_map.hpp"
 
 namespace smap
 {

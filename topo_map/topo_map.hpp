@@ -1,14 +1,30 @@
 #ifndef SMAP_CORE__topo_map_HPP_
 #define SMAP_CORE__topo_map_HPP_
 
-#include "../include/smap_core/label_writers.hpp"
+// STL
+#include "stdio.h"
+
+#include <cmath>
+#include <iostream>
+#include <list>
+#include <mutex>
+#include <string>
+#include <thread>
+
+// ROS
 #include "../include/smap_core/macros.hpp"
 #include "../include/smap_core/thing.hpp"
+#include "../include/smap_core/visibility_control.h"
 #include "rclcpp/rclcpp.hpp"
-#include "smap_interfaces/msg/smap_object.hpp"
-#include "stdio.h"
-#include "visibility_control.h"
 
+#include <geometry_msgs/msg/pose_stamped.hpp>
+#include <visualization_msgs/msg/marker.hpp>
+
+// SMAP
+#include "label_writers.hpp"
+#include "smap_interfaces/msg/smap_object.hpp"
+
+// BOOST
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/graph/adj_list_serialize.hpp>
@@ -18,22 +34,6 @@
 #include <boost/serialization/list.hpp>
 #include <boost/serialization/serialization.hpp>
 #include <boost/serialization/version.hpp>
-#include <cmath>
-#include <geometry_msgs/msg/pose_stamped.hpp>
-#include <iostream>
-#include <list>
-#include <mutex>
-#include <string>
-#include <thread>
-#include <visualization_msgs/msg/marker.hpp>
-
-// #include <boost/graph/properties.hpp>
-// #include <boost/graph/named_function_params.hpp>
-// #include <boost/property_map/property_map.hpp>
-
-// #include "smap_core/msg/smap_data.hpp"
-
-// #include "../include/smap_core/msg/smap_data.hpp"
 
 /* XXX current_vertex and previous_vertex can be a problem in the future!
        Check based on the location of the robot when loading
@@ -366,7 +366,7 @@ class topo_map : public rclcpp::Node
 
     inline void timer_callback( void ) { this->markers.async_publish_markers(); }
 
-		inline void monitor_callback(void){}
+    inline void monitor_callback( void ) {}
 
     inline void pose_callback( const geometry_msgs::msg::PoseStamped::SharedPtr pose )
     {

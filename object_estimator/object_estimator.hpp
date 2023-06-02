@@ -1,18 +1,24 @@
 #ifndef SMAP_CORE__OBJECT_ESTIMATOR_HPP_
 #define SMAP_CORE__OBJECT_ESTIMATOR_HPP_
 
-#include "../../include/smap_core/macros.hpp"
-#include "rclcpp/rclcpp.hpp"
-#include "visibility_control.h"
-
+// STL
 #include <chrono>
 #include <iostream>
+#include <math.h>
+#include <mutex>
+#include <stdio.h>
+#include <stdlib.h>
 #include <thread>
-// #include "rclcpp_components/register_node_macro.hpp"
-#include "tf2/convert.h"
-#include "tf2_geometry_msgs/tf2_geometry_msgs.h"
-#include "tf2_sensor_msgs/tf2_sensor_msgs.h"
-#include "visualization_msgs/msg/marker.hpp"
+
+// ROS
+#include "../include/smap_core/macros.hpp"
+#include "../include/smap_core/visibility_control.h"
+
+#include <rclcpp/rclcpp.hpp>
+#include <tf2/convert.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include <tf2_sensor_msgs/tf2_sensor_msgs.h>
+#include <visualization_msgs/msg/marker.hpp>
 
 // PCL
 #include <pcl/common/centroid.h>
@@ -33,16 +39,12 @@
 #include "smap_interfaces/msg/smap_object.hpp"
 
 // ImGui
-#include "../../imgui/imgui.h"
-#include "imgui_impl_opengl3.h"
-#include "imgui_impl_sdl2.h"
+// #include "imgui/backends/imgui_impl_opengl3.h"
+// #include "imgui/backends/imgui_impl_sdl2.h"
+// #include "imgui/imgui.h"
 
-#include <SDL2/SDL.h>
-#include <SDL2/SDL_opengl.h>
-#include <math.h>
-#include <mutex>
-#include <stdio.h>
-#include <stdlib.h>
+// #include <SDL2/SDL.h>
+// #include <SDL2/SDL_opengl.h>
 
 // TODO: Convert this node into a ROS component
 

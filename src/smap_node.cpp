@@ -12,15 +12,16 @@
 
 #include "../include/smap_core/macros.hpp"
 #include "../include/smap_core/thing.hpp"
-#include "../include/smap_core/topo_map.hpp"
 #include "smap_interfaces/msg/smap_data.hpp"
 #include "std_msgs/msg/string.hpp"
 
 #include <string>
 
 // #include "smap_core/object_estimator.hpp"
-#include "../include/smap_core/object_estimator.hpp"
-#include "../include/smap_core/perception_server.hpp"
+// #include "../include/smap_core/object_estimator.hpp"
+#include "../object_estimator/object_estimator.hpp"
+#include "../perception_server/perception_server.hpp"
+#include "../topo_map/topo_map.hpp"
 
 #define FROM_FRAME std::string( "map" )
 #define TO_FRAME std::string( "base_link" )

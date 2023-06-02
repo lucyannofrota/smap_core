@@ -1,8 +1,8 @@
-#include "../include/smap_core/object_estimator.hpp"
+#include "object_estimator.hpp"
+
+#include "parameter_tuning.hpp"
 
 using namespace std::chrono_literals;
-
-#include "../include/smap_core/parameter_tuning.hpp"
 
 // TODO: Check the slider parameters to avoid seg fault
 
