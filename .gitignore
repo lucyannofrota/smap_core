@@ -8,3 +8,7 @@ src/classification_node.py
 pcl_example/
 
 # topo_map_test/
+
+topo_map_test/
+
+src/debug.txt

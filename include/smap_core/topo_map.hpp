@@ -58,6 +58,8 @@ struct vertex_data_t
     smap::thing this_thing;
     std::list< smap::thing > related_things;
 
+    bool strong_vertex = false;
+
     friend class boost::serialization::access;
 
     template< class Archive >
@@ -318,8 +320,11 @@ class topo_map : public rclcpp::Node
     size_t v_index      = 1;
 
     // Timers
-    rclcpp::TimerBase::SharedPtr timer =
+    rclcpp::TimerBase::SharedPtr maker_timer =
         this->create_wall_timer( std::chrono::milliseconds( 500 ), std::bind( &topo_map::timer_callback, this ) );
+
+    rclcpp::TimerBase::SharedPtr monitor_timer =
+        this->create_wall_timer( std::chrono::milliseconds( 2000 ), std::bind( &topo_map::monitor_callback, this ) );
 
     // Subscriptions
     rclcpp::Subscription< geometry_msgs::msg::PoseStamped >::SharedPtr pose_sub =
@@ -361,9 +366,11 @@ class topo_map : public rclcpp::Node
 
     inline void timer_callback( void ) { this->markers.async_publish_markers(); }
 
+		inline void monitor_callback(void){}
+
     inline void pose_callback( const geometry_msgs::msg::PoseStamped::SharedPtr pose )
     {
-        this->add_vertex( pose->pose.position );
+        this->add_vertex( pose->pose.position, true );
     }
 
     inline void object_callback( const smap_interfaces::msg::SmapObject::SharedPtr object )
@@ -372,9 +379,9 @@ class topo_map : public rclcpp::Node
         this->add_object( object->obj_pose.pose );
     }
 
-    inline size_t _add_vertex( size_t v_index, const geometry_msgs::msg::Point& pos )
+    inline size_t _add_vertex( size_t v_index, const geometry_msgs::msg::Point& pos, bool strong_vertex )
     {
-        vertex_data_t vert { v_index, pos, thing(), std::list< smap::thing >() };
+        vertex_data_t vert { v_index, pos, thing(), std::list< smap::thing >(), strong_vertex };
         size_t ret = boost::add_vertex( vert, this->graph );
         // publish_vertex = true;
         this->markers.append_vertex(
@@ -431,44 +438,17 @@ class topo_map : public rclcpp::Node
         this->markers.set_com(
             this->publisher_marker_vertex, this->publisher_marker_edge, this->publisher_marker_label,
             this->get_clock() );
-
-        geometry_msgs::msg::Point point;
-        // point.x              = 1;
-        // point.y              = 2;
-        // point.z              = 1;
-        auto conv_point = [ & ]( point_t p ) {
-            point.x = p.x;
-            point.y = p.y;
-            point.z = p.z;
-            return point;
-        };
-        (void) conv_point;
-        // this->add_vertex( conv_point( { 0, 1, 0 } ) );
-        // this->add_vertex( conv_point( { 1, 0, 0 } ) );
-        // this->add_vertex( conv_point( { 0, 0, 0 } ) );
-        // this->add_vertex( conv_point( { 0, -1, 0 } ) );
-        // this->add_vertex( conv_point( { 1, -1, 0 } ) );
-        // this->add_vertex( conv_point( { 1, 0, 0 } ) );
-        // this->add_vertex( conv_point( { 2, -1, 0 } ) );
-        // this->add_vertex( conv_point( { 1, -1, 0 } ) );
-        // this->add_vertex( conv_point( { 0, -1, 0 } ) );
-        // this->add_vertex( conv_point( { 0, 0, 0 } ) );
-        // this->add_vertex( conv_point( { 0, 1, 0 } ) );
-        // this->add_vertex( conv_point( { 0, 2, 0 } ) );
-
-        // this->print_graph();
-        // this->export_graph();
-        // this->~topo_map();
     }
 
     ~topo_map( void ) { this->export_graph( "TopoGraph" ); }
 
-    inline void add_vertex( const geometry_msgs::msg::Point& pos )
+    inline void add_vertex( const geometry_msgs::msg::Point& pos, bool strong_vertex )
     {
-        this->add_vertex( pos, this->current_idx, this->previous_idx );
+
+        this->add_vertex( pos, this->current_idx, this->previous_idx, strong_vertex );
     }
 
-    void add_vertex( const geometry_msgs::msg::Point& pos, size_t& current, size_t& previous );
+    void add_vertex( const geometry_msgs::msg::Point& pos, size_t& current, size_t& previous, bool strong_vertex );
 
     void add_object( const geometry_msgs::msg::Pose pose );
 

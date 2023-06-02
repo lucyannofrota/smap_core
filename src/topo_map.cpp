@@ -38,7 +38,7 @@ size_t topo_map::get_closest_vertex( const geometry_msgs::msg::Point pos, double
     return closest;
 }
 
-void topo_map::add_vertex( const geometry_msgs::msg::Point& pos, size_t& current, size_t& previous )
+void topo_map::add_vertex( const geometry_msgs::msg::Point& pos, size_t& current, size_t& previous, bool strong_vertex )
 {
     double dist_current;
 
@@ -51,7 +51,7 @@ void topo_map::add_vertex( const geometry_msgs::msg::Point& pos, size_t& current
         // printf( "\tInitialization\n" );
         // printf( "\t\tcurrent -1\n" );
         // printf( "\t\tadding Vertex\n" );
-        idx     = this->_add_vertex( this->v_index++, pos );
+        idx     = this->_add_vertex( this->v_index++, pos, strong_vertex );
         current = this->graph[ idx ].index;
         // this->print_vertex( std::string( "\t\t" ), current );
         return;
@@ -113,7 +113,7 @@ void topo_map::add_vertex( const geometry_msgs::msg::Point& pos, size_t& current
             new_point.x = ( 1 - t * count ) * base_point.x + t * count * pos.x;
             new_point.y = ( 1 - t * count ) * base_point.y + t * count * pos.y;
 
-            int idx     = this->_add_vertex( this->v_index++, new_point );
+            int idx     = this->_add_vertex( this->v_index++, new_point, strong_vertex );
             current     = this->graph[ idx ].index;
 
             this->add_edge( previous, current );
@@ -131,7 +131,7 @@ void topo_map::add_vertex( const geometry_msgs::msg::Point& pos, size_t& current
     // this->print_vertex( std::string( "\t\t\tCurrent: " ), current );
     // this->print_vertex( std::string( "\t\t\tPrevious: " ), previous );
     // this->print_vertex( std::string( "\t\t\tClosest: " ), closest );
-    idx      = this->_add_vertex( this->v_index++, pos );
+    idx      = this->_add_vertex( this->v_index++, pos, strong_vertex );
     previous = current;
     current  = this->graph[ idx ].index;
     // this->print_vertex( std::string( "\t\t\t/Current: " ), current );
@@ -183,7 +183,7 @@ void topo_map::add_object( const geometry_msgs::msg::Pose pose )
         new_point.x = ( 1 - t * count ) * base_point.x + t * count * pose.position.x;
         new_point.y = ( 1 - t * count ) * base_point.y + t * count * pose.position.y;
 
-        int idx     = this->_add_vertex( this->v_index++, new_point );
+        int idx     = this->_add_vertex( this->v_index++, new_point, false );
         current     = this->graph[ idx ].index;
 
         this->add_edge( previous, current );
