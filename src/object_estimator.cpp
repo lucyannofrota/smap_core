@@ -106,6 +106,7 @@ void object_estimator::euclidean_clustering(
 void object_estimator::estimate_object_3D_AABB(
     const pcl::shared_ptr< cloud_t >& object_cloud, const smap_interfaces::msg::SmapObject::SharedPtr& obj ) const
 {
+    // TODO: Try to use medians
     count_time timer;
 
     obj->aabb.min.point.x = object_cloud->points[ 0 ].x;

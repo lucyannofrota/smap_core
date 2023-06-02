@@ -196,9 +196,6 @@ class object_estimator : public rclcpp::Node
   private:
 
     const size_t max_threads = 8;  // Should be grater then than 1 because of the function "__compute_timeout"
-    // rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr img_publisher =
-    // this->create_publisher<sensor_msgs::msg::Image>(
-    //   "pcl", 10);
 
     rclcpp::Subscription< smap_interfaces::msg::SmapDetections >::SharedPtr smap_detections_sub =
         this->create_subscription< smap_interfaces::msg::SmapDetections >(
@@ -287,9 +284,9 @@ class object_estimator : public rclcpp::Node
         bbx_marker.pose.orientation.y = 0;
         bbx_marker.pose.orientation.z = 0;
         bbx_marker.pose.orientation.w = 1;
-        bbx_marker.scale.x            = ( obj->aabb.max.point.x - obj->aabb.min.point.x );
-        bbx_marker.scale.y            = ( obj->aabb.max.point.y - obj->aabb.min.point.y );
-        bbx_marker.scale.z            = ( obj->aabb.max.point.z - obj->aabb.min.point.z );
+        bbx_marker.scale.x            = abs( obj->aabb.max.point.x - obj->aabb.min.point.x );
+        bbx_marker.scale.y            = abs( obj->aabb.max.point.y - obj->aabb.min.point.y );
+        bbx_marker.scale.z            = abs( obj->aabb.max.point.z - obj->aabb.min.point.z );
         bbx_marker.color.b            = 0;
         bbx_marker.color.g            = 0;
         bbx_marker.color.r            = 255;
