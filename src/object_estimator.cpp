@@ -120,7 +120,7 @@ void object_estimator::estimate_object_3D_AABB(
     {
         if( point.x < obj->aabb.min.point.x ) obj->aabb.min.point.x = point.x;
         if( point.y < obj->aabb.min.point.y ) obj->aabb.min.point.y = point.y;
-        if( point.z < obj->aabb.min.point.y ) obj->aabb.min.point.z = point.z;
+        if( point.z < obj->aabb.min.point.z ) obj->aabb.min.point.z = point.z;
 
         if( point.x > obj->aabb.max.point.x ) obj->aabb.max.point.x = point.x;
         if( point.y > obj->aabb.max.point.y ) obj->aabb.max.point.y = point.y;
