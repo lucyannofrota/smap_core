@@ -37,7 +37,7 @@ VertexData:\
 
 - index: Index of the vertice
 - pos: postion of the vertice
-- this_thing: Is the thing of the current Vertice. Should be a semantic_type::Location
+- this_thing: Is the thing of the current Vertice. Should be a semantic_type_t::Location
 - related_things: Linked list of things detected while in the current Vertex Location
 
 Boost Container: https://www.boost.org/doc/libs/1_80_0/doc/html/container.html

@@ -44,11 +44,6 @@
         acquired, vertex creation will gonna be blocked
 */
 
-// struct observation_t
-// {
-//     std::array<>
-// };
-
 struct vertex_data_t
 
 {
@@ -333,7 +328,7 @@ class topo_map : public rclcpp::Node
     rclcpp::Subscription< smap_interfaces::msg::SmapObservation >::SharedPtr object_sub =
         this->create_subscription< smap_interfaces::msg::SmapObservation >(
             std::string( this->get_namespace() ) + std::string( "/object_estimator/observations" ), 10,
-            std::bind( &topo_map::object_callback, this, std::placeholders::_1 ) );
+            std::bind( &topo_map::observation_callback, this, std::placeholders::_1 ) );
 
     // Publishers
     rclcpp::Publisher< visualization_msgs::msg::Marker >::SharedPtr publisher_marker_vertex =
@@ -372,9 +367,12 @@ class topo_map : public rclcpp::Node
         this->add_vertex( pose->pose.position, true );
     }
 
-    inline void object_callback( const smap_interfaces::msg::SmapObservation::SharedPtr observation )
+    inline void observation_callback( const smap_interfaces::msg::SmapObservation::SharedPtr observation )
     {
-        // (void) object;
+
+        // 1. Select possible vertexes
+        // 2.
+
         this->add_object( observation->object );
     }
 
