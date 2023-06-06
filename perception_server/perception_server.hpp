@@ -27,7 +27,7 @@ struct detector_t
     detector_type type       = object;
     std::string architecture = "";
     size_t n_classes         = 0;
-    std::vector< std::string > classes;
+    std::map< std::string, int > classes;
 };
 
 namespace smap
@@ -38,7 +38,8 @@ class perception_server : public rclcpp::Node
   private:
 
     std::vector< detector_t > detectors;
-    std::list< std::pair< int, std::string > > classes;
+
+    std::map< std::string, std::pair< int, int > > classes;  // pair[server_id, detector_id]
     int n_classes = 0;
 
     rclcpp::Service< smap_interfaces::srv::AddPerceptionModule >::SharedPtr add_perception_module_srv =
@@ -74,7 +75,7 @@ class perception_server : public rclcpp::Node
 
     inline ~perception_server() {}
 
-    std::list< std::pair< int, std::string > > add_detector( detector_t& new_detector );
+    std::map< std::string, std::pair< int, int > > add_detector( detector_t& new_detector );
 
     void AddPerceptionModule_callback(
         const std::shared_ptr< smap_interfaces::srv::AddPerceptionModule::Request > request,
@@ -88,7 +89,9 @@ class perception_server : public rclcpp::Node
 
     // print data
 
-    void print_classes( std::string pref, std::list< std::pair< int, std::string > >& classes );
+    void print_classes( std::string pref, std::map< std::string, int >& classes );
+
+    void print_classes( std::string pref, std::map< std::string, std::pair< int, int > >& classes );
 
     void print_classes( std::string pref, std::vector< std::string >& classes );
 
