@@ -8,6 +8,7 @@
 // #include "visualization_msgs/msg/marker.hpp"
 
 // SMAP
+#include "../topo_map/topo_map.hpp"
 #include "smap_interfaces/msg/smap_detections.hpp"
 #include "smap_interfaces/msg/smap_object.hpp"
 #include "smap_interfaces/msg/smap_observation.hpp"
@@ -37,9 +38,10 @@ class perception_server : public rclcpp::Node
 {
   private:
 
+    friend class topo_map;
+
     std::vector< detector_t > detectors;
 
-    std::map< std::string, std::pair< int, int > > classes;  // pair[server_id, detector_id]
     int n_classes = 0;
 
     rclcpp::Service< smap_interfaces::srv::AddPerceptionModule >::SharedPtr add_perception_module_srv =
@@ -61,6 +63,8 @@ class perception_server : public rclcpp::Node
             std::bind( &perception_server::observations_callback, this, std::placeholders::_1 ) );
 
   public:
+
+    std::map< std::string, std::pair< int, int > > classes;  // pair[server_id, detector_id]
 
     // Constructor/Destructor
     inline perception_server() : Node( "perception_server" )

@@ -79,8 +79,6 @@ void perception_server::AddPerceptionModule_callback(
     }
     for( size_t cls_i = 0; cls_i < request->n_classes; cls_i++ )
         det.classes[ request->classes[ cls_i ] ] = request->class_ids[ cls_i ];
-    for( size_t cls_i = 0; cls_i < request->n_classes; cls_i++ )
-        printf( "Values: %i\n", (int) det.classes[ request->classes[ cls_i ] ] );
 
     // Check if the detector is already registered
     for( auto detector: this->detectors )
