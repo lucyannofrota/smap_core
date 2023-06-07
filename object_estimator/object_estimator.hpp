@@ -270,7 +270,7 @@ class object_estimator : public rclcpp::Node
     void estimate_object_3D_AABB(
         const pcl::shared_ptr< cloud_t >& object_cloud, smap_interfaces::msg::SmapObject& obj ) const;
 
-    void transform_object_param(
+    void transform_object_pcl(
         smap_interfaces::msg::SmapObject& obj,
         const std::shared_ptr< geometry_msgs::msg::TransformStamped >& transform ) const;
 

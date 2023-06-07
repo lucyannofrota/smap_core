@@ -136,18 +136,18 @@ void object_estimator::estimate_object_3D_AABB(
     timer.get_time( this->get_logger(), str, centroid_plot );
 }
 
-void object_estimator::transform_object_param(
+void object_estimator::transform_object_pcl(
     smap_interfaces::msg::SmapObject& obj,
     const std::shared_ptr< geometry_msgs::msg::TransformStamped >& transform ) const
 {
     count_time timer;
 
-    // Centroid
-    tf2::doTransform< geometry_msgs::msg::PoseStamped >( obj.pose, obj.pose, *transform );
+    // // Centroid
+    // tf2::doTransform< geometry_msgs::msg::PoseStamped >( obj.pose, obj.pose, *transform );
 
-    // Limits
-    tf2::doTransform< geometry_msgs::msg::PointStamped >( obj.aabb.min, obj.aabb.min, *transform );
-    tf2::doTransform< geometry_msgs::msg::PointStamped >( obj.aabb.max, obj.aabb.max, *transform );
+    // // Limits
+    // tf2::doTransform< geometry_msgs::msg::PointStamped >( obj.aabb.min, obj.aabb.min, *transform );
+    // tf2::doTransform< geometry_msgs::msg::PointStamped >( obj.aabb.max, obj.aabb.max, *transform );
 
     // Point cloud
     tf2::doTransform< sensor_msgs::msg::PointCloud2 >( obj.pointcloud, obj.pointcloud, *transform );
@@ -205,25 +205,26 @@ void object_estimator::object_estimation_thread(
         const char str_filtering[] = "filtering_time";
         filter_timer.get_time( this->get_logger(), str_filtering, total_filter_plot );
 
+        // if( this->euclidean_clust ) pcl::toROSMsg( *object_cloud_pcl, obs.object.pointcloud );
+
+        // Transform
         if( this->euclidean_clust ) pcl::toROSMsg( *object_cloud_pcl, obs.object.pointcloud );
+        else pcl::toROSMsg( *segment_cloud_pcl, obs.object.pointcloud );
+        this->transform_object_pcl( obs.object, transform );
 
         // Parameter Estimation
         count_time estimation_timer;
-        if( this->euclidean_clust ) this->estimate_object_3D_AABB( object_cloud_pcl, obs.object );
-        else this->estimate_object_3D_AABB( segment_cloud_pcl, obs.object );
+        pcl::fromROSMsg( obs.object.pointcloud, *object_cloud_pcl );
+        this->estimate_object_3D_AABB( object_cloud_pcl, obs.object );
 
         const char str_estimation_time[] = "estimation_time";
         estimation_timer.get_time( this->get_logger(), str_estimation_time, total_estimation_plot );
-
-        // Transform
-        pcl::toROSMsg( *object_cloud_pcl, obs.object.pointcloud );
-        this->transform_object_param( obs.object, transform );
 
         const char str_process_time[] = "pcl_process";
         timer.get_time( this->get_logger(), str_process_time, total_thread_time );
         // plot_vec centroid_plot, boundaries_plot, total_estimation_plot;
 
-        obj->pointcloud.header.frame_id = "map";  // TODO: Check if can be removed
+        obs.object.pointcloud.header.frame_id = "map";  // TODO: Check if can be removed
 
         // Direction of observation
         obs.direction = atan2(
