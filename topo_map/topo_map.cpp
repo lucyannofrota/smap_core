@@ -2,6 +2,100 @@
 
 namespace smap
 {
+
+void topo_map::observation_callback( const smap_interfaces::msg::SmapObservation::SharedPtr observation )
+{
+    // TODO: Add message "no classes registered"
+    printf( "0. Check graph integrity\n" );
+    if( boost::num_vertices( this->graph ) == 0 || this->reg_classes == nullptr ) return;
+
+    // TODO: Add mutex
+
+    // 1. Get all adjacent vertexes 3 layers deep
+    printf( "1. Get all adjacent vertexes 3 layers deep\n" );
+    std::vector< size_t > idxs_checked, idxs_checking, idxs_to_check;  // Using iterator graph idxs (not v_indexes)
+    double min;
+    idxs_checking.push_back(
+        this->_get_vertex( this->get_closest_vertex( observation->object.pose.pose.position, min ) ) );
+    for( size_t i = 0; i <= 3; i++ )
+    {
+        for( auto checking: idxs_checking )
+        {
+            idxs_checked.push_back( checking );
+            for( auto to_check: boost::make_iterator_range(
+                     boost::adjacent_vertices( boost::vertex( checking, this->graph ), this->graph ) ) )
+            {
+                if( std::find( idxs_checked.begin(), idxs_checked.end(), to_check ) != idxs_checked.end() ) continue;
+                else idxs_to_check.push_back( to_check );
+            }
+        }
+    }
+
+    // 2. Filter possible vertexes
+    printf( "2. Filter possible vertexes\n" );
+    std::vector< std::vector< thing* > > candidates;
+    // int server_class_id = -1;
+    for( auto checking = idxs_checked.begin(); checking != idxs_checked.end(); checking++ )
+    {
+        // Check list of objects inside each vertex
+        std::vector< thing* > local_candidates;
+        local_candidates.clear();
+        bool has_candidate = false;
+        for( auto obj: this->graph[ *checking ].related_things )
+        {
+            // Check labels
+            if( !obj.label_is_equal( observation->object.module_id, observation->object.label ) ) continue;
+
+            // Check active cone
+            if( abs( topo_map::rad2deg(
+                    this->compute_direction( observation->object.pose.pose.position, observation->robot_pose.pose ) ) )
+                > ACTIVE_FOV_H )
+                continue;
+
+            // Check position
+            if( this->_calc_distance( observation->object.pose.pose.position, obj.pos ) > OBJECT_ERROR_DISTANCE )
+                continue;
+
+            local_candidates.push_back( &obj );
+            has_candidate = true;
+        }
+        if( !has_candidate ) idxs_checked.erase( checking );
+        else candidates.push_back( local_candidates );
+    }
+
+    // 3. Update vertex
+    // If true add object otherwise update an existing one
+    printf( "3. Update vertex\n" );
+    if( candidates.size() == 0 ) this->add_object( observation->object );
+    else
+    {
+        // Select the closest object
+        printf( "\nSelect the closest object\n" );
+        thing* closest = nullptr;
+        for( auto c: candidates )
+        {
+            for( auto lc: c )
+            {
+                if( closest == nullptr )
+                {
+                    closest = lc;
+                    min     = this->_calc_distance( observation->object.pose.pose.position, lc->pos );
+                    continue;
+                }
+
+                if( this->_calc_distance( observation->object.pose.pose.position, lc->pos ) < min )
+                {
+                    closest = lc;
+                    min     = this->_calc_distance( observation->object.pose.pose.position, lc->pos );
+                }
+            }
+        }
+        // TODO: Implement object update
+        printf( "\nObject update\n" );
+        closest->update( smap::semantic_type_t::OBJECT, observation->object, (double) observation->direction );
+    }
+}
+
 bool topo_map::add_edge( const size_t& previous, const size_t& current )
 {
     vertex_data_t prev, cur;
@@ -152,7 +246,7 @@ void topo_map::add_vertex( const geometry_msgs::msg::Point& pos, size_t& current
 void topo_map::add_object( const smap_interfaces::msg::SmapObject& object )
 {
     // TODO: create callback group. Should be mutually exclusive
-    // printf( "add_object\n" );
+    printf( "add_object\n" );
     if( boost::num_vertices( this->graph ) == 0 ) return;
 
     size_t current = -1, previous = -1;
@@ -165,6 +259,7 @@ void topo_map::add_object( const smap_interfaces::msg::SmapObject& object )
     if( distance < 2 * VERTEX_DISTANCE )
     {
         // TODO: Implement method
+        printf( "append_object\n" );
         // this->append_object();
         // printf( "append_object\n" );
         return;

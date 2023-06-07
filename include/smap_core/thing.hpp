@@ -7,7 +7,9 @@
 #include <iostream>
 
 // ROS
+#include "geometry_msgs/msg/point.hpp"
 #include "rclcpp/rclcpp.hpp"
+#include "sensor_msgs/msg/point_cloud2.hpp"
 #include "visibility_control.h"
 
 // BOOST
@@ -16,12 +18,13 @@
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/version.hpp>
 
+// SMAP
+#include "../../perception_server/detector_descriptor.hpp"
+#include "macros.hpp"
+#include "smap_interfaces/msg/smap_object.hpp"
+
 namespace smap
 {
-
-#include <boost/histogram/axis.hpp>
-#include <boost/histogram/make_histogram.hpp>
-#include <iostream>
 
 double log_odds( double prob ) { return log( prob / ( 1 - prob ) ); }
 
@@ -45,8 +48,8 @@ struct observation_histogram
     {
         this->histogram = boost::histogram::make_histogram(
             boost::histogram::axis::regular<
-                double, boost::histogram::use_default, boost::histogram::use_default, opts >( n_bins, 0, 360 ) );
-        this->bin_width = 360.0 / n_bins;
+                double, boost::histogram::use_default, boost::histogram::use_default, opts >( n_bins, -M_PI, M_PI ) );
+        this->bin_width = ( 2 * M_PI ) / n_bins;
         this->n_bins    = n_bins;
     }
 
@@ -87,7 +90,7 @@ struct observation_histogram
             if( log_odds_inv( this->histogram[ idx ] ) > upper_sat_threshold ) return true;
         }
         // Second condition
-        // - Max occlusion (1/5)*360
+        // - Max occlusion (1/5)*(2*M_PI)
         if( neg_bins >= this->n_bins * ( 4 / 5 ) ) return false;
         // Third condition
         // - More than (4/5) of bins positive
@@ -133,20 +136,32 @@ class thing
     // Attributes
     semantic_type_t type               = semantic_type_t::LOCATION;
     observation_histogram observations = observation_histogram( 36 );  // Polar histogram of the observations
+    geometry_msgs::msg::Point pos;
 
-                                                                       // Methods
-    // thing( void ) { this->histogram = polar_histogram::polar_histogram(36); }
+    std::map< std::string, std::pair< int, int > >** reg_classes = nullptr;
+
+    // Methods
     thing( void ) {}
+
+    thing( std::map< std::string, std::pair< int, int > >** class_map )
+    {
+        // this->observations = observation_histogram::observation_histogram( 36 );
+        this->reg_classes = class_map;
+    }
 
     thing( semantic_type_t type ) { this->type = type; }
 
     virtual ~thing() {}
 
-    std::string get_label();
+    std::string get_label( void );
+
+    bool label_is_equal( uint8_t& module_id, uint8_t& obs_label );
+
+    // std::string get_label( uint8_t module_id );
 
     std::pair< std::string, std::string > get_vertex_representation();
 
-    void update( semantic_type_t type, double angle );
+    void update( semantic_type_t type, smap_interfaces::msg::SmapObject& obj, double angle );
 
   private:
 
@@ -159,6 +174,8 @@ class thing
         (void) version;
         ar& type;
     }
+
+    int _get_label( void );
 };
 
 }  // namespace smap

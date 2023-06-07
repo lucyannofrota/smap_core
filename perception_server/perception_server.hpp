@@ -9,27 +9,12 @@
 
 // SMAP
 #include "../topo_map/topo_map.hpp"
+#include "detector_descriptor.hpp"
 #include "smap_interfaces/msg/smap_detections.hpp"
 #include "smap_interfaces/msg/smap_object.hpp"
 #include "smap_interfaces/msg/smap_observation.hpp"
 #include "smap_interfaces/srv/add_perception_module.hpp"
 #include "smap_interfaces/srv/smap_classes.hpp"
-
-enum detector_type
-{
-    object,
-    place
-};
-
-struct detector_t
-{
-    std::string name         = "";
-    int id                   = 0;
-    detector_type type       = object;
-    std::string architecture = "";
-    size_t n_classes         = 0;
-    std::map< std::string, int > classes;
-};
 
 namespace smap
 {

@@ -4,9 +4,11 @@
 // STL
 #include "stdio.h"
 
+#include <algorithm>
 #include <cmath>
 #include <iostream>
 #include <list>
+#include <math.h>
 #include <mutex>
 #include <string>
 #include <thread>
@@ -18,9 +20,12 @@
 #include "rclcpp/rclcpp.hpp"
 
 #include <geometry_msgs/msg/pose_stamped.hpp>
+#include <tf2/convert.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <visualization_msgs/msg/marker.hpp>
 
 // SMAP
+#include "../perception_server/perception_server.hpp"
 #include "label_writers.hpp"
 #include "smap_interfaces/msg/smap_object.hpp"
 #include "smap_interfaces/msg/smap_observation.hpp"
@@ -367,14 +372,7 @@ class topo_map : public rclcpp::Node
         this->add_vertex( pose->pose.position, true );
     }
 
-    inline void observation_callback( const smap_interfaces::msg::SmapObservation::SharedPtr observation )
-    {
-
-        // 1. Select possible vertexes
-        // 2.
-
-        this->add_object( observation->object );
-    }
+    void observation_callback( const smap_interfaces::msg::SmapObservation::SharedPtr observation );
 
     inline void add_vertex( const geometry_msgs::msg::Point& pos, bool strong_vertex )
     {
@@ -388,7 +386,7 @@ class topo_map : public rclcpp::Node
 
     inline size_t _add_vertex( size_t v_index, const geometry_msgs::msg::Point& pos, bool strong_vertex )
     {
-        vertex_data_t vert { v_index, pos, thing(), std::list< smap::thing >(), strong_vertex };
+        vertex_data_t vert { v_index, pos, thing( &( this->reg_classes ) ), std::list< smap::thing >(), strong_vertex };
         size_t ret = boost::add_vertex( vert, this->graph );
         // publish_vertex = true;
         this->markers.append_vertex(
@@ -461,6 +459,14 @@ class topo_map : public rclcpp::Node
         }
     };
 
+    std::map< std::string, std::pair< int, int > >* reg_classes;
+
+    inline void define_reg_classes( std::map< std::string, std::pair< int, int > >& classes )
+    {
+        printf( "Defining reg_classes\n" );
+        this->reg_classes = &classes;
+    }
+
     inline void print_graph( void )
     {
         boost::print_graph( this->graph, boost::get( &vertex_data_t::index, this->graph ) );
@@ -493,6 +499,22 @@ class topo_map : public rclcpp::Node
             }
         }
     }
+
+    inline double compute_direction( geometry_msgs::msg::Point& p1, geometry_msgs::msg::Pose& p2 )
+    {
+        // Result defined in [-pi,pi]
+        tf2::Quaternion q( p2.orientation.x, p2.orientation.y, p2.orientation.z, p2.orientation.w );
+        tf2::Matrix3x3 m( q );
+        double row, pitch, yaw;
+        m.getEulerYPR( yaw, pitch, row );
+        // printf( "R: %6.2f, P: %6.2f, Y: %6.2f\n", row, pitch, yaw );
+        double ret = atan2( p2.position.y - p1.y, p2.position.x - p1.x ) - yaw;
+        return atan2( sin( ret ), cos( ret ) );
+    }
+
+    inline static double rad2deg( double rad ) { return rad * ( 180 / M_PI ); }
+
+    inline static double deg2rad( double deg ) { return deg * ( M_PI / 180 ); }
 };
 }  // namespace smap
 
