@@ -6,13 +6,17 @@ namespace smap
 void topo_map::observation_callback( const smap_interfaces::msg::SmapObservation::SharedPtr observation )
 {
     // TODO: Add message "no classes registered"
-    printf( "0. Check graph integrity\n" );
-    if( boost::num_vertices( this->graph ) == 0 || this->reg_classes == nullptr ) return;
+    RCLCPP_DEBUG( this->get_logger(), "0. Check graph integrity" );
+    if( boost::num_vertices( this->graph ) == 0 || this->reg_classes == nullptr )
+    {
+        RCLCPP_WARN( this->get_logger(), "No detectors registered." );
+        return;
+    }
 
     // TODO: Add mutex
 
     // 1. Get all adjacent vertexes 3 layers deep
-    printf( "1. Get all adjacent vertexes 3 layers deep\n" );
+    RCLCPP_DEBUG( this->get_logger(), "1. Get all adjacent vertexes 3 layers deep" );
     std::vector< size_t > idxs_checked, idxs_checking, idxs_to_check;  // Using iterator graph idxs (not v_indexes)
     double min;
     idxs_checking.push_back(
@@ -32,7 +36,7 @@ void topo_map::observation_callback( const smap_interfaces::msg::SmapObservation
     }
 
     // 2. Filter possible vertexes
-    printf( "2. Filter possible vertexes\n" );
+    RCLCPP_DEBUG( this->get_logger(), "2. Filter possible vertexes" );
     std::vector< std::vector< thing* > > candidates;
     // int server_class_id = -1;
     for( auto checking = idxs_checked.begin(); checking != idxs_checked.end(); checking++ )
@@ -65,12 +69,12 @@ void topo_map::observation_callback( const smap_interfaces::msg::SmapObservation
 
     // 3. Update vertex
     // If true add object otherwise update an existing one
-    printf( "3. Update vertex\n" );
-    if( candidates.size() == 0 ) this->add_object( observation->object );
+    RCLCPP_DEBUG( this->get_logger(), "3. Update vertex" );
+    if( candidates.size() == 0 ) this->add_object( observation );
     else
     {
         // Select the closest object
-        printf( "\nSelect the closest object\n" );
+        RCLCPP_DEBUG( this->get_logger(), "Select the closest object" );
         thing* closest = nullptr;
         for( auto c: candidates )
         {
@@ -91,7 +95,7 @@ void topo_map::observation_callback( const smap_interfaces::msg::SmapObservation
             }
         }
         // TODO: Implement object update
-        printf( "\nObject update\n" );
+        RCLCPP_DEBUG( this->get_logger(), "Object update" );
         closest->update( smap::semantic_type_t::OBJECT, observation->object, (double) observation->direction );
     }
 }
@@ -243,7 +247,9 @@ void topo_map::add_vertex( const geometry_msgs::msg::Point& pos, size_t& current
     // this->export_graph();
 }
 
-void topo_map::add_object( const smap_interfaces::msg::SmapObject& object )
+// void topo_map::add_object( const smap_interfaces::msg::SmapObject& object )
+void topo_map::add_object( const smap_interfaces::msg::SmapObservation::SharedPtr observation )
+// void topo_map::add_object( const smap_interfaces::msg::SmapObject& object, double& angle ) // TODO: Revert
 {
     // TODO: create callback group. Should be mutually exclusive
     printf( "add_object\n" );
@@ -252,7 +258,7 @@ void topo_map::add_object( const smap_interfaces::msg::SmapObject& object )
     size_t current = -1, previous = -1;
     double distance, t;
     // previous will be the closest point in this case
-    previous = this->get_closest_vertex( object.pose.pose.position, distance );
+    previous = this->get_closest_vertex( observation->object.pose.pose.position, distance );
     vertex_data_t pre;
     this->get_vertex( previous, pre );
 
@@ -260,6 +266,10 @@ void topo_map::add_object( const smap_interfaces::msg::SmapObject& object )
     {
         // TODO: Implement method
         printf( "append_object\n" );
+        thing new_thing( &( this->reg_classes ) );
+        // probabilities
+        new_thing.update( smap::semantic_type_t::OBJECT, observation->object, observation->direction );  // TODO: Revert
+        // pre.related_things.push_back( new_thing );
         // this->append_object();
         // printf( "append_object\n" );
         return;
@@ -275,8 +285,8 @@ void topo_map::add_object( const smap_interfaces::msg::SmapObject& object )
     // printf( "Create support nodes\nn: %i|t: %6.1f\n", n_new_vertex, t );
     while( distance > VERTEX_DISTANCE && n_new_vertex > 0 )
     {
-        new_point.x = ( 1 - t * count ) * base_point.x + t * count * object.pose.pose.position.x;
-        new_point.y = ( 1 - t * count ) * base_point.y + t * count * object.pose.pose.position.y;
+        new_point.x = ( 1 - t * count ) * base_point.x + t * count * observation->object.pose.pose.position.x;
+        new_point.y = ( 1 - t * count ) * base_point.y + t * count * observation->object.pose.pose.position.y;
 
         int idx     = this->_add_vertex( this->v_index++, new_point, false );
         current     = this->graph[ idx ].index;
@@ -285,7 +295,7 @@ void topo_map::add_object( const smap_interfaces::msg::SmapObject& object )
 
         previous = current;
         this->get_vertex( previous, pre );
-        distance = this->_calc_distance( pre.pos, object.pose.pose.position );
+        distance = this->_calc_distance( pre.pos, observation->object.pose.pose.position );
         n_new_vertex--;
         count++;
     }

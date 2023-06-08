@@ -48,25 +48,52 @@ std::pair< std::string, std::string > thing::get_vertex_representation()
     return std::pair< std::string, std::string >( UNDEFINED_LABEL, std::string( "red" ) );
 }
 
-void thing::update( semantic_type_t type, smap_interfaces::msg::SmapObject& obj, double angle )
+void thing::update( const semantic_type_t type, const smap_interfaces::msg::SmapObject& obj, double angle )
 {
     (void) angle;
     (void) obj;
-    // TODO: Store object attributes
     static bool set = false;
     if( !set )
     {
-        set        = true;
+        // set        = true;
         this->type = type;
-        // TODO: initialize histogram
+        // TODO: Define initialization
+
+        // 1. Histogram initialization
         printf( "Histogram:\n" );
         printf( "\tn_bins: %i\n", (int) this->observations.n_bins );
         printf( "\tbin_width: %f\n", this->observations.bin_width );
+        int u    = 0;
+        double s = 0;
+
+        // 2. Position initialization
+
+        // 3. Probabilities vector initialization
+        // Create a map to store this information
+        printf( "Probabilities\n" );
+        for( auto e: obj.probability_distribution )
+        {
+            u++;
+            s += e;
+            printf( "\tProb: %6.2f\n", e );
+        }
+
+        // this->
         // this->histogram
+        // this->
     }
     else
     {
-        // TODO: define else
+        // TODO: Define
+        // 1. Histogram update
+
+        // 2. Position update
+
+        // 3. Probabilities vector update
+
+        // Must combine the received probabilities vector with the previous
+        // x_hat[k] = x[k] + x[k-1]
+        // Verify the best combination (PROBABLY NOT A SUM [+])
     }
 }
 

@@ -262,9 +262,9 @@ void object_estimator::detections_callback( const smap_interfaces::msg::SmapDete
     for( auto& obj: input_msg->objects )
     {
         // BOOST_FOREACH(obj, input_msg->objects){
-        if( obj.confidence < 70 ) continue;  // TODO: Remove DEBUG
+        if( obj.confidence < 0.70 ) continue;  // TODO: Remove DEBUG
 
-        if( obj.label != 62 ) continue;      // TODO: Remove DEBUG
+        if( obj.label != 62 ) continue;        // TODO: Remove DEBUG
 
         obj.module_id = input_msg->module_id;
 

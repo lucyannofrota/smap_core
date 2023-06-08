@@ -140,6 +140,8 @@ class thing
 
     std::map< std::string, std::pair< int, int > >** reg_classes = nullptr;
 
+    std::map< std::string, std::vector< float > > probabilities;
+
     // Methods
     thing( void ) {}
 
@@ -161,7 +163,7 @@ class thing
 
     std::pair< std::string, std::string > get_vertex_representation();
 
-    void update( semantic_type_t type, smap_interfaces::msg::SmapObject& obj, double angle );
+    void update( semantic_type_t type, const smap_interfaces::msg::SmapObject& obj, double angle );
 
   private:
 

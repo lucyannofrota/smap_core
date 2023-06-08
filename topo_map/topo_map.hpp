@@ -365,7 +365,10 @@ class topo_map : public rclcpp::Node
 
     inline void timer_callback( void ) { this->markers.async_publish_markers(); }
 
-    inline void monitor_callback( void ) {}
+    inline void monitor_callback( void )
+    {
+        // TODO: Implement monitor (should update markers attributes based on the strength of the vertex )
+    }
 
     inline void pose_callback( const geometry_msgs::msg::PoseStamped::SharedPtr pose )
     {
@@ -382,15 +385,19 @@ class topo_map : public rclcpp::Node
 
     void add_vertex( const geometry_msgs::msg::Point& pos, size_t& current, size_t& previous, bool strong_vertex );
 
-    void add_object( const smap_interfaces::msg::SmapObject& object );
+    // void add_object( const smap_interfaces::msg::SmapObject& object );
+    void add_object( const smap_interfaces::msg::SmapObservation::SharedPtr observation );
+
+    // void add_object( const smap_interfaces::msg::SmapObject& object, double& angle ); TODO: Revert
 
     inline size_t _add_vertex( size_t v_index, const geometry_msgs::msg::Point& pos, bool strong_vertex )
     {
         vertex_data_t vert { v_index, pos, thing( &( this->reg_classes ) ), std::list< smap::thing >(), strong_vertex };
         size_t ret = boost::add_vertex( vert, this->graph );
         // publish_vertex = true;
-        this->markers.append_vertex(
-            pos, v_index, vert.this_thing.get_label() + std::string( "_" ) + std::to_string( v_index ) );
+        if( strong_vertex )
+            this->markers.append_vertex(
+                pos, v_index, vert.this_thing.get_label() + std::string( "_" ) + std::to_string( v_index ) );
 
         RCLCPP_INFO( this->get_logger(), "Vertex added (%li) [%4.1f,%4.1f,%4.1f]", this->v_index, pos.x, pos.y, pos.z );
         return ret;
