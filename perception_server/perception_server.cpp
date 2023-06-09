@@ -178,10 +178,11 @@ void perception_server::print_classes( std::string pref, std::map< int, std::str
 
 void perception_server::print_classes( std::string pref, std::map< std::string, std::pair< int, int > >& classes )
 {
-    RCLCPP_INFO( this->get_logger(), "%sServer|Detector|Label", pref.c_str() );
+    RCLCPP_INFO( this->get_logger(), "%so idx|Server|Detector|Label", pref.c_str() );
+    int i = 0;
     for( auto cls: classes )
         RCLCPP_INFO(
-            this->get_logger(), "%s  %4i|    %4i| %s", pref.c_str(), cls.second.first, cls.second.second,
+            this->get_logger(), "%s %4i|  %4i|    %4i| %s", pref.c_str(), i++, cls.second.first, cls.second.second,
             cls.first.c_str() );
 }
 
