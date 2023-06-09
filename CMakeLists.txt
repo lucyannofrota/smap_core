@@ -79,9 +79,9 @@ find_package(tf2_geometry_msgs REQUIRED)
 ############
 
 
-add_subdirectory(topo_map)
 add_subdirectory(object_estimator)
 add_subdirectory(perception_server)
+add_subdirectory(topo_map)
 
 
 install(

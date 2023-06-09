@@ -48,7 +48,9 @@ std::pair< std::string, std::string > thing::get_vertex_representation()
     return std::pair< std::string, std::string >( UNDEFINED_LABEL, std::string( "red" ) );
 }
 
-void thing::update( const semantic_type_t type, const smap_interfaces::msg::SmapObject& obj, double angle )
+void thing::update(
+    const semantic_type_t type, const smap_interfaces::msg::SmapObject& obj, double distance, double angle,
+    detector_t& detector )
 {
     (void) angle;
     (void) obj;
@@ -62,25 +64,98 @@ void thing::update( const semantic_type_t type, const smap_interfaces::msg::Smap
         // 1. Histogram initialization
         printf( "Histogram:\n" );
         printf( "\tn_bins: %i\n", (int) this->observations.n_bins );
-        printf( "\tbin_width: %f\n", this->observations.bin_width );
-        int u    = 0;
-        double s = 0;
+        printf( "\tbin_width: %6.1f\n", rad2deg( this->observations.bin_width ) );
+        this->observations.register_obs( distance, angle, true );
+        this->observations.print();
 
         // 2. Position initialization
 
         // 3. Probabilities vector initialization
         // Create a map to store this information
-        printf( "Probabilities\n" );
-        for( auto e: obj.probability_distribution )
+        // int u    = 0;
+        // double s = 0;
+        int i = 0, j = 0;
+        bool sw = false;
+        printf( "Probabilities [BEFORE]:\n" );
+        printf( "\tClass |" );
+        auto it = obj.probability_distribution.begin();
+        while( it != obj.probability_distribution.end() )
         {
-            u++;
-            s += e;
-            printf( "\tProb: %6.2f\n", e );
+            if( sw )
+            {
+                printf( "%6.3f|", *it );
+                it++;
+                i--;
+            }
+            else
+            {
+                printf( "%6i|", i + j * 20 );
+                i++;
+            }
+            if( sw && i == 0 )
+            {
+                sw = false;
+                printf( "\n\tClass |" );
+                j++;
+                continue;
+            }
+            if( i % 20 == 0 )
+            {
+                sw = true;
+                printf( "\n\tProbs |" );
+                continue;
+            }
         }
+        // this->probabilities
+        for( auto c: **this->reg_classes ) this->probabilities[ c.first ] = log_odds( 0 );
 
-        // this->
-        // this->histogram
-        // this->
+        stack_vectors( this->probabilities, obj.probability_distribution, detector );
+
+        i  = 0;
+        j  = 0;
+        sw = false;
+        printf( "Probabilities [AFTER]:\n" );
+        printf( "\tClass |" );
+        auto itp = this->probabilities.begin();
+        while( itp != this->probabilities.end() )
+        {
+            if( sw )
+            {
+                printf( "%6.3f|", log_odds_inv( ( *itp ).second ) );
+                itp++;
+                i--;
+            }
+            else
+            {
+                printf( "%6i|", i + j * 20 );
+                i++;
+            }
+            if( sw && i == 0 )
+            {
+                sw = false;
+                printf( "\n\tClass |" );
+                j++;
+                continue;
+            }
+            if( i % 20 == 0 )
+            {
+                sw = true;
+                printf( "\n\tProbs |" );
+                continue;
+            }
+        }
+        return;
+    }
+    if( this->probabilities.size() != ( *this->reg_classes )->size() )
+    {
+        // find
+        for( auto c: **this->reg_classes )
+        {
+            // if class not found add it to the map
+            stack_normalization();
+            if( this->probabilities.find( c.first ) == this->probabilities.end() )
+                this->probabilities[ c.first ] = log_odds( 0 );
+        }
     }
     else
     {

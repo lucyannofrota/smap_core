@@ -47,8 +47,6 @@
 // #include <SDL2/SDL.h>
 // #include <SDL2/SDL_opengl.h>
 
-// TODO: Convert this node into a ROS component
-
 using namespace std::chrono_literals;
 
 // TODO: Reject unregistered requests

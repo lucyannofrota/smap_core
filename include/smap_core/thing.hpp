@@ -20,15 +20,13 @@
 
 // SMAP
 #include "../../perception_server/detector_descriptor.hpp"
+#include "aux_functions.hpp"
 #include "macros.hpp"
 #include "smap_interfaces/msg/smap_object.hpp"
+#include "stacking_classification.hpp"
 
 namespace smap
 {
-
-double log_odds( double prob ) { return log( prob / ( 1 - prob ) ); }
-
-double log_odds_inv( double lodds ) { return 1 - 1 / ( 1 + exp( lodds ) ); }
 
 struct observation_histogram
 {
@@ -112,12 +110,15 @@ struct observation_histogram
 
     void print( void )
     {
+        printf( "Bins       |" );
+        for( size_t i = 0; i < this->histogram.size(); i++ ) printf( "%4i|", (int) i );
+        printf( "\nBin center |" );
         for( size_t i = 0; i < this->histogram.size(); i++ )
-        {
-            printf(
-                "Bin [%2i], bin center: %5.1f, value: %8.4f\n", (int) i, this->histogram.axis().bin( i ).center(),
-                (double) log_odds_inv( this->histogram[ i ] ) );
-        }
+            printf( "%4i|", (int) rad2deg( this->histogram.axis().bin( i ).center() ) );
+        printf( "\nValue      |" );
+        for( size_t i = 0; i < this->histogram.size(); i++ )
+            printf( "%4.1f|", (double) log_odds_inv( this->histogram[ i ] ) );
+        printf( "\n" );
     }
 };
 
@@ -127,7 +128,7 @@ enum semantic_type_t
     LOCATION
 };
 
-// Can be a scene or object thing
+// Can be a location or object thing
 
 class thing
 {
@@ -140,7 +141,7 @@ class thing
 
     std::map< std::string, std::pair< int, int > >** reg_classes = nullptr;
 
-    std::map< std::string, std::vector< float > > probabilities;
+    std::map< std::string, float > probabilities;
 
     // Methods
     thing( void ) {}
@@ -163,7 +164,18 @@ class thing
 
     std::pair< std::string, std::string > get_vertex_representation();
 
-    void update( semantic_type_t type, const smap_interfaces::msg::SmapObject& obj, double angle );
+    void update(
+        semantic_type_t type, const smap_interfaces::msg::SmapObject& obj, double distance, double angle,
+        detector_t& detector );
+
+    // void print_probs( void )
+    // {
+    //     printf( "Probabilities:\n" );
+    //     printf( "\tClass |" );
+    //     int i = 0;
+    //     for( auto e: this->probabilities ) printf( "%4i|", e.second );
+    //     for( auto e: this->probabilities ) printf( "\tProb: %6.2f\n", e );
+    // }
 
   private:
 

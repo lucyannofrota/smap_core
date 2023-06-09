@@ -14,8 +14,6 @@
 #include <thread>
 
 // ROS
-#include "../include/smap_core/macros.hpp"
-#include "../include/smap_core/thing.hpp"
 #include "../include/smap_core/visibility_control.h"
 #include "rclcpp/rclcpp.hpp"
 
@@ -25,6 +23,9 @@
 #include <visualization_msgs/msg/marker.hpp>
 
 // SMAP
+#include "../include/smap_core/aux_functions.hpp"
+#include "../include/smap_core/macros.hpp"
+#include "../include/smap_core/thing.hpp"
 #include "../perception_server/perception_server.hpp"
 #include "label_writers.hpp"
 #include "smap_interfaces/msg/smap_object.hpp"
@@ -386,7 +387,7 @@ class topo_map : public rclcpp::Node
     void add_vertex( const geometry_msgs::msg::Point& pos, size_t& current, size_t& previous, bool strong_vertex );
 
     // void add_object( const smap_interfaces::msg::SmapObject& object );
-    void add_object( const smap_interfaces::msg::SmapObservation::SharedPtr observation );
+    void add_object( const smap_interfaces::msg::SmapObservation::SharedPtr observation, detector_t& det );
 
     // void add_object( const smap_interfaces::msg::SmapObject& object, double& angle ); TODO: Revert
 
@@ -468,10 +469,18 @@ class topo_map : public rclcpp::Node
 
     std::map< std::string, std::pair< int, int > >* reg_classes;
 
+    std::vector< detector_t >* reg_detectors;
+
     inline void define_reg_classes( std::map< std::string, std::pair< int, int > >& classes )
     {
         printf( "Defining reg_classes\n" );
         this->reg_classes = &classes;
+    }
+
+    inline void define_reg_detectors( std::vector< detector_t >& dets )
+    {
+        printf( "Defining reg_detectors\n" );
+        this->reg_detectors = &dets;
     }
 
     inline void print_graph( void )
@@ -518,10 +527,6 @@ class topo_map : public rclcpp::Node
         double ret = atan2( p2.position.y - p1.y, p2.position.x - p1.x ) - yaw;
         return atan2( sin( ret ), cos( ret ) );
     }
-
-    inline static double rad2deg( double rad ) { return rad * ( 180 / M_PI ); }
-
-    inline static double deg2rad( double deg ) { return deg * ( M_PI / 180 ); }
 };
 }  // namespace smap
 

@@ -91,6 +91,7 @@ int main( int argc, char** argv )
         std::make_shared< smap::perception_server >( options );
 
     _topo_map_node->define_reg_classes( _perception_server_node->classes );
+    _topo_map_node->define_reg_detectors( _perception_server_node->detectors );
     // _smap_node->topological_map = _topological_map_node;
     rclcpp::executors::MultiThreadedExecutor executor;
     executor.add_node( _smap_node );

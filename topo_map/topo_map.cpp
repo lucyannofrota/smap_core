@@ -7,7 +7,7 @@ void topo_map::observation_callback( const smap_interfaces::msg::SmapObservation
 {
     // TODO: Add message "no classes registered"
     RCLCPP_DEBUG( this->get_logger(), "0. Check graph integrity" );
-    if( boost::num_vertices( this->graph ) == 0 || this->reg_classes == nullptr )
+    if( boost::num_vertices( this->graph ) == 0 || this->reg_classes == nullptr || this->reg_detectors == nullptr )
     {
         RCLCPP_WARN( this->get_logger(), "No detectors registered." );
         return;
@@ -18,9 +18,9 @@ void topo_map::observation_callback( const smap_interfaces::msg::SmapObservation
     // 1. Get all adjacent vertexes 3 layers deep
     RCLCPP_DEBUG( this->get_logger(), "1. Get all adjacent vertexes 3 layers deep" );
     std::vector< size_t > idxs_checked, idxs_checking, idxs_to_check;  // Using iterator graph idxs (not v_indexes)
-    double min;
+    double min_distance;
     idxs_checking.push_back(
-        this->_get_vertex( this->get_closest_vertex( observation->object.pose.pose.position, min ) ) );
+        this->_get_vertex( this->get_closest_vertex( observation->object.pose.pose.position, min_distance ) ) );
     for( size_t i = 0; i <= 3; i++ )
     {
         for( auto checking: idxs_checking )
@@ -51,7 +51,7 @@ void topo_map::observation_callback( const smap_interfaces::msg::SmapObservation
             if( !obj.label_is_equal( observation->object.module_id, observation->object.label ) ) continue;
 
             // Check active cone
-            if( abs( topo_map::rad2deg(
+            if( abs( rad2deg(
                     this->compute_direction( observation->object.pose.pose.position, observation->robot_pose.pose ) ) )
                 > ACTIVE_FOV_H )
                 continue;
@@ -67,10 +67,28 @@ void topo_map::observation_callback( const smap_interfaces::msg::SmapObservation
         else candidates.push_back( local_candidates );
     }
 
-    // 3. Update vertex
+    // 3. Verify the existence of the detector
+    auto det       = this->reg_detectors->begin();
+    bool det_found = false;
+    for( ; det != this->reg_detectors->end(); det++ )
+    {
+        // printf( "det id: %i |%i\n", observation->object.module_id, det->id );
+        if( det->id == observation->object.module_id )
+        {
+            det_found = true;
+            break;
+        }
+    }
+    if( !det_found )  // return if no detector is found
+    {
+        RCLCPP_WARN( this->get_logger(), "Detector not found!" );
+        return;
+    }
+
+    // 4. Update vertex
     // If true add object otherwise update an existing one
     RCLCPP_DEBUG( this->get_logger(), "3. Update vertex" );
-    if( candidates.size() == 0 ) this->add_object( observation );
+    if( candidates.size() == 0 ) this->add_object( observation, *det );
     else
     {
         // Select the closest object
@@ -82,21 +100,22 @@ void topo_map::observation_callback( const smap_interfaces::msg::SmapObservation
             {
                 if( closest == nullptr )
                 {
-                    closest = lc;
-                    min     = this->_calc_distance( observation->object.pose.pose.position, lc->pos );
+                    closest      = lc;
+                    min_distance = this->_calc_distance( observation->object.pose.pose.position, lc->pos );
                     continue;
                 }
 
-                if( this->_calc_distance( observation->object.pose.pose.position, lc->pos ) < min )
+                if( this->_calc_distance( observation->object.pose.pose.position, lc->pos ) < min_distance )
                 {
-                    closest = lc;
-                    min     = this->_calc_distance( observation->object.pose.pose.position, lc->pos );
+                    closest      = lc;
+                    min_distance = this->_calc_distance( observation->object.pose.pose.position, lc->pos );
                 }
             }
         }
         // TODO: Implement object update
         RCLCPP_DEBUG( this->get_logger(), "Object update" );
-        closest->update( smap::semantic_type_t::OBJECT, observation->object, (double) observation->direction );
+        closest->update(
+            smap::semantic_type_t::OBJECT, observation->object, min_distance, (double) observation->direction, *det );
     }
 }
 
@@ -110,7 +129,7 @@ bool topo_map::add_edge( const size_t& previous, const size_t& current )
     for( auto e: boost::make_iterator_range( boost::out_edges( this->_get_vertex( current ), this->graph ) ) )
         if( boost::target( e, this->graph ) == this->_get_vertex( previous ) ) return false;
     boost::add_edge( this->_get_vertex( previous ), this->_get_vertex( current ), { distance, 1 }, this->graph );
-    this->markers.append_edge( prev.pos, cur.pos );
+    if( prev.strong_vertex && cur.strong_vertex ) this->markers.append_edge( prev.pos, cur.pos );
     RCLCPP_INFO(
         this->get_logger(), "Edge added %i->%i [ % 4.1f, % 4.1f, % 4.1f ] -> [ % 4.1f, % 4.1f, % 4.1f ] ", previous,
         current, prev.pos.x, prev.pos.y, prev.pos.z, cur.pos.x, cur.pos.y, cur.pos.z );
@@ -248,12 +267,12 @@ void topo_map::add_vertex( const geometry_msgs::msg::Point& pos, size_t& current
 }
 
 // void topo_map::add_object( const smap_interfaces::msg::SmapObject& object )
-void topo_map::add_object( const smap_interfaces::msg::SmapObservation::SharedPtr observation )
+void topo_map::add_object( const smap_interfaces::msg::SmapObservation::SharedPtr observation, detector_t& det )
 // void topo_map::add_object( const smap_interfaces::msg::SmapObject& object, double& angle ) // TODO: Revert
 {
     // TODO: create callback group. Should be mutually exclusive
     printf( "add_object\n" );
-    if( boost::num_vertices( this->graph ) == 0 ) return;
+    // if( boost::num_vertices( this->graph ) == 0 ) return;
 
     size_t current = -1, previous = -1;
     double distance, t;
@@ -268,7 +287,25 @@ void topo_map::add_object( const smap_interfaces::msg::SmapObservation::SharedPt
         printf( "append_object\n" );
         thing new_thing( &( this->reg_classes ) );
         // probabilities
-        new_thing.update( smap::semantic_type_t::OBJECT, observation->object, observation->direction );  // TODO: Revert
+        // *this->reg_detectors[]
+        // TODO: Get indexes based on the detector idx key
+
+        // Search for the detector related to the observation
+
+        // printf( "-> Classes: \n" );
+        // // for( auto cls: *this->reg_classes )
+        // //     printf(
+        // //         "\t[%2i] (%s) | (%s) [%2i,%2i]\n", cls.first, ( *this->reg_detectors )[ cls.second.second ],
+        // //         cls.first, cls.second.first, cls.second.second );
+        // for( auto c: det.classes )
+        //     // (*this->reg_classes)[ c.second ]
+        //     printf(
+        //         "\t[%2i] (%s) | [%2i,%2i]\n", c.first, c.second.c_str(), ( *this->reg_classes )[ c.second ].first,
+        //         ( *this->reg_classes )[ c.second ].second );
+
+        new_thing.update(
+            smap::semantic_type_t::OBJECT, observation->object, distance, observation->direction,
+            det );  // TODO: Revert
         // pre.related_things.push_back( new_thing );
         // this->append_object();
         // printf( "append_object\n" );
