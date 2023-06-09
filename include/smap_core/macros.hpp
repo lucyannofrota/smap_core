@@ -24,6 +24,8 @@ namespace smap
 
 #define UNDEFINED_LABEL std::string( "unknown" )
 
+#define MAX_POS_PROB 0.85
+
 }  // namespace smap
 
 #endif  // SMAP_CORE__MACROS_HPP_

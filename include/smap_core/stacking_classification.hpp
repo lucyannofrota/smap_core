@@ -7,42 +7,42 @@
 
 // SMAP
 #include "../../perception_server/detector_descriptor.hpp"
+#include "aux_functions.hpp"
 #include "visibility_control.h"
 
 namespace smap
 {
 
-void stack_normalization( void ) {}
+inline void stack_normalization( std::map< std::string, float >& prob_map )
+{
+    // XXX: If another type of normalization is needed. Changes to initialization and updating of vectors will be
+    // required
+
+    // Min-max feature scaling:
+    //														X' = (X - X_min)/(X_max - X_min)
+    double sum = 0, bef;
+    int i      = 0;
+    printf( "Normalization: \n" );
+    for( auto x: prob_map ) sum += log_odds_inv( x.second );
+    for( auto x: prob_map )
+    {
+        bef      = x.second;
+        x.second = log_odds( x.second / sum );
+        if( x.second > 0.001 ) printf( "[%i]: %f|%f\n", i, bef, x.second );
+        i++;
+    }
+}
 
 inline void stack_vectors(
     std::map< std::string, float >& current_likelihood, const std::vector< float >& new_vector, const detector_t& det )
 {
     // current_likelihood - is a map containing a vector of probabilities that represents the probability of beeing each
     // 											class given the current observation
-    (void) current_likelihood;
-    (void) new_vector;
-    (void) det;
-    bool initializing = current_likelihood.size() == 0;
-    if( current_likelihood.size() == 0 )
-    {  // Initialization
-        printf( "current_likelihood.size() == 0\n" );
-        // for(auto c : )
-    }
-
-    for( auto c: det.classes )
-        if( initializing ) current_likelihood[ c.second ] = new_vector[ c.first ];
-        else
-        {
-            // TODO: Probability combination
-            (void) current_likelihood;
-            (void) new_vector;
-            (void) det;
-        }
-    // for( auto c: det.classes )
-    //     // (*this->reg_classes)[ c.second ]
-    //     current printf(
-    //         "\t[%2i] (%s) | [%2i,%2i]\n", c.first, c.second.c_str(), ( *this->reg_classes )[ c.second ].first,
-    //         ( *this->reg_classes )[ c.second ].second );
+    int i = 0;
+    // 1. Probability combination
+    auto it = new_vector.begin();
+    for( i = 0; it != new_vector.end(); ++it, i++ ) current_likelihood[ det.classes.at( i ) ] += log_odds( *it );
+    // stack_normalization( current_likelihood );  // TODO: Test the influence of the normalization
 }
 }  // namespace smap
 

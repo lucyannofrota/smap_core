@@ -8,10 +8,20 @@ std::string thing::get_label( void )
     if( this->reg_classes == nullptr ) return UNDEFINED_LABEL;
     if( *( this->reg_classes ) == nullptr ) return UNDEFINED_LABEL;
 
-    for( auto e: ( **( this->reg_classes ) ) )
-        if( e.second.first == this->_get_label() ) return e.first;
+    // for( auto e: ( **( this->reg_classes ) ) )
+    //     if( e.second.first == this->_get_label() ) return e.first;
+    std::string ret = UNDEFINED_LABEL;
+    float value     = 0;
+    for( auto e: this->probabilities )
+    {
+        if( e.second > value )
+        {
+            value = e.second;
+            ret   = e.first;
+        }
+    }
 
-    return UNDEFINED_LABEL;
+    return ret;
 }
 
 bool thing::label_is_equal( uint8_t& module_id, uint8_t& obs_label )
@@ -107,9 +117,8 @@ void thing::update(
             }
         }
         // this->probabilities
-        for( auto c: **this->reg_classes ) this->probabilities[ c.first ] = log_odds( 0 );
-
-        stack_vectors( this->probabilities, obj.probability_distribution, detector );
+        for( auto c: **this->reg_classes )
+            this->probabilities[ c.first ] = log_odds( obj.probability_distribution[ c.second.second ] );
 
         i  = 0;
         j  = 0;
@@ -144,31 +153,39 @@ void thing::update(
                 continue;
             }
         }
-        return;
-    }
-    if( this->probabilities.size() != ( *this->reg_classes )->size() )
-    {
-        // find
-        for( auto c: **this->reg_classes )
-        {
-            // if class not found add it to the map
-            stack_normalization();
-            if( this->probabilities.find( c.first ) == this->probabilities.end() )
-                this->probabilities[ c.first ] = log_odds( 0 );
-        }
     }
     else
     {
         // TODO: Define
         // 1. Histogram update
+        // TODO: Test
+        this->observations.register_obs( distance, angle, true );
 
-        // 2. Position update
+        // 2. Probabilities vector update
+        // TODO: Test
+        if( this->probabilities.size() != ( *this->reg_classes )->size() )
+        {
+            // find
+            for( auto c: **this->reg_classes )
+            {
+                // if class not found add it to the map
+                if( this->probabilities.find( c.first ) == this->probabilities.end() )
+                    this->probabilities[ c.first ] = log_odds( 0 );
+            }
+        }
 
-        // 3. Probabilities vector update
+        stack_vectors( this->probabilities, obj.probability_distribution, detector );
 
-        // Must combine the received probabilities vector with the previous
-        // x_hat[k] = x[k] + x[k-1]
-        // Verify the best combination (PROBABLY NOT A SUM [+])
+        // 3. Position update
+        // TODO: Test
+        // Saturation of p. Max value is MAX_POS_PROB
+        float p = ( this->probabilities[ this->get_label() ] > MAX_POS_PROB )
+                    ? MAX_POS_PROB
+                    : ( this->probabilities[ this->get_label() ] > MAX_POS_PROB );
+        // Low pass filter to update the position with p as coefficient
+        this->pos.x = this->pos.x * p + obj.pose.pose.position.x * ( 1 - p );
+        this->pos.y = this->pos.y * p + obj.pose.pose.position.y * ( 1 - p );
+        this->pos.z = this->pos.z * p + obj.pose.pose.position.z * ( 1 - p );
     }
 }
 
