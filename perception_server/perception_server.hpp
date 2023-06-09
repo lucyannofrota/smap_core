@@ -25,8 +25,6 @@ class perception_server : public rclcpp::Node
 
     friend class topo_map;
 
-    std::vector< detector_t > detectors;
-
     int n_classes = 0;
 
     rclcpp::Service< smap_interfaces::srv::AddPerceptionModule >::SharedPtr add_perception_module_srv =
@@ -50,6 +48,8 @@ class perception_server : public rclcpp::Node
   public:
 
     std::map< std::string, std::pair< int, int > > classes;  // pair[server_id, detector_id]
+
+    std::vector< detector_t > detectors;
 
     // Constructor/Destructor
     inline perception_server() : Node( "perception_server" )
@@ -78,7 +78,8 @@ class perception_server : public rclcpp::Node
 
     // print data
 
-    void print_classes( std::string pref, std::map< std::string, int >& classes );
+    // void print_classes( std::string pref, std::map< std::string, int >& classes );
+    void print_classes( std::string pref, std::map< int, std::string >& classes );
 
     void print_classes( std::string pref, std::map< std::string, std::pair< int, int > >& classes );
 

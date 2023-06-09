@@ -17,7 +17,7 @@ struct detector_t
     detector_type type       = detector_type::object;
     std::string architecture = "";
     size_t n_classes         = 0;
-    std::map< std::string, int > classes;
+    std::map< int, std::string > classes;
 };
 
 #endif  // SMAP_CORE__DETECTOR_DESCRIPTOR_HPP_
