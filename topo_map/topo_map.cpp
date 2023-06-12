@@ -81,7 +81,7 @@ void topo_map::observation_callback( const smap_interfaces::msg::SmapObservation
     }
     if( !det_found )  // return if no detector is found
     {
-        RCLCPP_WARN( this->get_logger(), "Detector not found!" );
+        RCLCPP_WARN( this->get_logger(), "No detector was found!" );
         return;
     }
 
