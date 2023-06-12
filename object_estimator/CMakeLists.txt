@@ -1,25 +1,6 @@
 cmake_minimum_required(VERSION 3.5)
 project(smap_core)
 
-# Default to C99
-if(NOT CMAKE_C_STANDARD)
-  set(CMAKE_C_STANDARD 99)
-endif()
-
-# Default to C++14
-if(NOT CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD 14)
-endif()
-
-if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  add_compile_options(-Wall -Wextra -Wpedantic)
-endif()
-
-
-if (POLICY CMP0074)
-  cmake_policy(SET CMP0074 NEW)
-endif()
-
 # find dependencies
     # PCL
         find_package(PCL 1.1 REQUIRED)
@@ -86,6 +67,8 @@ endif()
       ${IMGUI_SRC}
     )
 
+    target_precompile_headers(object_estimator REUSE_FROM pch)
+
     target_include_directories(object_estimator PUBLIC
       $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
       $<INSTALL_INTERFACE:include>
@@ -123,6 +106,9 @@ endif()
       object_estimator.cpp
       ${IMGUI_SRC}
     )
+
+    # target_precompile_headers(object_estimator_node PRIVATE ../include/smap_core/pch.hpp)
+    target_precompile_headers(object_estimator_node REUSE_FROM pch)
 
     target_include_directories(object_estimator_node PUBLIC
       $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>

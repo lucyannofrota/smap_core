@@ -1,9 +1,8 @@
 #ifndef SMAP_CORE__MACROS_HPP_
 #define SMAP_CORE__MACROS_HPP_
 
+#include "../../pch/pch.hpp"
 #include "visibility_control.h"
-
-#include <string.h>
 
 namespace smap
 {
@@ -21,6 +20,8 @@ namespace smap
 #define ACTIVE_FOV_H 100                                          // Horizontal active FOV
 
 #define OBJECT_ERROR_DISTANCE 0.1  // Max position error of an object and max distance between objects
+
+#define HISTOGRAM_BINS 36  // Number of bins of the polar histogram
 
 #define UNDEFINED_LABEL std::string( "unknown" )
 

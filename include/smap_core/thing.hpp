@@ -1,24 +1,15 @@
 #ifndef SMAP_CORE__THING_HPP_
 #define SMAP_CORE__THING_HPP_
 
-// STL
-#include "stdio.h"
-
-#include <iostream>
-
 // ROS
+
 #include "geometry_msgs/msg/point.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "sensor_msgs/msg/point_cloud2.hpp"
 #include "visibility_control.h"
 
-// BOOST
-#include <boost/histogram/axis.hpp>
-#include <boost/histogram/make_histogram.hpp>
-#include <boost/serialization/access.hpp>
-#include <boost/serialization/version.hpp>
-
 // SMAP
+#include "../../pch/pch.hpp"
 #include "../../perception_server/detector_descriptor.hpp"
 #include "aux_functions.hpp"
 #include "macros.hpp"
@@ -135,8 +126,9 @@ class thing
   public:
 
     // Attributes
-    semantic_type_t type               = semantic_type_t::LOCATION;
-    observation_histogram observations = observation_histogram( 36 );  // Polar histogram of the observations
+    semantic_type_t type = semantic_type_t::LOCATION;
+    observation_histogram observations =
+        observation_histogram( HISTOGRAM_BINS );  // Polar histogram of the observations
     geometry_msgs::msg::Point pos;
 
     std::map< std::string, std::pair< int, int > >** reg_classes = nullptr;

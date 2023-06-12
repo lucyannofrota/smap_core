@@ -8,8 +8,8 @@ Panels:
         - /Status1
         - /SMAP1
         - /SMAP1/Topological Map1/Namespaces1
-        - /SMAP1/topo_map1
-        - /SMAP1/Object Cloud1
+        - /SMAP1/topo_map1/vertex1/Topic1
+        - /SMAP1/topo_map1/vertex1/Namespaces1
       Splitter Ratio: 0.48853209614753723
     Tree Height: 571
   - Class: rviz_common/Selection
@@ -232,16 +232,17 @@ Visualization Manager:
               Enabled: true
               Name: vertex
               Namespaces:
-                {}
+                labels: true
+                vertices: true
               Topic:
                 Depth: 5
-                Durability Policy: Volatile
-                History Policy: Keep Last
-                Reliability Policy: Reliable
+                Durability Policy: System Default
+                History Policy: Keep All
+                Reliability Policy: System Default
                 Value: /smap/topo_map/markers/vertex
               Value: true
             - Class: rviz_default_plugins/Marker
-              Enabled: true
+              Enabled: false
               Name: edges
               Namespaces:
                 {}
@@ -251,9 +252,9 @@ Visualization Manager:
                 History Policy: Keep Last
                 Reliability Policy: Reliable
                 Value: /smap/topo_map/markers/edge
-              Value: true
+              Value: false
             - Class: rviz_default_plugins/Marker
-              Enabled: true
+              Enabled: false
               Name: labels
               Namespaces:
                 {}
@@ -263,7 +264,7 @@ Visualization Manager:
                 History Policy: Keep Last
                 Reliability Policy: Reliable
                 Value: /smap/topo_map/markers/label
-              Value: true
+              Value: false
           Enabled: true
           Name: topo_map
         - Class: rviz_default_plugins/Image
@@ -317,7 +318,7 @@ Visualization Manager:
           Enabled: true
           Name: Objects
           Namespaces:
-            {}
+            "": true
           Topic:
             Depth: 5
             Durability Policy: Volatile
@@ -384,25 +385,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 6.8225202560424805
+      Distance: 8.224662780761719
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 0.1983768790960312
-        Y: -1.0920473337173462
-        Z: 0.27165642380714417
+        X: 0.06951767206192017
+        Y: -0.41284820437431335
+        Z: -0.3404070734977722
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.3097977936267853
+      Pitch: 0.5647975206375122
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz_default_plugins)
-      Yaw: 2.5024027824401855
+      Yaw: 2.7624030113220215
     Saved: ~
 Window Geometry:
   Detections:

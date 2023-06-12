@@ -12,7 +12,11 @@ if(NOT CMAKE_CXX_STANDARD)
 endif()
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  add_compile_options(-Wall -Wextra -Wpedantic)
+  add_compile_options(-Wall -Wextra -Wpedantic -fpie -fPIC)
+endif()
+
+if (POLICY CMP0074)
+  cmake_policy(SET CMP0074 NEW)
 endif()
 
 # find dependencies
@@ -43,11 +47,21 @@ find_package(tf2_geometry_msgs REQUIRED)
 ## /ADD BOOST LIB ##
 ####################
 
+#########
+## PCH ##
+#########
+
+add_subdirectory(pch)
+
+##########
+## /PCH ##
+##########
 ###########
 ## thing ##
 ###########
 
   add_library(thing src/thing.cpp)
+  target_precompile_headers(thing REUSE_FROM pch)
   target_include_directories(thing PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>)
@@ -106,6 +120,9 @@ install(DIRECTORY
 
 
 add_executable(smap_node src/smap_node.cpp)
+
+
+target_precompile_headers(smap_node REUSE_FROM pch)
 
 
 

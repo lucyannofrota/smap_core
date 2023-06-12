@@ -1,9 +1,8 @@
 #ifndef SMAP_CORE__AUX_FUNCTIONS_HPP_
 #define SMAP_CORE__AUX_FUNCTIONS_HPP_
 
+#include "../../pch/pch.hpp"
 #include "visibility_control.h"
-
-#include <math.h>
 
 namespace smap
 {

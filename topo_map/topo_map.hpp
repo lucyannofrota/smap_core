@@ -1,17 +1,5 @@
-#ifndef SMAP_CORE__topo_map_HPP_
-#define SMAP_CORE__topo_map_HPP_
-
-// STL
-#include "stdio.h"
-
-#include <algorithm>
-#include <cmath>
-#include <iostream>
-#include <list>
-#include <math.h>
-#include <mutex>
-#include <string>
-#include <thread>
+#ifndef SMAP_CORE__TOPO_MAP_HPP_
+#define SMAP_CORE__TOPO_MAP_HPP_
 
 // ROS
 #include "../include/smap_core/visibility_control.h"
@@ -26,21 +14,12 @@
 #include "../include/smap_core/aux_functions.hpp"
 #include "../include/smap_core/macros.hpp"
 #include "../include/smap_core/thing.hpp"
+#include "../pch/pch.hpp"
 #include "../perception_server/perception_server.hpp"
 #include "label_writers.hpp"
 #include "smap_interfaces/msg/smap_object.hpp"
 #include "smap_interfaces/msg/smap_observation.hpp"
-
-// BOOST
-#include <boost/archive/text_iarchive.hpp>
-#include <boost/archive/text_oarchive.hpp>
-#include <boost/graph/adj_list_serialize.hpp>
-#include <boost/graph/adjacency_list.hpp>
-#include <boost/graph/graph_utility.hpp>
-#include <boost/graph/graphviz.hpp>
-#include <boost/serialization/list.hpp>
-#include <boost/serialization/serialization.hpp>
-#include <boost/serialization/version.hpp>
+#include "topo_marker.hpp"
 
 /* XXX current_vertex and previous_vertex can be a problem in the future!
        Check based on the location of the robot when loading
@@ -137,173 +116,6 @@ struct boost::graph::internal_vertex_constructor< vertex_data_t >
 
 namespace smap
 {
-class topo_marker
-{
-
-  private:
-
-    visualization_msgs::msg::Marker vertex, edge, label;
-    std::vector< std::tuple< size_t, geometry_msgs::msg::Point, std::string > > vertex_label;
-
-    std::mutex mutex;
-
-    rclcpp::Publisher< visualization_msgs::msg::Marker >::SharedPtr vertex_pub, edge_pub, label_pub;
-    rclcpp::Clock::SharedPtr clock;
-
-    std::future< void > fut;
-
-    inline void _append_vertex( const geometry_msgs::msg::Point& pos )
-    {
-        static int32_t idx = 0;
-        this->vertex.id    = idx++;
-        for( auto it = this->vertex.points.begin(); it != this->vertex.points.end(); it++ )
-            if( ( it->x == pos.x ) && ( it->y == pos.y ) && ( it->z == pos.z ) ) return;
-        this->vertex.points.push_back( pos );
-    }
-
-    inline void _append_vertex_label( const geometry_msgs::msg::Point& pos, const std::string& label, const size_t& id )
-    {
-        geometry_msgs::msg::Point pos_up;
-
-        pos_up.x = pos.x;
-        pos_up.y = pos.y;
-        pos_up.z = pos.z + 0.1;
-        this->vertex_label.push_back(
-            std::tuple< size_t, geometry_msgs::msg::Point, std::string >( id, pos_up, label ) );
-    }
-
-  protected:
-
-  public:
-
-    topo_marker( void )
-    {
-        // Marker msg initialization
-        // Vertex
-        this->vertex.header.frame_id = "/map";
-        this->vertex.ns              = "vertices";
-        this->vertex.type            = visualization_msgs::msg::Marker::POINTS;
-        this->vertex.action          = visualization_msgs::msg::Marker::ADD;
-        this->vertex.scale.x         = 0.075 * 4;
-        this->vertex.scale.y         = 0.075 * 4;
-        this->vertex.scale.z         = 0.075 * 4;
-        this->vertex.color.r         = 102.0 / ( 102.0 + 51.0 );
-        this->vertex.color.g         = 51.0 / ( 102.0 + 51.0 );
-        this->vertex.color.b         = 0.0;
-        this->vertex.color.a         = 1.0;
-
-        // Edge
-        this->edge.header.frame_id    = "/map";
-        this->edge.ns                 = "edges";
-        this->edge.type               = visualization_msgs::msg::Marker::LINE_LIST;
-        this->edge.action             = visualization_msgs::msg::Marker::ADD;
-        this->edge.scale.x            = 0.007;
-        this->edge.scale.y            = 0.007;
-        this->edge.scale.z            = 0.007;
-        this->edge.color.r            = 1.0;
-        this->edge.color.g            = 0.0;
-        this->edge.color.b            = 0.0;
-        this->edge.pose.orientation.x = 0;
-        this->edge.pose.orientation.y = 0;
-        this->edge.pose.orientation.z = 0;
-        this->edge.pose.orientation.w = 1.0;
-        this->edge.color.a            = 1.0;
-
-        // Label
-        this->label.header.frame_id    = "/map";
-        this->label.ns                 = "labels";
-        this->label.type               = visualization_msgs::msg::Marker::TEXT_VIEW_FACING;
-        this->label.action             = visualization_msgs::msg::Marker::ADD;
-        this->label.scale.x            = 0.05;
-        this->label.scale.y            = 0.05;
-        this->label.scale.z            = 0.05;
-        this->label.color.r            = 0.0;
-        this->label.color.g            = 1.0;
-        this->label.color.b            = 0.0;
-        this->label.pose.orientation.x = 0;
-        this->label.pose.orientation.y = 0;
-        this->label.pose.orientation.z = 0;
-        this->label.pose.orientation.w = 1.0;
-        this->label.color.a            = 1.0;
-    }
-
-    void set_com(
-        rclcpp::Publisher< visualization_msgs::msg::Marker >::SharedPtr vertex_pub,
-        rclcpp::Publisher< visualization_msgs::msg::Marker >::SharedPtr edge_pub,
-        rclcpp::Publisher< visualization_msgs::msg::Marker >::SharedPtr label_pub, rclcpp::Clock::SharedPtr clock )
-    {
-        this->vertex_pub = vertex_pub;
-        this->edge_pub   = edge_pub;
-        this->label_pub  = label_pub;
-        this->clock      = clock;
-    }
-
-    inline void append_vertex( const geometry_msgs::msg::Point& pos, const size_t& id, const std::string& label )
-    {
-        printf( "append_vertex\n" );
-        const std::lock_guard< std::mutex > lock( this->mutex );
-        // static size_t marker_idx = 0;
-        this->_append_vertex( pos );
-        this->_append_vertex_label( pos, label, id );
-        // marker_idx++;
-    }
-
-    inline void append_edge( const geometry_msgs::msg::Point& pos1, const geometry_msgs::msg::Point& pos2 )
-    {
-        printf( "append_edge\n" );
-        const std::lock_guard< std::mutex > lock( this->mutex );
-        static int32_t idx = 0;
-        // static bool init_flag = true;
-        this->edge.id = idx++;
-        this->edge.points.push_back( pos1 );
-        this->edge.points.push_back( pos2 );
-        // if( init_flag )
-        // {
-        //     this->edge.points.push_back( pos1 );
-        //     this->edge.points.push_back( pos2 );
-        //     init_flag = false;
-        // }
-        // else { this->edge.points.push_back( pos2 ); }
-    }
-
-    inline void update_vertex_label( const std::string& label, const size_t& id )
-    {
-        (void) label;
-        (void) id;
-        const std::lock_guard< std::mutex > lock( this->mutex );
-    }
-
-    inline void publish_markers( void )
-    {
-
-        // TODO: should run independently
-        bool init_flag            = true;
-        this->vertex.header.stamp = clock->now();
-        vertex_pub->publish( this->vertex );
-        this->edge.header.stamp = clock->now();
-        edge_pub->publish( this->edge );
-        this->label.header.stamp = clock->now();
-        for( auto e: this->vertex_label )
-        {
-            this->label.id            = std::get< 0 >( e );
-            this->label.pose.position = std::get< 1 >( e );
-            this->label.text          = std::get< 2 >( e );
-            label_pub->publish( this->label );
-        }
-        if( init_flag )
-        {
-            this->vertex.action = visualization_msgs::msg::Marker::MODIFY;
-            this->edge.action   = visualization_msgs::msg::Marker::MODIFY;
-            init_flag           = false;
-        }
-    }
-
-    inline void async_publish_markers( void )
-    {
-        this->fut = std::async( std::launch::async, &topo_marker::publish_markers, this );
-    }
-};
-
 class topo_map : public rclcpp::Node
 
 {
@@ -339,15 +151,15 @@ class topo_map : public rclcpp::Node
     // Publishers
     rclcpp::Publisher< visualization_msgs::msg::Marker >::SharedPtr publisher_marker_vertex =
         this->create_publisher< visualization_msgs::msg::Marker >(
-            std::string( this->get_namespace() ) + std::string( "/topo_map/markers/vertex" ), 10 );
+            std::string( this->get_namespace() ) + std::string( "/topo_map/markers" ), 10 );
 
-    rclcpp::Publisher< visualization_msgs::msg::Marker >::SharedPtr publisher_marker_label =
-        this->create_publisher< visualization_msgs::msg::Marker >(
-            std::string( this->get_namespace() ) + std::string( "/topo_map/markers/label" ), 10 );
+    // rclcpp::Publisher< visualization_msgs::msg::Marker >::SharedPtr publisher_marker_label =
+    //     this->create_publisher< visualization_msgs::msg::Marker >(
+    //         std::string( this->get_namespace() ) + std::string( "/topo_map/markers/label" ), 10 );
 
-    rclcpp::Publisher< visualization_msgs::msg::Marker >::SharedPtr publisher_marker_edge =
-        this->create_publisher< visualization_msgs::msg::Marker >(
-            std::string( this->get_namespace() ) + std::string( "/topo_map/markers/edge" ), 10 );
+    // rclcpp::Publisher< visualization_msgs::msg::Marker >::SharedPtr publisher_marker_edge =
+    //     this->create_publisher< visualization_msgs::msg::Marker >(
+    //         std::string( this->get_namespace() ) + std::string( "/topo_map/markers/edge" ), 10 );
 
     // Threads
     // std::thread marker_thread;
@@ -448,9 +260,7 @@ class topo_map : public rclcpp::Node
                 RCL_RET_INVALID_ARGUMENT, "NEW_EDGE_FACTOR must be <= 1", nullptr, nullptr );
         }
 
-        this->markers.set_com(
-            this->publisher_marker_vertex, this->publisher_marker_edge, this->publisher_marker_label,
-            this->get_clock() );
+        this->markers.set_com( this->publisher_marker_vertex, this->get_clock() );
     }
 
     ~topo_map( void ) { this->export_graph( "TopoGraph" ); }
@@ -532,4 +342,4 @@ class topo_map : public rclcpp::Node
 
 BOOST_CLASS_VERSION( vertex_data_t, 0 ) BOOST_CLASS_VERSION( edge_data_t, 0 ) BOOST_CLASS_VERSION( smap::topo_map, 0 )
 
-#endif  // SMAP_CORE__topo_map_HPP_
+#endif  // SMAP_CORE__TOPO_MAP_HPP_

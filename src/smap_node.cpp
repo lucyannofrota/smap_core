@@ -1,13 +1,5 @@
 #include "rclcpp/rclcpp.hpp"
 
-#include <boost/archive/text_iarchive.hpp>
-#include <boost/archive/text_oarchive.hpp>
-#include <chrono>
-#include <cstdio>
-#include <fstream>
-#include <iostream>
-#include <math.h>
-
 // #include <visualization_msgs/msg/marker.hpp>
 
 #include "../include/smap_core/macros.hpp"
@@ -15,11 +7,13 @@
 #include "smap_interfaces/msg/smap_data.hpp"
 #include "std_msgs/msg/string.hpp"
 
-#include <string>
+// #include <string>
 
 // #include "smap_core/object_estimator.hpp"
 // #include "../include/smap_core/object_estimator.hpp"
+// #include "../include/smap_core/pch.hpp"
 #include "../object_estimator/object_estimator.hpp"
+#include "../pch/pch.hpp"
 #include "../perception_server/perception_server.hpp"
 #include "../topo_map/topo_map.hpp"
 

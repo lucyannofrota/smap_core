@@ -1,11 +1,7 @@
 #ifndef LABEL_WRITERS_HPP_
 #define LABEL_WRITERS_HPP_
 
-#include <boost/graph/graphviz.hpp>
-#include <geometry_msgs/msg/pose_stamped.hpp>
-#include <list>
-#include <ostream>
-#include <utility>
+#include "../pch/pch.hpp"
 
 namespace smap
 {

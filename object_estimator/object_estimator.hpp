@@ -2,13 +2,6 @@
 #define SMAP_CORE__OBJECT_ESTIMATOR_HPP_
 
 // STL
-#include <chrono>
-#include <iostream>
-#include <math.h>
-#include <mutex>
-#include <stdio.h>
-#include <stdlib.h>
-#include <thread>
 
 // ROS
 #include "../include/smap_core/macros.hpp"
@@ -34,6 +27,7 @@
 #include <pcl_conversions/pcl_conversions.h>
 
 // SMAP
+#include "../pch/pch.hpp"
 #include "smap_interfaces/msg/bounding_box2_d.hpp"
 #include "smap_interfaces/msg/smap_detections.hpp"
 #include "smap_interfaces/msg/smap_object.hpp"

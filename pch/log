@@ -1,0 +1,27 @@
+--- stderr: smap_core                                          
+** WARNING ** io features related to pcap will be disabled
+** WARNING ** io features related to png will be disabled
+** WARNING ** io features related to libusb-1.0 will be disabled
+cc1plus: warning: /workspace/build/smap_core/pch/CMakeFiles/pch.dir/cmake_pch.hxx.gch: not used because `pch_EXPORTS' not defined [-Winvalid-pch]
+cc1plus: warning: /workspace/build/smap_core/pch/CMakeFiles/pch.dir/cmake_pch.hxx.gch: not used because `pch_EXPORTS' not defined [-Winvalid-pch]
+cc1plus: warning: /workspace/build/smap_core/pch/CMakeFiles/pch.dir/cmake_pch.hxx.gch: not used because `pch_EXPORTS' not defined [-Winvalid-pch]
+cc1plus: warning: /workspace/build/smap_core/pch/CMakeFiles/pch.dir/cmake_pch.hxx.gch: not used because `pch_EXPORTS' not defined [-Winvalid-pch]
+cc1plus: warning: /workspace/build/smap_core/pch/CMakeFiles/pch.dir/cmake_pch.hxx.gch: not used because `pch_EXPORTS' not defined [-Winvalid-pch]
+cc1plus: warning: /workspace/build/smap_core/pch/CMakeFiles/pch.dir/cmake_pch.hxx.gch: created and used with different settings of %<-fpie%>
+cc1plus: warning: /workspace/build/smap_core/pch/CMakeFiles/pch.dir/cmake_pch.hxx.gch: not used because `pch_EXPORTS' not defined [-Winvalid-pch]
+cc1plus: warning: /workspace/build/smap_core/pch/CMakeFiles/pch.dir/cmake_pch.hxx.gch: created and used with different settings of %<-fpie%>
+cc1plus: warning: /workspace/build/smap_core/pch/CMakeFiles/pch.dir/cmake_pch.hxx.gch: not used because `pch_EXPORTS' not defined [-Winvalid-pch]
+cc1plus: warning: /workspace/build/smap_core/pch/CMakeFiles/pch.dir/cmake_pch.hxx.gch: created and used with different settings of %<-fpie%>
+cc1plus: warning: /workspace/build/smap_core/pch/CMakeFiles/pch.dir/cmake_pch.hxx.gch: not used because `pch_EXPORTS' not defined [-Winvalid-pch]
+cc1plus: warning: /workspace/build/smap_core/pch/CMakeFiles/pch.dir/cmake_pch.hxx.gch: not used because `pch_EXPORTS' not defined [-Winvalid-pch]
+cc1plus: warning: /workspace/build/smap_core/pch/CMakeFiles/pch.dir/cmake_pch.hxx.gch: created and used with different settings of %<-fpie%>
+cc1plus: warning: /workspace/build/smap_core/pch/CMakeFiles/pch.dir/cmake_pch.hxx.gch: not used because `pch_EXPORTS' not defined [-Winvalid-pch]
+cc1plus: warning: /workspace/build/smap_core/pch/CMakeFiles/pch.dir/cmake_pch.hxx.gch: not used because `pch_EXPORTS' not defined [-Winvalid-pch]
+cc1plus: warning: /workspace/build/smap_core/pch/CMakeFiles/pch.dir/cmake_pch.hxx.gch: created and used with different settings of %<-fpie%>
+cc1plus: warning: /workspace/build/smap_core/pch/CMakeFiles/pch.dir/cmake_pch.hxx.gch: created and used with different settings of %<-fpie%>
+cc1plus: warning: /workspace/build/smap_core/pch/CMakeFiles/pch.dir/cmake_pch.hxx.gch: created and used with different settings of %<-fpie%>
+cc1plus: warning: /workspace/build/smap_core/pch/CMakeFiles/pch.dir/cmake_pch.hxx.gch: created and used with different settings of %<-fpie%>
+cc1plus: warning: /workspace/build/smap_core/pch/CMakeFiles/pch.dir/cmake_pch.hxx.gch: created and used with different settings of %<-fpie%>
+cc1plus: warning: /workspace/build/smap_core/pch/CMakeFiles/pch.dir/cmake_pch.hxx.gch: created and used with different settings of %<-fpie%>
+cc1plus: warning: /workspace/build/smap_core/pch/CMakeFiles/pch.dir/cmake_pch.hxx.gch: not used because `pch_EXPORTS' not defined [-Winvalid-pch]
+cc1plus: warning: /workspace/build/smap_core/pch/CMakeFiles/pch.dir/cmake_pch.hxx.gch: created and used with different settings of %<-fpie%>
