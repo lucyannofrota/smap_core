@@ -1,6 +1,18 @@
 #ifndef SMAP_CORE__TOPO_MAP_HPP_
 #define SMAP_CORE__TOPO_MAP_HPP_
 
+// STL
+
+// BOOST
+#include <boost/graph/graph_utility.hpp>
+#include <boost/graph/graphviz.hpp>
+#include <boost/histogram/axis.hpp>
+#include <boost/histogram/make_histogram.hpp>
+#include <boost/serialization/access.hpp>
+#include <boost/serialization/list.hpp>
+#include <boost/serialization/serialization.hpp>
+#include <boost/serialization/version.hpp>
+
 // ROS
 #include "../include/smap_core/visibility_control.h"
 #include "rclcpp/rclcpp.hpp"
@@ -9,13 +21,14 @@
 #include <tf2/convert.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <visualization_msgs/msg/marker.hpp>
+#include <visualization_msgs/msg/marker_array.hpp>
 
 // SMAP
 #include "../include/smap_core/aux_functions.hpp"
 #include "../include/smap_core/macros.hpp"
-#include "../include/smap_core/thing.hpp"
-#include "../pch/pch.hpp"
+#include "../thing/thing.hpp"
 #include "../perception_server/perception_server.hpp"
+#include "graph.hpp"
 #include "label_writers.hpp"
 #include "smap_interfaces/msg/smap_object.hpp"
 #include "smap_interfaces/msg/smap_observation.hpp"
@@ -29,90 +42,92 @@
         acquired, vertex creation will gonna be blocked
 */
 
-struct vertex_data_t
+// struct vertex_data_t
 
-{
-    size_t index = (size_t) -1;
-    geometry_msgs::msg::Point pos;
-    smap::thing this_thing;
-    std::list< smap::thing > related_things;
+// {
+//     size_t index = (size_t) -1;
+//     geometry_msgs::msg::Point pos;
+//     smap::thing this_thing;
+//     std::list< smap::thing > related_things;
 
-    bool strong_vertex = false;
+// bool strong_vertex = false;
 
-    friend class boost::serialization::access;
+// friend class boost::serialization::access;
 
-    template< class Archive >
-    void serialize( Archive& ar, const unsigned int version )
-    {
-        (void) version;
-        ar& index;
-        ar& pos.x;
-        ar& pos.y;
-        ar& pos.z;
-        ar& this_thing;
-        ar& related_things;
-    }
-};
+// template< class Archive >
+// void serialize( Archive& ar, const unsigned int version )
+// {
+//     (void) version;
+//     ar& index;
+//     ar& pos.x;
+//     ar& pos.y;
+//     ar& pos.z;
+//     ar& this_thing;
+//     ar& related_things;
+// }
+// };
 
-struct edge_data_t
-{
-    // The cost of the edge will be distance*modifier
+// struct edge_data_t
+// {
+//     // The cost of the edge will be distance*modifier
 
-    double distance = 0;
-    double modifier = 1;
+// double distance = 0;
+// double modifier = 1;
 
-    double get_cost( void ) { return round( distance * modifier * 100 ) / 100.0; }
+// double get_cost( void ) { return round( distance * modifier * 100 ) / 100.0; }
 
-    friend class boost::serialization::access;
+// friend class boost::serialization::access;
 
-    template< class Archive >
-    inline void serialize( Archive& ar, const unsigned int version )
-    {
-        (void) version;
-        ar& distance;
-        ar& modifier;
-    }
-};
+// template< class Archive >
+// inline void serialize( Archive& ar, const unsigned int version )
+// {
+//     (void) version;
+//     ar& distance;
+//     ar& modifier;
+// }
+// };
 
-typedef boost::adjacency_list< boost::vecS, boost::vecS, boost::undirectedS, vertex_data_t, edge_data_t > graph_t;
+// typedef boost::adjacency_list< boost::vecS, boost::vecS, boost::undirectedS, vertex_data_t, edge_data_t > graph_t;
 
-// traits
-template<>
-struct boost::graph::internal_vertex_name< vertex_data_t >
-{
-    // https://stackoverflow.com/questions/71488845/how-to-configure-boostgraph-to-use-my-own-stable-index-for-vertices
-    struct type
-    {
-        using result_type = size_t;
+// // traits
+// template<>
+// struct boost::graph::internal_vertex_name< vertex_data_t >
+// {
+//     //
+//     https://stackoverflow.com/questions/71488845/how-to-configure-boostgraph-to-use-my-own-stable-index-for-vertices
+//     struct type
+//     {
+//         using result_type = size_t;
 
-        const result_type& operator()( const vertex_data_t& bundle ) const { return bundle.index; }
-    };
-};
+// const result_type& operator()( const vertex_data_t& bundle ) const { return bundle.index; }
+// };
+// };
 
-template<>
-struct boost::graph::internal_vertex_constructor< vertex_data_t >
-{
-    // https://stackoverflow.com/questions/71488845/how-to-configure-boostgraph-to-use-my-own-stable-index-for-vertices
-    struct type
-    {
-      private:
+// template<>
+// struct boost::graph::internal_vertex_constructor< vertex_data_t >
+// {
+//     //
+//     https://stackoverflow.com/questions/71488845/how-to-configure-boostgraph-to-use-my-own-stable-index-for-vertices
+//     struct type
+//     {
+//       private:
 
-        using extractor = typename internal_vertex_name< vertex_data_t >::type;
-        using name_t    = std::decay_t< typename extractor::result_type >;
+// using extractor = typename internal_vertex_name< vertex_data_t >::type;
+// using name_t    = std::decay_t< typename extractor::result_type >;
 
-      public:
+// public:
 
-        using argument_type = name_t;
-        using result_type   = vertex_data_t;
+// using argument_type = name_t;
+// using result_type   = vertex_data_t;
 
-        result_type operator()( const name_t& index ) const
-        {
-            result_type ret;
-            ret.index = index;
-            return ret;
-        }
-    };
-};
+// result_type operator()( const name_t& index ) const
+// {
+//     result_type ret;
+//     ret.index = index;
+//     return ret;
+// }
+// };
+// };
 
 namespace smap
 {
@@ -132,7 +147,7 @@ class topo_map : public rclcpp::Node
     size_t v_index      = 1;
 
     // Timers
-    rclcpp::TimerBase::SharedPtr maker_timer =
+    rclcpp::TimerBase::SharedPtr marker_timer =
         this->create_wall_timer( std::chrono::milliseconds( 500 ), std::bind( &topo_map::timer_callback, this ) );
 
     rclcpp::TimerBase::SharedPtr monitor_timer =
@@ -149,8 +164,8 @@ class topo_map : public rclcpp::Node
             std::bind( &topo_map::observation_callback, this, std::placeholders::_1 ) );
 
     // Publishers
-    rclcpp::Publisher< visualization_msgs::msg::Marker >::SharedPtr publisher_marker_vertex =
-        this->create_publisher< visualization_msgs::msg::Marker >(
+    rclcpp::Publisher< visualization_msgs::msg::MarkerArray >::SharedPtr publisher_marker_vertex =
+        this->create_publisher< visualization_msgs::msg::MarkerArray >(
             std::string( this->get_namespace() ) + std::string( "/topo_map/markers" ), 10 );
 
     // rclcpp::Publisher< visualization_msgs::msg::Marker >::SharedPtr publisher_marker_label =
@@ -178,10 +193,7 @@ class topo_map : public rclcpp::Node
 
     inline void timer_callback( void ) { this->markers.async_publish_markers(); }
 
-    inline void monitor_callback( void )
-    {
-        // TODO: Implement monitor (should update markers attributes based on the strength of the vertex )
-    }
+    inline void monitor_callback( void ) { this->markers.async_update_markers( /*this->graph*/ ); }
 
     inline void pose_callback( const geometry_msgs::msg::PoseStamped::SharedPtr pose )
     {

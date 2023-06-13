@@ -1,8 +1,6 @@
 #ifndef LABEL_WRITERS_HPP_
 #define LABEL_WRITERS_HPP_
 
-#include "../pch/pch.hpp"
-
 namespace smap
 {
 

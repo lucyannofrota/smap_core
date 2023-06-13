@@ -115,7 +115,8 @@ void topo_map::observation_callback( const smap_interfaces::msg::SmapObservation
         // TODO: Implement object update
         RCLCPP_DEBUG( this->get_logger(), "Object update" );
         closest->update(
-            smap::semantic_type_t::OBJECT, observation->object, min_distance, (double) observation->direction, *det );
+            smap::semantic_type_t::OBJECT, observation->object.probability_distribution,
+            observation->object.pose.pose.position, min_distance, (double) observation->direction, *det );
     }
 }
 
@@ -303,7 +304,9 @@ void topo_map::add_object( const smap_interfaces::msg::SmapObservation::SharedPt
         //         "\t[%2i] (%s) | [%2i,%2i]\n", c.first, c.second.c_str(), ( *this->reg_classes )[ c.second ].first,
         //         ( *this->reg_classes )[ c.second ].second );
 
-        new_thing.update( smap::semantic_type_t::OBJECT, observation->object, distance, observation->direction, det );
+        new_thing.update(
+            smap::semantic_type_t::OBJECT, observation->object.probability_distribution,
+            observation->object.pose.pose.position, distance, observation->direction, det );
         // TODO: Append "thing" to list to enable accumulation
         // pre.related_things.push_back( new_thing );
         // this->append_object();

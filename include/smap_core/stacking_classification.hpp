@@ -1,9 +1,13 @@
 #ifndef SMAP_CORE__STACKING_CLASSIFICATION_HPP_
 #define SMAP_CORE__STACKING_CLASSIFICATION_HPP_
 
+// STL
+#include <map>
+#include <string>
+#include <vector>
+
 // SMAP
-#include "../../pch/pch.hpp"
-#include "../../perception_server/detector_descriptor.hpp"
+#include "../../src/perception_server/detector_descriptor.hpp"
 #include "aux_functions.hpp"
 #include "visibility_control.h"
 

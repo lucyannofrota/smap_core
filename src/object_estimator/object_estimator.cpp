@@ -2,6 +2,8 @@
 
 #include "parameter_tuning.hpp"
 
+#include <math.h>
+
 using namespace std::chrono_literals;
 
 // TODO: Check the slider parameters to avoid seg fault

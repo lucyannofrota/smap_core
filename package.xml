@@ -24,6 +24,7 @@
   <depend>visualization_msgs</depend>
   
   <depend>smap_interfaces</depend>
+  <depend>smap_object_estimator</depend>
 
   <depend>boost</depend>
   <depend>libopencv-dev</depend>

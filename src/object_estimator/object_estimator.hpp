@@ -2,10 +2,14 @@
 #define SMAP_CORE__OBJECT_ESTIMATOR_HPP_
 
 // STL
+#include <chrono>
+#include <mutex>
+#include <stdlib.h>
+#include <thread>
 
 // ROS
-#include "../include/smap_core/macros.hpp"
-#include "../include/smap_core/visibility_control.h"
+#include "../../include/smap_core/macros.hpp"
+#include "../../include/smap_core/visibility_control.h"
 
 #include <rclcpp/rclcpp.hpp>
 #include <tf2/convert.h>
@@ -27,7 +31,6 @@
 #include <pcl_conversions/pcl_conversions.h>
 
 // SMAP
-#include "../pch/pch.hpp"
 #include "smap_interfaces/msg/bounding_box2_d.hpp"
 #include "smap_interfaces/msg/smap_detections.hpp"
 #include "smap_interfaces/msg/smap_object.hpp"
@@ -41,7 +44,7 @@
 // #include <SDL2/SDL.h>
 // #include <SDL2/SDL_opengl.h>
 
-using namespace std::chrono_literals;
+// using namespace std::chrono_literals;
 
 // TODO: Reject unregistered requests
 
@@ -51,7 +54,7 @@ inline bool timeout(
 {
     if( std::get< 0 >( element ) )
     {
-        bool ret = ( std::get< 0 >( element )->wait_for( 0ms ) == std::future_status::ready )
+        bool ret = ( std::get< 0 >( element )->wait_for( std::chrono::milliseconds( 0 ) ) == std::future_status::ready )
                 || ( std::chrono::duration_cast< std::chrono::milliseconds >(
                          std::chrono::high_resolution_clock::now() - std::get< 1 >( element ) ) )
                            .count()

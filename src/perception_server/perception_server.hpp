@@ -2,8 +2,8 @@
 #define SMAP_CORE__PERCEPTION_SERVER_HPP_
 
 // ROS
-#include "../include/smap_core/macros.hpp"
-#include "../include/smap_core/visibility_control.h"
+#include "../../include/smap_core/macros.hpp"
+#include "../../include/smap_core/visibility_control.h"
 #include "rclcpp/rclcpp.hpp"
 // #include "visualization_msgs/msg/marker.hpp"
 

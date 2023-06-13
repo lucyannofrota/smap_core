@@ -1,4 +1,6 @@
-#include "../include/smap_core/thing.hpp"
+#include "thing.hpp"
+
+#include "../include/smap_core/stacking_classification.hpp"
 
 namespace smap
 {
@@ -59,11 +61,10 @@ std::pair< std::string, std::string > thing::get_vertex_representation()
 }
 
 void thing::update(
-    const semantic_type_t type, const smap_interfaces::msg::SmapObject& obj, double distance, double angle,
-    detector_t& detector )
+    const semantic_type_t type, const std::vector< float >& probability_distribution, geometry_msgs::msg::Point& point,
+    double distance, double angle, detector_t& detector )
 {
     (void) angle;
-    (void) obj;
     static bool set = false;
     if( !set )
     {
@@ -88,8 +89,8 @@ void thing::update(
         bool sw = false;
         printf( "Probabilities [BEFORE]:\n" );
         printf( "\tClass |" );
-        auto it = obj.probability_distribution.begin();
-        while( it != obj.probability_distribution.end() )
+        auto it = probability_distribution.begin();
+        while( it != probability_distribution.end() )
         {
             if( sw )
             {
@@ -118,7 +119,7 @@ void thing::update(
         }
         // this->probabilities
         for( auto c: **this->reg_classes )
-            this->probabilities[ c.first ] = log_odds( obj.probability_distribution[ c.second.second ] );
+            this->probabilities[ c.first ] = log_odds( probability_distribution[ c.second.second ] );
 
         i  = 0;
         j  = 0;
@@ -174,7 +175,7 @@ void thing::update(
             }
         }
 
-        stack_vectors( this->probabilities, obj.probability_distribution, detector );
+        stack_vectors( this->probabilities, probability_distribution, detector );
 
         // 3. Position update
         // TODO: Test
@@ -183,9 +184,9 @@ void thing::update(
                     ? MAX_POS_PROB
                     : ( this->probabilities[ this->get_label() ] > MAX_POS_PROB );
         // Low pass filter to update the position with p as coefficient
-        this->pos.x = this->pos.x * p + obj.pose.pose.position.x * ( 1 - p );
-        this->pos.y = this->pos.y * p + obj.pose.pose.position.y * ( 1 - p );
-        this->pos.z = this->pos.z * p + obj.pose.pose.position.z * ( 1 - p );
+        this->pos.x = this->pos.x * p + point.x * ( 1 - p );
+        this->pos.y = this->pos.y * p + point.y * ( 1 - p );
+        this->pos.z = this->pos.z * p + point.z * ( 1 - p );
     }
 }
 

@@ -1,6 +1,10 @@
 cmake_minimum_required(VERSION 3.5)
 project(smap_core)
 
+if (POLICY CMP0074)
+  cmake_policy(SET CMP0074 NEW)
+endif()
+
 # find dependencies
     # PCL
         find_package(PCL 1.1 REQUIRED)
@@ -67,8 +71,6 @@ project(smap_core)
       ${IMGUI_SRC}
     )
 
-    target_precompile_headers(object_estimator REUSE_FROM pch)
-
     target_include_directories(object_estimator PUBLIC
       $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
       $<INSTALL_INTERFACE:include>
@@ -107,8 +109,6 @@ project(smap_core)
       ${IMGUI_SRC}
     )
 
-    # target_precompile_headers(object_estimator_node PRIVATE ../include/smap_core/pch.hpp)
-    target_precompile_headers(object_estimator_node REUSE_FROM pch)
 
     target_include_directories(object_estimator_node PUBLIC
       $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>

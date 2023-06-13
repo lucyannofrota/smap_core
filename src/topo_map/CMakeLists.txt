@@ -39,7 +39,6 @@ set(Boost_USE_MULTITHREADED ON)
 
   ## Lib ##
   add_library(topo_marker topo_marker.cpp )
-    target_precompile_headers(topo_marker REUSE_FROM pch)
 
 target_include_directories(topo_marker PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -79,7 +78,6 @@ install(
 
   ## Lib ##
   add_library(topo_map topo_map.cpp )
-  target_precompile_headers(topo_map REUSE_FROM pch)
   target_link_libraries(topo_map thing topo_marker ${Boost_LIBRARIES})
 target_include_directories(topo_map PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -114,7 +112,6 @@ install(
       topo_map_node
       topo_map.cpp
   )
-  # target_precompile_headers(topo_map_node REUSE_FROM pch)
 
   target_include_directories(topo_map_node PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>

@@ -12,7 +12,7 @@ if(NOT CMAKE_CXX_STANDARD)
 endif()
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  add_compile_options(-Wall -Wextra -Wpedantic -fpie -fPIC)
+  add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
 if (POLICY CMP0074)
@@ -29,6 +29,7 @@ find_package(sensor_msgs REQUIRED)
 find_package(tf2 REQUIRED)
 # find_package(tf2_ros REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
+find_package(PCL 1.1 REQUIRED)
 
 ###################
 ## ADD BOOST LIB ##
@@ -47,55 +48,18 @@ find_package(tf2_geometry_msgs REQUIRED)
 ## /ADD BOOST LIB ##
 ####################
 
-#########
-## PCH ##
-#########
-
-add_subdirectory(pch)
-
-##########
-## /PCH ##
-##########
-###########
-## thing ##
-###########
-
-  add_library(thing src/thing.cpp)
-  target_precompile_headers(thing REUSE_FROM pch)
-  target_include_directories(thing PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:include>)
-
-  ament_target_dependencies(
-    thing
-    rclcpp
-    geometry_msgs
-    tf2
-    tf2_geometry_msgs
-    sensor_msgs
-    smap_interfaces
-  )
-
-  # Causes the visibility macros to use dllexp<depend>smap_interfaces</depend>ort rather than dllimport,
-  # which is appropriate when building the dll but not consuming it.
-  target_compile_definitions(thing PRIVATE "SMAP_BUILDING_LIBRARY")
-
-  install(
-    TARGETS thing
-    EXPORT export_${PROJECT_NAME}
-    ARCHIVE DESTINATION lib
-    LIBRARY DESTINATION lib
-    RUNTIME DESTINATION bin
-  )
-
-############
-## /thing ##
-############
+include_directories(
+  include
+  ${colcon_INCLUDE_DIRS}
+)
 
 
-add_subdirectory(object_estimator)
-add_subdirectory(perception_server)
-add_subdirectory(topo_map)
+
+
+add_subdirectory(src/object_estimator)
+add_subdirectory(src/perception_server)
+add_subdirectory(src/topo_map)
+add_subdirectory(src/thing)
 
 
 install(
@@ -121,8 +85,6 @@ install(DIRECTORY
 
 add_executable(smap_node src/smap_node.cpp)
 
-
-target_precompile_headers(smap_node REUSE_FROM pch)
 
 
 
@@ -169,7 +131,7 @@ ament_export_include_directories(
 ament_export_libraries(
   thing
   topo_map
-  object_estimator
+#   object_estimator
   perception_server
 )
 

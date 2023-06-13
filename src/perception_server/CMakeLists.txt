@@ -27,8 +27,6 @@ project(smap_core)
     perception_server.cpp
   )
 
-  target_precompile_headers(perception_server REUSE_FROM pch)
-
   target_include_directories(perception_server PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>
@@ -53,8 +51,6 @@ project(smap_core)
     perception_server_node
     perception_server.cpp
   )
-
-  target_precompile_headers(perception_server_node REUSE_FROM pch)
 
   target_include_directories(perception_server_node PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>

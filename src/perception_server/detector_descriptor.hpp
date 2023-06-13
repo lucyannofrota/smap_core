@@ -1,7 +1,8 @@
 #ifndef SMAP_CORE__DETECTOR_DESCRIPTOR_HPP_
 #define SMAP_CORE__DETECTOR_DESCRIPTOR_HPP_
 
-#include "../pch/pch.hpp"
+#include <map>
+#include <string>
 
 enum detector_type
 {
