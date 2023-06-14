@@ -15,7 +15,7 @@
 #include <boost/serialization/version.hpp>
 
 // ROS
-#include "geometry_msgs/msg/point.hpp"
+#include <geometry_msgs/msg/point.hpp>
 
 // SMAP
 #include "../thing/thing.hpp"

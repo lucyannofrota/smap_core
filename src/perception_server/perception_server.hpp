@@ -4,8 +4,7 @@
 // ROS
 #include "../../include/smap_core/macros.hpp"
 #include "../../include/smap_core/visibility_control.h"
-#include "rclcpp/rclcpp.hpp"
-// #include "visualization_msgs/msg/marker.hpp"
+#include <rclcpp/rclcpp.hpp>
 
 // SMAP
 #include "../topo_map/topo_map.hpp"
