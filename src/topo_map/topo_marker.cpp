@@ -57,19 +57,19 @@ topo_marker::topo_marker( void )
     // this->vertex.color.b = 0.0;
     // this->vertex.color.a = 1.0;
 
-    // AABB
-    this->AABB.header.frame_id    = "/map";
-    this->AABB.ns                 = "AABB";
-    this->AABB.type               = visualization_msgs::msg::Marker::CUBE;
-    this->AABB.action             = visualization_msgs::msg::Marker::MODIFY;
-    this->AABB.pose.orientation.x = 0;
-    this->AABB.pose.orientation.y = 0;
-    this->AABB.pose.orientation.z = 0;
-    this->AABB.pose.orientation.w = 1.0;
-    this->AABB.color.r            = 0.0;
-    this->AABB.color.g            = 0.0;
-    this->AABB.color.b            = 1.0;
-    this->AABB.color.a            = 0.5;
+    // aabb
+    this->aabb.header.frame_id    = "/map";
+    this->aabb.ns                 = "aabb";
+    this->aabb.type               = visualization_msgs::msg::Marker::CUBE;
+    this->aabb.action             = visualization_msgs::msg::Marker::MODIFY;
+    this->aabb.pose.orientation.x = 0;
+    this->aabb.pose.orientation.y = 0;
+    this->aabb.pose.orientation.z = 0;
+    this->aabb.pose.orientation.w = 1.0;
+    this->aabb.color.r            = 0.0;
+    this->aabb.color.g            = 0.0;
+    this->aabb.color.b            = 1.0;
+    this->aabb.color.a            = 0.5;
 
     // Edge
     this->edge.header.frame_id    = "/map";
@@ -227,12 +227,12 @@ void topo_marker::update_markers( const graph_t& graph )
         r_thing.pos = graph[ e ].pos;
         // r_thing.pos.y         = graph[ e ].pos.y;
         // r_thing.pos.z         = graph[ e ].pos.z;
-        r_thing.AABB.first.x  = 1.51;
-        r_thing.AABB.first.y  = 1.51;
-        r_thing.AABB.first.z  = 1.1;
-        r_thing.AABB.second.x = 1.0;
-        r_thing.AABB.second.y = 1.0;
-        r_thing.AABB.second.z = 0.9;
+        r_thing.aabb.first.x  = 1.51;
+        r_thing.aabb.first.y  = 1.51;
+        r_thing.aabb.first.z  = 1.1;
+        r_thing.aabb.second.x = 1.0;
+        r_thing.aabb.second.y = 1.0;
+        r_thing.aabb.second.z = 0.9;
         // for( auto& r_thing: graph[ e ].related_things ) // TODO: Revert for
         // {
         // Histogram
@@ -248,7 +248,7 @@ void topo_marker::update_markers( const graph_t& graph )
             offset_theta = ( 2 * M_PI / HISTOGRAM_BINS ) * i;
             for( j = 0; j < 3; j++, it++ )
             {
-                d_point     = abs( r_thing.AABB.second - r_thing.AABB.first );
+                d_point     = abs( r_thing.aabb.second - r_thing.aabb.first );
                 r           = ( d_point.x > d_point.y ? d_point.x : d_point.y ) * 0.7;
                 aux_point.x = ( r + R_TRIANGLES ) * cos( offset_theta );
                 aux_point.y = ( r + R_TRIANGLES ) * sin( offset_theta );
@@ -263,15 +263,15 @@ void topo_marker::update_markers( const graph_t& graph )
         this->histogram.header.stamp = clock->now();
         this->array.markers.push_back( this->histogram );
 
-        // AABB
-        this->AABB.id            = obj_id;
-        this->AABB.header.stamp  = clock->now();
-        this->AABB.scale         = vec3_abs( r_thing.AABB.second - r_thing.AABB.first );
-        this->AABB.pose.position = r_thing.pos;
-        this->array.markers.push_back( this->AABB );
-        // bbx_marker.scale.x         = abs( obj.AABB.max.point.x - obj.AABB.min.point.x );
-        // bbx_marker.scale.y         = abs( obj.AABB.max.point.y - obj.AABB.min.point.y );
-        // bbx_marker.scale.z         = abs( obj.AABB.max.point.z - obj.AABB.min.point.z );
+        // aabb
+        this->aabb.id            = obj_id;
+        this->aabb.header.stamp  = clock->now();
+        this->aabb.scale         = vec3_abs( r_thing.aabb.second - r_thing.aabb.first );
+        this->aabb.pose.position = r_thing.pos;
+        this->array.markers.push_back( this->aabb );
+        // bbx_marker.scale.x         = abs( obj.aabb.max.point.x - obj.aabb.min.point.x );
+        // bbx_marker.scale.y         = abs( obj.aabb.max.point.y - obj.aabb.min.point.y );
+        // bbx_marker.scale.z         = abs( obj.aabb.max.point.z - obj.aabb.min.point.z );
         // bbx_marker.pose.position   = obj.pose.pose.position;
         obj_id++;
         // }// TODO: Revert for

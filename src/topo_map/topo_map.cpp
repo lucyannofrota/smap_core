@@ -116,7 +116,7 @@ void topo_map::observation_callback( const smap_interfaces::msg::SmapObservation
             smap::semantic_type_t::OBJECT, observation->object.probability_distribution,
             observation->object.pose.pose.position,
             std::pair< geometry_msgs::msg::Point, geometry_msgs::msg::Point >(
-                observation->object.AABB.min.point, observation->object.AABB.max.point ),
+                observation->object.aabb.min.point, observation->object.aabb.max.point ),
             min_distance, (double) observation->direction, *det );
     }
 }
@@ -309,7 +309,7 @@ void topo_map::add_object( const smap_interfaces::msg::SmapObservation::SharedPt
             smap::semantic_type_t::OBJECT, observation->object.probability_distribution,
             observation->object.pose.pose.position,
             std::pair< geometry_msgs::msg::Point, geometry_msgs::msg::Point >(
-                observation->object.AABB.min.point, observation->object.AABB.max.point ),
+                observation->object.aabb.min.point, observation->object.aabb.max.point ),
             distance, observation->direction, det );
         // TODO: Append "thing" to list to enable accumulation
         // pre.related_things.push_back( new_thing );

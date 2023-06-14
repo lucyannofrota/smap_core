@@ -39,7 +39,7 @@ class thing
         observation_histogram( HISTOGRAM_BINS );                             // Polar histogram of the observations
     geometry_msgs::msg::Point pos;
 
-    std::pair< geometry_msgs::msg::Point, geometry_msgs::msg::Point > AABB;  // min, max
+    std::pair< geometry_msgs::msg::Point, geometry_msgs::msg::Point > aabb;  // min, max
 
     std::map< std::string, std::pair< int, int > >** reg_classes = nullptr;
 
@@ -68,7 +68,7 @@ class thing
 
     void update(
         const semantic_type_t type, const std::vector< float >& probability_distribution,
-        geometry_msgs::msg::Point& point, std::pair< geometry_msgs::msg::Point, geometry_msgs::msg::Point > AABB,
+        geometry_msgs::msg::Point& point, std::pair< geometry_msgs::msg::Point, geometry_msgs::msg::Point > aabb,
         double distance, double angle, detector_t& detector );
 
   private:

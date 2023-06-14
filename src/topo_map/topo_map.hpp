@@ -215,12 +215,12 @@ class topo_map : public rclcpp::Node
         //         t.pos.x         = 3;
         //         t.pos.y         = 3;
         //         t.pos.z         = 3;
-        //         t.AABB.first.x  = 2.5;
-        //         t.AABB.first.y  = 2.5;
-        //         t.AABB.first.z  = 2.5;
-        //         t.AABB.second.x = 3.5;
-        //         t.AABB.second.y = 3.5;
-        //         t.AABB.second.z = 3.5;
+        //         t.aabb.first.x  = 2.5;
+        //         t.aabb.first.y  = 2.5;
+        //         t.aabb.first.z  = 2.5;
+        //         t.aabb.second.x = 3.5;
+        //         t.aabb.second.y = 3.5;
+        //         t.aabb.second.z = 3.5;
         //         t.type          = semantic_type_t::OBJECT;
         //         this->graph[ e ].related_things.push_back( t );
         //     }

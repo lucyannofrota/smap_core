@@ -62,7 +62,7 @@ std::pair< std::string, std::string > thing::get_vertex_representation()
 
 void thing::update(
     const semantic_type_t type, const std::vector< float >& probability_distribution, geometry_msgs::msg::Point& point,
-    std::pair< geometry_msgs::msg::Point, geometry_msgs::msg::Point > AABB, double distance, double angle,
+    std::pair< geometry_msgs::msg::Point, geometry_msgs::msg::Point > aabb, double distance, double angle,
     detector_t& detector )
 {
     static bool set = false;
@@ -81,7 +81,7 @@ void thing::update(
 
         // // 2. Position initialization
         // this->pos  = point;
-        // this->AABB = AABB;
+        // this->aabb = aabb;
 
         // // 3. Probabilities vector initialization
         // // Create a map to store this information
@@ -188,8 +188,8 @@ void thing::update(
         // Low pass filter to update the position with p as coefficient
         this->pos         = this->pos * p + point * ( 1 - p );
 
-        this->AABB.first  = this->AABB.first * p + AABB.first * ( 1 - p );
-        this->AABB.second = this->AABB.second * p + AABB.second * ( 1 - p );
+        this->aabb.first  = this->aabb.first * p + aabb.first * ( 1 - p );
+        this->aabb.second = this->aabb.second * p + aabb.second * ( 1 - p );
     }
 }
 
