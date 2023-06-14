@@ -23,9 +23,11 @@ namespace smap
 
 #define OBJECT_ERROR_DISTANCE 0.1  // Max position error of an object and max distance between objects
 
-#define R_TRIANGLES 0.1            // Size of the histogram triangles
+#define R_TRIANGLES 0.025          // Size of the histogram triangles
 
 #define HISTOGRAM_BINS 36          // Number of bins of the polar histogram
+
+#define HISTOGRAM_MARKER_ALPHA_LIM 0.6
 
 #define UNDEFINED_LABEL std::string( "unknown" )
 

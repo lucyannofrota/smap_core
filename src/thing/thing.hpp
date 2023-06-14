@@ -13,6 +13,7 @@
 #include "sensor_msgs/msg/point_cloud2.hpp"
 
 // SMAP
+#include "../include/smap_core/interface_templates.hpp"
 #include "../include/smap_core/macros.hpp"
 #include "../perception_server/detector_descriptor.hpp"
 #include "observation_histogram.hpp"
@@ -35,8 +36,10 @@ class thing
     // Attributes
     semantic_type_t type = semantic_type_t::LOCATION;
     observation_histogram observations =
-        observation_histogram( HISTOGRAM_BINS );  // Polar histogram of the observations
+        observation_histogram( HISTOGRAM_BINS );                             // Polar histogram of the observations
     geometry_msgs::msg::Point pos;
+
+    std::pair< geometry_msgs::msg::Point, geometry_msgs::msg::Point > AABB;  // min, max
 
     std::map< std::string, std::pair< int, int > >** reg_classes = nullptr;
 
@@ -55,7 +58,7 @@ class thing
 
     virtual ~thing() {}
 
-    std::string get_label( void );
+    std::string get_label( void ) const;
 
     bool label_is_equal( uint8_t& module_id, uint8_t& obs_label );
 
@@ -65,7 +68,8 @@ class thing
 
     void update(
         const semantic_type_t type, const std::vector< float >& probability_distribution,
-        geometry_msgs::msg::Point& point, double distance, double angle, detector_t& detector );
+        geometry_msgs::msg::Point& point, std::pair< geometry_msgs::msg::Point, geometry_msgs::msg::Point > AABB,
+        double distance, double angle, detector_t& detector );
 
   private:
 

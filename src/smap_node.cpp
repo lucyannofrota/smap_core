@@ -2,7 +2,6 @@
 
 // #include <visualization_msgs/msg/marker.hpp>
 
-
 #include "std_msgs/msg/string.hpp"
 
 // #include <string>
@@ -11,11 +10,11 @@
 
 // SMAP
 #include "../include/smap_core/macros.hpp"
+#include "object_estimator/object_estimator.hpp"
+#include "perception_server/perception_server.hpp"
 #include "smap_interfaces/msg/smap_data.hpp"
 #include "thing/thing.hpp"
-#include "perception_server/perception_server.hpp"
 #include "topo_map/topo_map.hpp"
-#include "object_estimator/object_estimator.hpp"
 
 #define FROM_FRAME std::string( "map" )
 #define TO_FRAME std::string( "base_link" )
@@ -77,20 +76,26 @@ int main( int argc, char** argv )
 {
     rclcpp::init( argc, argv );
     rclcpp::NodeOptions options;
-    std::shared_ptr< smap::smap_node > _smap_node    = std::make_shared< smap::smap_node >();
+    printf( "main\n" );            // TODO: remove
+    std::shared_ptr< smap::smap_node > _smap_node = std::make_shared< smap::smap_node >();
+    printf( "_smap_node\n" );      // TODO: remove
     std::shared_ptr< smap::topo_map > _topo_map_node = std::make_shared< smap::topo_map >();
-    // std::shared_ptr< smap::object_estimator > _object_estimator_node =
-    //     std::make_shared< smap::object_estimator >( options );
+    printf( "_topo_map_node\n" );  // TODO: remove
+    std::shared_ptr< smap::object_estimator > _object_estimator_node =
+        std::make_shared< smap::object_estimator >( options );
     std::shared_ptr< smap::perception_server > _perception_server_node =
         std::make_shared< smap::perception_server >( options );
+    printf( "_perception_server_node\n" );  // TODO: remove
 
     _topo_map_node->define_reg_classes( _perception_server_node->classes );
+    printf( "define_reg_classes\n" );       // TODO: remove
     _topo_map_node->define_reg_detectors( _perception_server_node->detectors );
+    printf( "define_reg_detectors\n" );     // TODO: remove
     // _smap_node->topological_map = _topological_map_node;
     rclcpp::executors::MultiThreadedExecutor executor;
     executor.add_node( _smap_node );
     executor.add_node( _topo_map_node );
-    // executor.add_node( _object_estimator_node );
+    executor.add_node( _object_estimator_node );
     executor.add_node( _perception_server_node );
     // rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr service =
     // _smap_node->create_service<std_srvs::srv::Trigger>("serv_smap", &smap::test_serv);

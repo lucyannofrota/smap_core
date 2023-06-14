@@ -7,8 +7,6 @@ Panels:
         - /Global Options1
         - /Status1
         - /SMAP1
-        - /SMAP1/topo_map1/vertex1/Topic1
-        - /SMAP1/topo_map1/vertex1/Namespaces1
       Splitter Ratio: 0.48853209614753723
     Tree Height: 468
   - Class: rviz_common/Selection
@@ -180,6 +178,19 @@ Visualization Manager:
       Name: Robot
     - Class: rviz_common/Group
       Displays:
+        - Class: rviz_default_plugins/MarkerArray
+          Enabled: true
+          Name: topo_map
+          Namespaces:
+            labels: true
+            vertices: true
+          Topic:
+            Depth: 5
+            Durability Policy: Volatile
+            History Policy: Keep Last
+            Reliability Policy: Reliable
+            Value: /smap/topo_map/markers
+          Value: true
         - Alpha: 1
           Autocompute Intensity Bounds: true
           Autocompute Value Bounds:
@@ -213,46 +224,6 @@ Visualization Manager:
           Use Fixed Frame: true
           Use rainbow: true
           Value: false
-        - Class: rviz_common/Group
-          Displays:
-            - Class: rviz_default_plugins/Marker
-              Enabled: true
-              Name: vertex
-              Namespaces:
-                {}
-              Topic:
-                Depth: 5
-                Durability Policy: System Default
-                History Policy: Keep All
-                Reliability Policy: System Default
-                Value: /smap/topo_map/markers/vertex
-              Value: true
-            - Class: rviz_default_plugins/Marker
-              Enabled: false
-              Name: edges
-              Namespaces:
-                {}
-              Topic:
-                Depth: 5
-                Durability Policy: Volatile
-                History Policy: Keep Last
-                Reliability Policy: Reliable
-                Value: /smap/topo_map/markers/edge
-              Value: false
-            - Class: rviz_default_plugins/Marker
-              Enabled: false
-              Name: labels
-              Namespaces:
-                {}
-              Topic:
-                Depth: 5
-                Durability Policy: Volatile
-                History Policy: Keep Last
-                Reliability Policy: Reliable
-                Value: /smap/topo_map/markers/label
-              Value: false
-          Enabled: true
-          Name: topo_map
         - Class: rviz_default_plugins/Image
           Enabled: true
           Max Value: 1
@@ -304,7 +275,7 @@ Visualization Manager:
           Enabled: true
           Name: Objects
           Namespaces:
-            "": true
+            {}
           Topic:
             Depth: 5
             Durability Policy: Volatile
@@ -327,21 +298,6 @@ Visualization Manager:
         History Policy: Keep Last
         Reliability Policy: Reliable
         Value: /zed2/zed_node/rgb/image_rect_color
-      Value: true
-    - Class: rviz_default_plugins/Marker
-      Enabled: true
-      Name: Marker
-      Namespaces:
-        edges: true
-        histogram: true
-        labels: true
-        vertices: true
-      Topic:
-        Depth: 5
-        Durability Policy: Volatile
-        History Policy: Keep All
-        Reliability Policy: Reliable
-        Value: /smap/topo_map/markers
       Value: true
   Enabled: true
   Global Options:
@@ -386,25 +342,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 8.964517593383789
+      Distance: 7.059121131896973
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: -0.25434058904647827
-        Y: -0.3591309189796448
-        Z: -0.6366907358169556
+        X: 0.16028492152690887
+        Y: 0.08139011263847351
+        Z: -0.42960742115974426
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.8297973275184631
+      Pitch: 0.5247972011566162
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz_default_plugins)
-      Yaw: 2.8124032020568848
+      Yaw: 2.737405776977539
     Saved: ~
 Window Geometry:
   Detections:

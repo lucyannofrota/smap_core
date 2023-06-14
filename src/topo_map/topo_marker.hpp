@@ -8,6 +8,7 @@
 #include <visualization_msgs/msg/marker_array.hpp>
 
 // SMAP
+#include "../include/smap_core/interface_templates.hpp"
 #include "../include/smap_core/macros.hpp"
 #include "graph.hpp"
 
@@ -31,12 +32,27 @@ struct marker_data_t
     std::vector< marker_object_t > objects;
 };
 
+struct triangles_t
+{
+    geometry_msgs::msg::Point point;
+    std_msgs::msg::ColorRGBA color;
+
+    triangles_t()
+    {
+        this->color.r = 0;
+        this->color.g = 0;
+        this->color.b = 255;
+        this->color.a = 1;
+    }
+};
+
 class topo_marker
+
 {
 
   private:
 
-    visualization_msgs::msg::Marker vertex, edge, label, histogram;
+    visualization_msgs::msg::Marker vertex, edge, label, histogram, AABB;
     std::vector< marker_data_t > vertex_data;
 
     std::mutex mutex;
@@ -47,6 +63,8 @@ class topo_marker
     visualization_msgs::msg::MarkerArray array;
 
     std::future< void > fut_pub, fut_upd;
+
+    std::vector< triangles_t > triangles_base;
 
     inline void _append_vertex( const geometry_msgs::msg::Point& pos )
     {
@@ -89,6 +107,8 @@ class topo_marker
     void _gen_triangles(
         float r, std::vector< geometry_msgs::msg::Point >& points, std::vector< std_msgs::msg::ColorRGBA >& colors );
 
+    std_msgs::msg::ColorRGBA histogram_color_picker( double min, double max, double value );
+
   public:
 
     topo_marker( void );
@@ -128,18 +148,18 @@ class topo_marker
         // else { this->edge.points.push_back( pos2 ); }
     }
 
-    inline void update_vertex_data( const std::string& label, const size_t& id )
-    {
-        (void) label;
-        (void) id;
-        const std::lock_guard< std::mutex > lock( this->mutex );
-        // TODO: implement update
-    }
+    // inline void update_vertex_data( const std::string& label, const size_t& id )
+    // {
+    //     (void) label;
+    //     (void) id;
+    //     const std::lock_guard< std::mutex > lock( this->mutex );
+    //     // TODO: implement update
+    // }
 
     inline void publish_markers( void )
     {
         const std::lock_guard< std::mutex > lock( this->mutex );
-        this->pub->publish( this->array );
+        // this->pub->publish( this->array );
     }
 
     inline void async_publish_markers( void )
@@ -147,12 +167,13 @@ class topo_marker
         this->fut_pub = std::async( std::launch::async, &topo_marker::publish_markers, this );
     }
 
-    void update_markers( void );
+    void update_markers( const graph_t& graph );
 
-    inline void async_update_markers( /*graph_t& graph*/ )
+    inline void async_update_markers( const graph_t& graph )
     {
         // (void) graph;
-        this->fut_upd = std::async( std::launch::async, &topo_marker::update_markers, this );
+        // printf( "async_update_markers\n" );
+        this->fut_upd = std::async( std::launch::async, &topo_marker::update_markers, this, std::ref( graph ) );
     }
 };
 }  // namespace smap

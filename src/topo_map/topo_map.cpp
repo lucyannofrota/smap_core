@@ -5,15 +5,13 @@ namespace smap
 
 void topo_map::observation_callback( const smap_interfaces::msg::SmapObservation::SharedPtr observation )
 {
-    // TODO: Add message "no classes registered"
+    printf( "observation_callback\n" );
     RCLCPP_DEBUG( this->get_logger(), "0. Check graph integrity" );
     if( boost::num_vertices( this->graph ) == 0 || this->reg_classes == nullptr || this->reg_detectors == nullptr )
     {
         RCLCPP_WARN( this->get_logger(), "No detectors registered." );
         return;
     }
-
-    // TODO: Add mutex
 
     // 1. Get all adjacent vertexes 3 layers deep
     RCLCPP_DEBUG( this->get_logger(), "1. Get all adjacent vertexes 3 layers deep" );
@@ -116,7 +114,10 @@ void topo_map::observation_callback( const smap_interfaces::msg::SmapObservation
         RCLCPP_DEBUG( this->get_logger(), "Object update" );
         closest->update(
             smap::semantic_type_t::OBJECT, observation->object.probability_distribution,
-            observation->object.pose.pose.position, min_distance, (double) observation->direction, *det );
+            observation->object.pose.pose.position,
+            std::pair< geometry_msgs::msg::Point, geometry_msgs::msg::Point >(
+                observation->object.aabb.min.point, observation->object.aabb.max.point ),
+            min_distance, (double) observation->direction, *det );
     }
 }
 
@@ -306,7 +307,10 @@ void topo_map::add_object( const smap_interfaces::msg::SmapObservation::SharedPt
 
         new_thing.update(
             smap::semantic_type_t::OBJECT, observation->object.probability_distribution,
-            observation->object.pose.pose.position, distance, observation->direction, det );
+            observation->object.pose.pose.position,
+            std::pair< geometry_msgs::msg::Point, geometry_msgs::msg::Point >(
+                observation->object.aabb.min.point, observation->object.aabb.max.point ),
+            distance, observation->direction, det );
         // TODO: Append "thing" to list to enable accumulation
         // pre.related_things.push_back( new_thing );
         // this->append_object();

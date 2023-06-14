@@ -90,6 +90,22 @@ topo_marker::topo_marker( void )
     this->label.pose.orientation.z = 0;
     this->label.pose.orientation.w = 1.0;
     this->label.color.a            = 1.0;
+
+    // Generating triangles
+    printf( "Generating triangles\n" );  // TODO: remove
+    float t;
+    triangles_t triangle;
+    const float thetas[ 3 ] = { 0, 2.0944, 4.1888 };
+    for( int i = 0; i < HISTOGRAM_BINS; i++ )
+    {
+        for( int j = 0; j < 3; j++ )
+        {
+            t                = ( 2 * M_PI / HISTOGRAM_BINS ) * i;
+            triangle.point.x = R_TRIANGLES * cos( thetas[ j ] + t );
+            triangle.point.y = R_TRIANGLES * sin( thetas[ j ] + t );
+            this->triangles_base.push_back( triangle );
+        }
+    }
 }
 
 void topo_marker::_append_histogram( void )
@@ -97,39 +113,16 @@ void topo_marker::_append_histogram( void )
     // HISTOGRAM_BINS
 }
 
-void topo_marker::_gen_triangles(
-    float r, std::vector< geometry_msgs::msg::Point >& points, std::vector< std_msgs::msg::ColorRGBA >& colors )
+std_msgs::msg::ColorRGBA topo_marker::histogram_color_picker( double min, double max, double value )
 {
-    const float thetas[ 3 ] = { 0, 2.0944, 4.1888 };
-    std::vector< geometry_msgs::msg::Point > points_aux;
-    geometry_msgs::msg::Point p;
-    p.z = 0;
-    float t;
-    for( int i = 0; i < HISTOGRAM_BINS; i++ )
-    {
-        t   = ( 2 * M_PI / HISTOGRAM_BINS ) * i;
-        p.x = ( r + R_TRIANGLES ) * cos( t );
-        p.y = ( r + R_TRIANGLES ) * sin( t );
-        points_aux.push_back( p );
-    }
+    std_msgs::msg::ColorRGBA color;
+    color.b     = 0.0;
+    double diff = max - min, ct = diff / 2, alpha = abs( value - ct ) / ( diff / 2 );
 
-    int j    = 0;
-    auto cit = colors.begin();
-    for( auto e: points_aux )
-    {
-        for( int i = 0; i < 3; i++, cit++ )
-        {
-            t   = ( 2 * M_PI / HISTOGRAM_BINS ) * j;
-            p.x = e.x + R_TRIANGLES * cos( thetas[ i ] + t );
-            p.y = e.y + R_TRIANGLES * sin( thetas[ i ] + t );
-            points.push_back( p );
-            // ( *cit ).r = 255;
-            // ( *cit ).g = 0;
-            // ( *cit ).b = 0;
-            // ( *cit ).a = 1;
-        }
-        j++;
-    }
+    color.a = alpha > HISTOGRAM_MARKER_ALPHA_LIM ? alpha : 0;
+    color.r = 1.0 - value / diff;
+    color.g = 0.0 + value / diff;
+    return color;
 }
 
 // void topo_marker::publish_markers( void )
@@ -158,9 +151,111 @@ void topo_marker::_gen_triangles(
 // // }
 // }
 
-void topo_marker::update_markers( void )
+void topo_marker::update_markers( const graph_t& graph )
 {
     const std::lock_guard< std::mutex > lock( this->mutex );
+    // if( !this->array.markers.empty() ) this->array.markers.clear();
     this->array.markers.clear();
+    this->vertex.points.clear();
+    this->edge.points.clear();
+    this->histogram.points.clear();
+    this->histogram.colors.clear();
+
+    // this->histogram.color.r = 255;
+    // this->histogram.color.g = 0;
+    // this->histogram.color.b = 255;
+    // this->histogram.color.a = 1;
+
+    // boost::graph_traits< graph_t >::vertex_iterator vi, vi_end, next;
+    // std::tie( vi, vi_end ) = boost::vertices( graph );
+
+    // Vertices
+    geometry_msgs::msg::Point up_point, aux_point, d_point;
+    up_point.x  = 0;
+    up_point.y  = 0;
+    up_point.z  = 0.2;
+
+    aux_point.x = 0;
+    aux_point.y = 0;
+    aux_point.z = 0.1;
+
+    int hist_id = 0;
+    for( auto e: boost::make_iterator_range( boost::vertices( graph ) ) )
+    {
+        printf( "ID: %i\n", (int) graph[ e ].index );
+
+        // edge
+        // for( auto e: boost::make_iterator_range( boost::out_edges( this->_get_vertex( current ), this->graph ) ) )
+        // if( boost::target( e, this->graph ) == this->_get_vertex( previous ) ) return false;
+        for( auto edg: boost::make_iterator_range( boost::out_edges( e, graph ) ) )
+        {
+            this->edge.points.push_back( graph[ e ].pos );
+            this->edge.points.push_back( graph[ edg.m_target ].pos );
+            // if( boost::souce( e, this->graph ) )
+            //
+            //
+        }
+        // graph[ edg ].
+
+        // vertex
+        this->vertex.points.push_back( graph[ e ].pos );
+        // label
+        this->label.pose.position.x = graph[ e ].pos.x + up_point.x;
+        this->label.pose.position.y = graph[ e ].pos.y + up_point.y;
+        this->label.pose.position.z = graph[ e ].pos.z + up_point.z;
+        this->label.text = graph[ e ].this_thing.get_label() + std::string( "_" ) + std::to_string( graph[ e ].index );
+        this->label.id   = graph[ e ].index;
+        this->array.markers.push_back( this->label );
+        // histogram
+        double offset_theta, r;
+        thing r_thing;
+        r_thing.pos.x         = graph[ e ].pos.x;
+        r_thing.pos.y         = graph[ e ].pos.y;
+        r_thing.pos.z         = graph[ e ].pos.z;
+        r_thing.AABB.first.x  = 1.51;
+        r_thing.AABB.first.y  = 1.51;
+        r_thing.AABB.first.z  = 1.1;
+        r_thing.AABB.second.x = 1.0;
+        r_thing.AABB.second.y = 1.0;
+        r_thing.AABB.second.z = 0.9;
+        // for( auto& r_thing: graph[ e ].related_things )
+        // {
+        int j = 0;
+        std_msgs::msg::ColorRGBA color;
+        color.r = 0.0;
+        color.g = 1.0;
+        color.b = 0.0;
+        color.a = 1.0;
+        auto it = this->triangles_base.begin();
+        for( int i = 0; i < HISTOGRAM_BINS; i++ )
+        {
+            offset_theta = ( 2 * M_PI / HISTOGRAM_BINS ) * i;
+            for( j = 0; j < 3; j++, it++ )
+            {
+                d_point     = abs( r_thing.AABB.second - r_thing.AABB.first );
+                r           = ( d_point.x > d_point.y ? d_point.x : d_point.y ) * 0.7;
+                aux_point.x = ( r + R_TRIANGLES ) * cos( offset_theta );
+                aux_point.y = ( r + R_TRIANGLES ) * sin( offset_theta );
+
+                this->histogram.points.push_back( r_thing.pos + it->point + aux_point );
+                this->histogram.colors.push_back(
+                    this->histogram_color_picker( 0, HISTOGRAM_BINS - 1, i ) );  // TODO: Change i to probability
+            }
+        }
+
+        this->histogram.id = hist_id++;
+        this->array.markers.push_back( this->histogram );
+        // }
+
+        // this->edge.points.push_back()
+    }
+
+    this->vertex.header.stamp = clock->now();
+    this->vertex.header.stamp = clock->now();
+
+    this->array.markers.push_back( this->edge );
+    this->array.markers.push_back( this->vertex );
+    // this->array.markers.push_back( this->label );
+    this->pub->publish( this->array );
 }
 }  // namespace smap

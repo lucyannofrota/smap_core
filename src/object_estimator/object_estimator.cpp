@@ -178,6 +178,7 @@ void object_estimator::object_estimation_thread(
 
     try
     {
+        printf( "object_estimation_thread\n" );
         count_time timer;
         smap_interfaces::msg::SmapObservation obs;
         obs.robot_pose = *pose;

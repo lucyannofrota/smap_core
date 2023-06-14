@@ -26,8 +26,8 @@
 // SMAP
 #include "../include/smap_core/aux_functions.hpp"
 #include "../include/smap_core/macros.hpp"
-#include "../thing/thing.hpp"
 #include "../perception_server/perception_server.hpp"
+#include "../thing/thing.hpp"
 #include "graph.hpp"
 #include "label_writers.hpp"
 #include "smap_interfaces/msg/smap_object.hpp"
@@ -150,8 +150,8 @@ class topo_map : public rclcpp::Node
     rclcpp::TimerBase::SharedPtr marker_timer =
         this->create_wall_timer( std::chrono::milliseconds( 500 ), std::bind( &topo_map::timer_callback, this ) );
 
-    rclcpp::TimerBase::SharedPtr monitor_timer =
-        this->create_wall_timer( std::chrono::milliseconds( 2000 ), std::bind( &topo_map::monitor_callback, this ) );
+    rclcpp::TimerBase::SharedPtr monitor_timer = this->create_wall_timer(
+        std::chrono::milliseconds( 2000 / 2 ), std::bind( &topo_map::monitor_callback, this ) );
 
     // Subscriptions
     rclcpp::Subscription< geometry_msgs::msg::PoseStamped >::SharedPtr pose_sub =
@@ -191,13 +191,40 @@ class topo_map : public rclcpp::Node
         ar& v_index;
     }
 
-    inline void timer_callback( void ) { this->markers.async_publish_markers(); }
+    inline void timer_callback( void )
+    {
+        printf( "timer_callback\n" );
+        this->markers.async_publish_markers();
+    }
 
-    inline void monitor_callback( void ) { this->markers.async_update_markers( /*this->graph*/ ); }
+    inline void monitor_callback( void )
+    {
+        printf( "monitor_callback\n" );
+        this->markers.async_update_markers( this->graph );
+    }
 
     inline void pose_callback( const geometry_msgs::msg::PoseStamped::SharedPtr pose )
     {
+        // printf( "pose_callback\n" );
         this->add_vertex( pose->pose.position, true );
+        // if( boost::num_vertices( this->graph ) == 1 )
+        // {
+        //     for( auto e: boost::make_iterator_range( boost::vertices( this->graph ) ) )
+        //     {
+        //         thing t;
+        //         t.pos.x         = 3;
+        //         t.pos.y         = 3;
+        //         t.pos.z         = 3;
+        //         t.AABB.first.x  = 2.5;
+        //         t.AABB.first.y  = 2.5;
+        //         t.AABB.first.z  = 2.5;
+        //         t.AABB.second.x = 3.5;
+        //         t.AABB.second.y = 3.5;
+        //         t.AABB.second.z = 3.5;
+        //         t.type          = semantic_type_t::OBJECT;
+        //         this->graph[ e ].related_things.push_back( t );
+        //     }
+        // }
     }
 
     void observation_callback( const smap_interfaces::msg::SmapObservation::SharedPtr observation );

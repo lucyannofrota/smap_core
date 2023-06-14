@@ -5,7 +5,7 @@
 namespace smap
 {
 
-std::string thing::get_label( void )
+std::string thing::get_label( void ) const
 {
     if( this->reg_classes == nullptr ) return UNDEFINED_LABEL;
     if( *( this->reg_classes ) == nullptr ) return UNDEFINED_LABEL;
@@ -62,9 +62,9 @@ std::pair< std::string, std::string > thing::get_vertex_representation()
 
 void thing::update(
     const semantic_type_t type, const std::vector< float >& probability_distribution, geometry_msgs::msg::Point& point,
-    double distance, double angle, detector_t& detector )
+    std::pair< geometry_msgs::msg::Point, geometry_msgs::msg::Point > AABB, double distance, double angle,
+    detector_t& detector )
 {
-    (void) angle;
     static bool set = false;
     if( !set )
     {
@@ -73,87 +73,89 @@ void thing::update(
         // TODO: Define initialization
 
         // 1. Histogram initialization
-        printf( "Histogram:\n" );
-        printf( "\tn_bins: %i\n", (int) this->observations.n_bins );
-        printf( "\tbin_width: %6.1f\n", rad2deg( this->observations.bin_width ) );
-        this->observations.register_obs( distance, angle, true );
-        this->observations.print();
+        // printf( "Histogram:\n" );
+        // printf( "\tn_bins: %i\n", (int) this->observations.n_bins );
+        // printf( "\tbin_width: %6.1f\n", rad2deg( this->observations.bin_width ) );
+        // this->observations.register_obs( distance, angle, true );
+        // this->observations.print();
 
-        // 2. Position initialization
+        // // 2. Position initialization
+        // this->pos  = point;
+        // this->AABB = AABB;
 
-        // 3. Probabilities vector initialization
-        // Create a map to store this information
-        // int u    = 0;
-        // double s = 0;
-        int i = 0, j = 0;
-        bool sw = false;
-        printf( "Probabilities [BEFORE]:\n" );
-        printf( "\tClass |" );
-        auto it = probability_distribution.begin();
-        while( it != probability_distribution.end() )
-        {
-            if( sw )
-            {
-                printf( "%6.3f|", *it );
-                it++;
-                i--;
-            }
-            else
-            {
-                printf( "%6i|", i + j * 20 );
-                i++;
-            }
-            if( sw && i == 0 )
-            {
-                sw = false;
-                printf( "\n\tClass |" );
-                j++;
-                continue;
-            }
-            if( i % 20 == 0 )
-            {
-                sw = true;
-                printf( "\n\tProbs |" );
-                continue;
-            }
-        }
-        // this->probabilities
-        for( auto c: **this->reg_classes )
-            this->probabilities[ c.first ] = log_odds( probability_distribution[ c.second.second ] );
+        // // 3. Probabilities vector initialization
+        // // Create a map to store this information
+        // // int u    = 0;
+        // // double s = 0;
+        // int i = 0, j = 0;
+        // bool sw = false;
+        // printf( "Probabilities [BEFORE]:\n" );
+        // printf( "\tClass |" );
+        // auto it = probability_distribution.begin();
+        // while( it != probability_distribution.end() )
+        // {
+        //     if( sw )
+        //     {
+        //         printf( "%6.3f|", *it );
+        //         it++;
+        //         i--;
+        //     }
+        //     else
+        //     {
+        //         printf( "%6i|", i + j * 20 );
+        //         i++;
+        //     }
+        //     if( sw && i == 0 )
+        //     {
+        //         sw = false;
+        //         printf( "\n\tClass |" );
+        //         j++;
+        //         continue;
+        //     }
+        //     if( i % 20 == 0 )
+        //     {
+        //         sw = true;
+        //         printf( "\n\tProbs |" );
+        //         continue;
+        //     }
+        // }
+        // // this->probabilities
+        // for( auto c: **this->reg_classes )
+        //     this->probabilities[ c.first ] = log_odds( probability_distribution[ c.second.second ] );
 
-        i  = 0;
-        j  = 0;
-        sw = false;
-        printf( "Probabilities [AFTER]:\n" );
-        printf( "\tClass |" );
-        auto itp = this->probabilities.begin();
-        while( itp != this->probabilities.end() )
-        {
-            if( sw )
-            {
-                printf( "%6.3f|", log_odds_inv( ( *itp ).second ) );
-                itp++;
-                i--;
-            }
-            else
-            {
-                printf( "%6i|", i + j * 20 );
-                i++;
-            }
-            if( sw && i == 0 )
-            {
-                sw = false;
-                printf( "\n\tClass |" );
-                j++;
-                continue;
-            }
-            if( i % 20 == 0 )
-            {
-                sw = true;
-                printf( "\n\tProbs |" );
-                continue;
-            }
-        }
+        // i  = 0;
+        // j  = 0;
+        // sw = false;
+        // printf( "Probabilities [AFTER]:\n" );
+        // printf( "\tClass |" );
+        // auto itp = this->probabilities.begin();
+        // while( itp != this->probabilities.end() )
+        // {
+        //     if( sw )
+        //     {
+        //         printf( "%6.3f|", log_odds_inv( ( *itp ).second ) );
+        //         itp++;
+        //         i--;
+        //     }
+        //     else
+        //     {
+        //         printf( "%6i|", i + j * 20 );
+        //         i++;
+        //     }
+        //     if( sw && i == 0 )
+        //     {
+        //         sw = false;
+        //         printf( "\n\tClass |" );
+        //         j++;
+        //         continue;
+        //     }
+        //     if( i % 20 == 0 )
+        //     {
+        //         sw = true;
+        //         printf( "\n\tProbs |" );
+        //         continue;
+        //     }
+        // }
     }
     else
     {
@@ -180,13 +182,14 @@ void thing::update(
         // 3. Position update
         // TODO: Test
         // Saturation of p. Max value is MAX_POS_PROB
-        float p = ( this->probabilities[ this->get_label() ] > MAX_POS_PROB )
-                    ? MAX_POS_PROB
-                    : ( this->probabilities[ this->get_label() ] > MAX_POS_PROB );
+        double p = ( this->probabilities[ this->get_label() ] > MAX_POS_PROB )
+                     ? MAX_POS_PROB
+                     : ( this->probabilities[ this->get_label() ] > MAX_POS_PROB );
         // Low pass filter to update the position with p as coefficient
-        this->pos.x = this->pos.x * p + point.x * ( 1 - p );
-        this->pos.y = this->pos.y * p + point.y * ( 1 - p );
-        this->pos.z = this->pos.z * p + point.z * ( 1 - p );
+        this->pos         = this->pos * p + point * ( 1 - p );
+
+        this->AABB.first  = this->AABB.first * p + AABB.first * ( 1 - p );
+        this->AABB.second = this->AABB.second * p + AABB.second * ( 1 - p );
     }
 }
 
