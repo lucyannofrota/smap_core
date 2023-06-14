@@ -2,11 +2,11 @@
 #define SMAP_CORE__PERCEPTION_SERVER_HPP_
 
 // ROS
-#include "../../include/smap_core/macros.hpp"
 #include "../../include/smap_core/visibility_control.h"
 #include <rclcpp/rclcpp.hpp>
 
 // SMAP
+#include "../../include/smap_core/macros.hpp"
 #include "../topo_map/topo_map.hpp"
 #include "detector_descriptor.hpp"
 #include "smap_interfaces/msg/smap_detections.hpp"

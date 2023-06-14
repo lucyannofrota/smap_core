@@ -111,28 +111,28 @@ void object_estimator::estimate_object_3D_AABB(
     // TODO: Try to use medians
     count_time timer;
 
-    obj.aabb.min.point.x = object_cloud->points[ 0 ].x;
-    obj.aabb.min.point.y = object_cloud->points[ 0 ].y;
-    obj.aabb.min.point.z = object_cloud->points[ 0 ].z;
+    obj.AABB.min.point.x = object_cloud->points[ 0 ].x;
+    obj.AABB.min.point.y = object_cloud->points[ 0 ].y;
+    obj.AABB.min.point.z = object_cloud->points[ 0 ].z;
 
-    obj.aabb.max.point.x = object_cloud->points[ 0 ].x;
-    obj.aabb.max.point.y = object_cloud->points[ 0 ].y;
-    obj.aabb.max.point.z = object_cloud->points[ 0 ].z;
+    obj.AABB.max.point.x = object_cloud->points[ 0 ].x;
+    obj.AABB.max.point.y = object_cloud->points[ 0 ].y;
+    obj.AABB.max.point.z = object_cloud->points[ 0 ].z;
 
     for( cloud_point_t& point: *object_cloud )
     {
-        if( point.x < obj.aabb.min.point.x ) obj.aabb.min.point.x = point.x;
-        if( point.y < obj.aabb.min.point.y ) obj.aabb.min.point.y = point.y;
-        if( point.z < obj.aabb.min.point.z ) obj.aabb.min.point.z = point.z;
+        if( point.x < obj.AABB.min.point.x ) obj.AABB.min.point.x = point.x;
+        if( point.y < obj.AABB.min.point.y ) obj.AABB.min.point.y = point.y;
+        if( point.z < obj.AABB.min.point.z ) obj.AABB.min.point.z = point.z;
 
-        if( point.x > obj.aabb.max.point.x ) obj.aabb.max.point.x = point.x;
-        if( point.y > obj.aabb.max.point.y ) obj.aabb.max.point.y = point.y;
-        if( point.z > obj.aabb.max.point.z ) obj.aabb.max.point.z = point.z;
+        if( point.x > obj.AABB.max.point.x ) obj.AABB.max.point.x = point.x;
+        if( point.y > obj.AABB.max.point.y ) obj.AABB.max.point.y = point.y;
+        if( point.z > obj.AABB.max.point.z ) obj.AABB.max.point.z = point.z;
     }
 
-    obj.pose.pose.position.x = ( obj.aabb.min.point.x + obj.aabb.max.point.x ) / 2;
-    obj.pose.pose.position.y = ( obj.aabb.min.point.y + obj.aabb.max.point.y ) / 2;
-    obj.pose.pose.position.z = ( obj.aabb.min.point.z + obj.aabb.max.point.z ) / 2;
+    obj.pose.pose.position.x = ( obj.AABB.min.point.x + obj.AABB.max.point.x ) / 2;
+    obj.pose.pose.position.y = ( obj.AABB.min.point.y + obj.AABB.max.point.y ) / 2;
+    obj.pose.pose.position.z = ( obj.AABB.min.point.z + obj.AABB.max.point.z ) / 2;
 
     const char str[]         = "3D_AABB";
     timer.get_time( this->get_logger(), str, centroid_plot );
@@ -148,8 +148,8 @@ void object_estimator::transform_object_pcl(
     // tf2::doTransform< geometry_msgs::msg::PoseStamped >( obj.pose, obj.pose, *transform );
 
     // // Limits
-    // tf2::doTransform< geometry_msgs::msg::PointStamped >( obj.aabb.min, obj.aabb.min, *transform );
-    // tf2::doTransform< geometry_msgs::msg::PointStamped >( obj.aabb.max, obj.aabb.max, *transform );
+    // tf2::doTransform< geometry_msgs::msg::PointStamped >( obj.AABB.min, obj.AABB.min, *transform );
+    // tf2::doTransform< geometry_msgs::msg::PointStamped >( obj.AABB.max, obj.AABB.max, *transform );
 
     // Point cloud
     tf2::doTransform< sensor_msgs::msg::PointCloud2 >( obj.pointcloud, obj.pointcloud, *transform );

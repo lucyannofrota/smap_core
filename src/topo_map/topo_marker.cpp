@@ -269,9 +269,9 @@ void topo_marker::update_markers( const graph_t& graph )
         this->AABB.scale         = vec3_abs( r_thing.AABB.second - r_thing.AABB.first );
         this->AABB.pose.position = r_thing.pos;
         this->array.markers.push_back( this->AABB );
-        // bbx_marker.scale.x         = abs( obj.aabb.max.point.x - obj.aabb.min.point.x );
-        // bbx_marker.scale.y         = abs( obj.aabb.max.point.y - obj.aabb.min.point.y );
-        // bbx_marker.scale.z         = abs( obj.aabb.max.point.z - obj.aabb.min.point.z );
+        // bbx_marker.scale.x         = abs( obj.AABB.max.point.x - obj.AABB.min.point.x );
+        // bbx_marker.scale.y         = abs( obj.AABB.max.point.y - obj.AABB.min.point.y );
+        // bbx_marker.scale.z         = abs( obj.AABB.max.point.z - obj.AABB.min.point.z );
         // bbx_marker.pose.position   = obj.pose.pose.position;
         obj_id++;
         // }// TODO: Revert for

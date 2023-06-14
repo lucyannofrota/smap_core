@@ -282,9 +282,9 @@ class object_estimator : public rclcpp::Node
         bbx_marker.pose.orientation.y = 0;
         bbx_marker.pose.orientation.z = 0;
         bbx_marker.pose.orientation.w = 1;
-        bbx_marker.scale.x            = abs( obj.aabb.max.point.x - obj.aabb.min.point.x );
-        bbx_marker.scale.y            = abs( obj.aabb.max.point.y - obj.aabb.min.point.y );
-        bbx_marker.scale.z            = abs( obj.aabb.max.point.z - obj.aabb.min.point.z );
+        bbx_marker.scale.x            = abs( obj.AABB.max.point.x - obj.AABB.min.point.x );
+        bbx_marker.scale.y            = abs( obj.AABB.max.point.y - obj.AABB.min.point.y );
+        bbx_marker.scale.z            = abs( obj.AABB.max.point.z - obj.AABB.min.point.z );
         bbx_marker.color.b            = 0;
         bbx_marker.color.g            = 0;
         bbx_marker.color.r            = 255;
@@ -299,8 +299,8 @@ class object_estimator : public rclcpp::Node
       cloud_point_t position_OBB;
       Eigen::Matrix3f rotational_matrix_OBB;
       feature_extractor.getAABB(min_point_AABB, max_point_AABB);
-      obj->aabb.min.x = min_point_AABB.x; obj->aabb.min.y = min_point_AABB.y; obj->aabb.min.z = min_point_AABB.z;
-      obj->aabb.max.x = max_point_AABB.x; obj->aabb.max.y = max_point_AABB.y; obj->aabb.max.z = max_point_AABB.z;
+      obj->AABB.min.x = min_point_AABB.x; obj->AABB.min.y = min_point_AABB.y; obj->AABB.min.z = min_point_AABB.z;
+      obj->AABB.max.x = max_point_AABB.x; obj->AABB.max.y = max_point_AABB.y; obj->AABB.max.z = max_point_AABB.z;
 
       feature_extractor.getOBB (min_point_OBB, max_point_OBB, position_OBB, rotational_matrix_OBB);
 
