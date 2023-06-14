@@ -1,7 +1,8 @@
 #ifndef SMAP_CORE__TEMPLATES_HPP_
 #define SMAP_CORE__TEMPLATES_HPP_
 
-#include "geometry_msgs/msg/point.hpp"
+#include <geometry_msgs/msg/point.hpp>
+#include <geometry_msgs/msg/vector3.hpp>
 
 // geometry_msgs::msg::Point operators
 
@@ -63,6 +64,15 @@ inline geometry_msgs::msg::Point operator*=( geometry_msgs::msg::Point& a, const
 inline geometry_msgs::msg::Point abs( geometry_msgs::msg::Point a )
 {
     geometry_msgs::msg::Point ret;
+    ret.x = abs( a.x );
+    ret.y = abs( a.y );
+    ret.z = abs( a.z );
+    return ret;
+}
+
+inline geometry_msgs::msg::Vector3 vec3_abs( geometry_msgs::msg::Point a )
+{
+    geometry_msgs::msg::Vector3 ret;
     ret.x = abs( a.x );
     ret.y = abs( a.y );
     ret.z = abs( a.z );

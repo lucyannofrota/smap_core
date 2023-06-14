@@ -247,9 +247,9 @@ class topo_map : public rclcpp::Node
         vertex_data_t vert { v_index, pos, thing( &( this->reg_classes ) ), std::list< smap::thing >(), strong_vertex };
         size_t ret = boost::add_vertex( vert, this->graph );
         // publish_vertex = true;
-        if( strong_vertex )
-            this->markers.append_vertex(
-                pos, v_index, vert.this_thing.get_label() + std::string( "_" ) + std::to_string( v_index ) );
+        // if( strong_vertex )
+        //     this->markers.append_vertex(
+        //         pos, v_index, vert.this_thing.get_label() + std::string( "_" ) + std::to_string( v_index ) );
 
         RCLCPP_INFO( this->get_logger(), "Vertex added (%li) [%4.1f,%4.1f,%4.1f]", this->v_index, pos.x, pos.y, pos.z );
         return ret;

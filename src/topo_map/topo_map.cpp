@@ -131,7 +131,7 @@ bool topo_map::add_edge( const size_t& previous, const size_t& current )
     for( auto e: boost::make_iterator_range( boost::out_edges( this->_get_vertex( current ), this->graph ) ) )
         if( boost::target( e, this->graph ) == this->_get_vertex( previous ) ) return false;
     boost::add_edge( this->_get_vertex( previous ), this->_get_vertex( current ), { distance, 1 }, this->graph );
-    if( prev.strong_vertex && cur.strong_vertex ) this->markers.append_edge( prev.pos, cur.pos );
+    // if( prev.strong_vertex && cur.strong_vertex ) this->markers.append_edge( prev.pos, cur.pos );
     RCLCPP_INFO(
         this->get_logger(), "Edge added %i->%i [ % 4.1f, % 4.1f, % 4.1f ] -> [ % 4.1f, % 4.1f, % 4.1f ] ", previous,
         current, prev.pos.x, prev.pos.y, prev.pos.z, cur.pos.x, cur.pos.y, cur.pos.z );

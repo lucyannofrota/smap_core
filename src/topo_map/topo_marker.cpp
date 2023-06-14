@@ -57,6 +57,20 @@ topo_marker::topo_marker( void )
     // this->vertex.color.b = 0.0;
     // this->vertex.color.a = 1.0;
 
+    // AABB
+    this->AABB.header.frame_id    = "/map";
+    this->AABB.ns                 = "AABB";
+    this->AABB.type               = visualization_msgs::msg::Marker::CUBE;
+    this->AABB.action             = visualization_msgs::msg::Marker::MODIFY;
+    this->AABB.pose.orientation.x = 0;
+    this->AABB.pose.orientation.y = 0;
+    this->AABB.pose.orientation.z = 0;
+    this->AABB.pose.orientation.w = 1.0;
+    this->AABB.color.r            = 0.0;
+    this->AABB.color.g            = 0.0;
+    this->AABB.color.b            = 1.0;
+    this->AABB.color.a            = 0.5;
+
     // Edge
     this->edge.header.frame_id    = "/map";
     this->edge.ns                 = "edges";
@@ -108,10 +122,10 @@ topo_marker::topo_marker( void )
     }
 }
 
-void topo_marker::_append_histogram( void )
-{
-    // HISTOGRAM_BINS
-}
+// void topo_marker::_append_histogram( void )
+// {
+//     // HISTOGRAM_BINS
+// }
 
 std_msgs::msg::ColorRGBA topo_marker::histogram_color_picker( double min, double max, double value )
 {
@@ -179,7 +193,7 @@ void topo_marker::update_markers( const graph_t& graph )
     aux_point.y = 0;
     aux_point.z = 0.1;
 
-    int hist_id = 0;
+    int obj_id  = 0;
     for( auto e: boost::make_iterator_range( boost::vertices( graph ) ) )
     {
         printf( "ID: %i\n", (int) graph[ e ].index );
@@ -200,26 +214,28 @@ void topo_marker::update_markers( const graph_t& graph )
         // vertex
         this->vertex.points.push_back( graph[ e ].pos );
         // label
-        this->label.pose.position.x = graph[ e ].pos.x + up_point.x;
-        this->label.pose.position.y = graph[ e ].pos.y + up_point.y;
-        this->label.pose.position.z = graph[ e ].pos.z + up_point.z;
+        this->label.pose.position = graph[ e ].pos + up_point;
+        // this->label.pose.position.y = graph[ e ].pos.y + up_point.y;
+        // this->label.pose.position.z = graph[ e ].pos.z + up_point.z;
         this->label.text = graph[ e ].this_thing.get_label() + std::string( "_" ) + std::to_string( graph[ e ].index );
         this->label.id   = graph[ e ].index;
+        this->label.header.stamp = clock->now();
         this->array.markers.push_back( this->label );
         // histogram
         double offset_theta, r;
         thing r_thing;
-        r_thing.pos.x         = graph[ e ].pos.x;
-        r_thing.pos.y         = graph[ e ].pos.y;
-        r_thing.pos.z         = graph[ e ].pos.z;
+        r_thing.pos = graph[ e ].pos;
+        // r_thing.pos.y         = graph[ e ].pos.y;
+        // r_thing.pos.z         = graph[ e ].pos.z;
         r_thing.AABB.first.x  = 1.51;
         r_thing.AABB.first.y  = 1.51;
         r_thing.AABB.first.z  = 1.1;
         r_thing.AABB.second.x = 1.0;
         r_thing.AABB.second.y = 1.0;
         r_thing.AABB.second.z = 0.9;
-        // for( auto& r_thing: graph[ e ].related_things )
+        // for( auto& r_thing: graph[ e ].related_things ) // TODO: Revert for
         // {
+        // Histogram
         int j = 0;
         std_msgs::msg::ColorRGBA color;
         color.r = 0.0;
@@ -243,15 +259,26 @@ void topo_marker::update_markers( const graph_t& graph )
             }
         }
 
-        this->histogram.id = hist_id++;
+        this->histogram.id           = obj_id;
+        this->histogram.header.stamp = clock->now();
         this->array.markers.push_back( this->histogram );
-        // }
 
-        // this->edge.points.push_back()
+        // AABB
+        this->AABB.id            = obj_id;
+        this->AABB.header.stamp  = clock->now();
+        this->AABB.scale         = vec3_abs( r_thing.AABB.second - r_thing.AABB.first );
+        this->AABB.pose.position = r_thing.pos;
+        this->array.markers.push_back( this->AABB );
+        // bbx_marker.scale.x         = abs( obj.aabb.max.point.x - obj.aabb.min.point.x );
+        // bbx_marker.scale.y         = abs( obj.aabb.max.point.y - obj.aabb.min.point.y );
+        // bbx_marker.scale.z         = abs( obj.aabb.max.point.z - obj.aabb.min.point.z );
+        // bbx_marker.pose.position   = obj.pose.pose.position;
+        obj_id++;
+        // }// TODO: Revert for
     }
 
     this->vertex.header.stamp = clock->now();
-    this->vertex.header.stamp = clock->now();
+    this->edge.header.stamp   = clock->now();
 
     this->array.markers.push_back( this->edge );
     this->array.markers.push_back( this->vertex );
