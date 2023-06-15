@@ -43,7 +43,7 @@ class thing
 
     std::map< std::string, std::pair< int, int > >** reg_classes = nullptr;
 
-    std::map< std::string, float > probabilities;
+    std::map< std::string, float > class_probabilities;
 
     // Methods
     thing( void ) {}
@@ -60,18 +60,27 @@ class thing
 
     std::string get_label( void ) const;
 
+    double get_confidence( void ) const;
+
     bool label_is_equal( uint8_t& module_id, uint8_t& obs_label );
 
     // std::string get_label( uint8_t module_id );
 
     std::pair< std::string, std::string > get_vertex_representation();
 
-    void update(
+    void set(
         const semantic_type_t type, const std::vector< float >& probability_distribution,
-        geometry_msgs::msg::Point& point, std::pair< geometry_msgs::msg::Point, geometry_msgs::msg::Point > aabb,
-        double distance, double angle, detector_t& detector );
+        const geometry_msgs::msg::Point& point, std::pair< geometry_msgs::msg::Point, geometry_msgs::msg::Point > aabb,
+        const float& pos_confidence, const double& distance, const double& angle, const detector_t& detector );
+
+    void update(
+        const std::vector< float >& probability_distribution, geometry_msgs::msg::Point& point,
+        std::pair< geometry_msgs::msg::Point, geometry_msgs::msg::Point > aabb, const float& pos_confidence,
+        double distance, double angle, const detector_t& detector );
 
   private:
+
+    float pos_confidence;
 
     friend class boost::serialization::access;
     rclcpp::Logger logger = rclcpp::get_logger( "thing" );

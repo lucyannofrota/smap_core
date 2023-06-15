@@ -9,6 +9,8 @@
 namespace smap
 {
 
+#define DEBUG_MODE 1
+
 #define OUTPUT_PATH std::string( "src/smap/smap_core/maps/" )  // Output path of files
 
 #define DEFAULT_FILE_NAME "Sem_Map.smp"

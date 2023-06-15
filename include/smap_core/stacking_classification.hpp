@@ -39,8 +39,8 @@ inline void stack_vectors(
 {
     // current_likelihood - is a map containing a vector of probabilities that represents the probability of beeing each
     // 											class given the current observation
-    int i = 0;
     // 1. Probability combination
+    int i   = 0;
     auto it = new_vector.begin();
     for( i = 0; it != new_vector.end(); ++it, i++ ) current_likelihood[ det.classes.at( i ) ] += log_odds( *it );
     // stack_normalization( current_likelihood );  // TODO: Test the influence of the normalization

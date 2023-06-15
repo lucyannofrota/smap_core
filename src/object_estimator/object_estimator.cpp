@@ -191,7 +191,7 @@ void object_estimator::object_estimation_thread(
 
     try
     {
-        printf( "object_estimation_thread\n" );
+        RCLCPP_DEBUG_EXPRESSION( this->get_logger(), DEBUG_MODE, "object_estimation_thread" );
         count_time timer;
         smap_interfaces::msg::SmapObservation obs;
         obs.robot_pose = *pose;

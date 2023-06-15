@@ -4,14 +4,14 @@
     "mainwindow": {
       "keys": {
         "geometry": {
-          "repr(QByteArray.hex)": "QtCore.QByteArray(b'01d9d0cb00030000000000480000001b000003ba000002300000004800000040000003ba00000230000000000000000007800000004800000040000003ba00000230')",
+          "repr(QByteArray.hex)": "QtCore.QByteArray(b'01d9d0cb00030000000000480000001b0000077f0000043700000048000000400000077f000004370000000000000000078000000048000000400000077f00000437')",
           "type": "repr(QByteArray.hex)",
-          "pretty-print": "     H     0 H @   0      H @   0"
+          "pretty-print": "     H     7 H @   7      H @   7"
         },
         "state": {
-          "repr(QByteArray.hex)": "QtCore.QByteArray(b'000000ff00000000fd000000010000000300000373000001c7fc0100000001fb0000004c007200710074005f0063006f006e0073006f006c0065005f005f0043006f006e0073006f006c0065005f005f0031005f005f0043006f006e0073006f006c00650057006900640067006500740100000000000003730000025b00ffffff000003730000000000000004000000040000000800000008fc00000001000000030000000100000036004d0069006e0069006d0069007a006500640044006f0063006b00570069006400670065007400730054006f006f006c0062006100720000000000ffffffff0000000000000000')",
+          "repr(QByteArray.hex)": "QtCore.QByteArray(b'000000ff00000000fd000000010000000300000738000003cefc0100000004fb0000004c007200710074005f0063006f006e0073006f006c0065005f005f0043006f006e0073006f006c0065005f005f0031005f005f0043006f006e0073006f006c00650057006900640067006500740100000000000007380000028100fffffffb0000004c007200710074005f0074006f007000690063005f005f0054006f0070006900630050006c007500670069006e005f005f0031005f005f0054006f0070006900630057006900640067006500740100000551000001e70000000000000000fb00000022007200710074005f0074006f0070005f005f0054004f0050005f005f0031005f005f01000004f5000002430000000000000000fb00000072007200710074005f0073006500720076006900630065005f00630061006c006c00650072005f005f005300650072007600690063006500430061006c006c00650072005f005f0031005f005f005300650072007600690063006500430061006c006c006500720057006900640067006500740100000498000002a00000000000000000000007380000000000000004000000040000000800000008fc00000001000000030000000100000036004d0069006e0069006d0069007a006500640044006f0063006b00570069006400670065007400730054006f006f006c0062006100720000000000ffffffff0000000000000000')",
           "type": "repr(QByteArray.hex)",
-          "pretty-print": "                 Lrqt_console__Console__1__ConsoleWidget                            6MinimizedDockWidgetsToolbar        "
+          "pretty-print": "                 Lrqt_console__Console__1__ConsoleWidget          Lrqt_topic__TopicPlugin__1__TopicWidget          \"rqt_top__TOP__1__          rrqt_service_caller__ServiceCaller__1__ServiceCallerWidget                            6MinimizedDockWidgetsToolbar        "
         }
       },
       "groups": {
@@ -57,7 +57,7 @@
             "plugin": {
               "keys": {
                 "exclude_filters": {
-                  "repr": "'severity'",
+                  "repr": "'node'",
                   "type": "repr"
                 },
                 "filter_splitter": {
@@ -66,7 +66,7 @@
                   "pretty-print": "       p p     "
                 },
                 "highlight_filters": {
-                  "repr": "['node', 'severity']",
+                  "repr": "''",
                   "type": "repr"
                 },
                 "message_limit": {
@@ -99,7 +99,7 @@
                       "type": "repr"
                     },
                     "itemlist": {
-                      "repr": "''",
+                      "repr": "['smap.object_estimator', 'smap.perception_yolo_v5', 'smap.smap_core', 'smap.perception_server']",
                       "type": "repr"
                     }
                   },
@@ -148,6 +148,57 @@
                   "groups": {}
                 }
               }
+            }
+          }
+        },
+        "plugin__rqt_service_caller__ServiceCaller__1": {
+          "keys": {},
+          "groups": {
+            "plugin": {
+              "keys": {
+                "current_service_name": {
+                  "repr": "'/FollowWaypoints/_action/cancel_goal'",
+                  "type": "repr"
+                },
+                "splitter_orientation": {
+                  "repr": "2",
+                  "type": "repr"
+                }
+              },
+              "groups": {}
+            }
+          }
+        },
+        "plugin__rqt_top__TOP__1": {
+          "keys": {},
+          "groups": {
+            "plugin": {
+              "keys": {
+                "filter_text": {
+                  "repr": "''",
+                  "type": "repr"
+                },
+                "is_regex": {
+                  "repr": "0",
+                  "type": "repr"
+                }
+              },
+              "groups": {}
+            }
+          }
+        },
+        "plugin__rqt_topic__TopicPlugin__1": {
+          "keys": {},
+          "groups": {
+            "plugin": {
+              "keys": {
+                "tree_widget_header_state": {
+                  "repr(QByteArray.hex)": "QtCore.QByteArray(b'000000ff00000000000000010000000000000005010000000000000000000000062000000001000000050000006400000406000000060101000100000000000000000600000064ffffffff000000810000000300000006000001ad00000001000000030000016800000001000000030000006200000001000000030000002b0000000100000003000000640000000100000003000000000000000100000003000003e80000000064')",
+                  "type": "repr(QByteArray.hex)",
+                  "pretty-print": "                      d                                                            d"
+                }
+              },
+              "groups": {}
             }
           }
         }

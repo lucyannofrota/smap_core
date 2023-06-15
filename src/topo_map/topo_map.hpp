@@ -42,93 +42,6 @@
         acquired, vertex creation will gonna be blocked
 */
 
-// struct vertex_data_t
-
-// {
-//     size_t index = (size_t) -1;
-//     geometry_msgs::msg::Point pos;
-//     smap::thing this_thing;
-//     std::list< smap::thing > related_things;
-
-// bool strong_vertex = false;
-
-// friend class boost::serialization::access;
-
-// template< class Archive >
-// void serialize( Archive& ar, const unsigned int version )
-// {
-//     (void) version;
-//     ar& index;
-//     ar& pos.x;
-//     ar& pos.y;
-//     ar& pos.z;
-//     ar& this_thing;
-//     ar& related_things;
-// }
-// };
-
-// struct edge_data_t
-// {
-//     // The cost of the edge will be distance*modifier
-
-// double distance = 0;
-// double modifier = 1;
-
-// double get_cost( void ) { return round( distance * modifier * 100 ) / 100.0; }
-
-// friend class boost::serialization::access;
-
-// template< class Archive >
-// inline void serialize( Archive& ar, const unsigned int version )
-// {
-//     (void) version;
-//     ar& distance;
-//     ar& modifier;
-// }
-// };
-
-// typedef boost::adjacency_list< boost::vecS, boost::vecS, boost::undirectedS, vertex_data_t, edge_data_t > graph_t;
-
-// // traits
-// template<>
-// struct boost::graph::internal_vertex_name< vertex_data_t >
-// {
-//     //
-//     https://stackoverflow.com/questions/71488845/how-to-configure-boostgraph-to-use-my-own-stable-index-for-vertices
-//     struct type
-//     {
-//         using result_type = size_t;
-
-// const result_type& operator()( const vertex_data_t& bundle ) const { return bundle.index; }
-// };
-// };
-
-// template<>
-// struct boost::graph::internal_vertex_constructor< vertex_data_t >
-// {
-//     //
-//     https://stackoverflow.com/questions/71488845/how-to-configure-boostgraph-to-use-my-own-stable-index-for-vertices
-//     struct type
-//     {
-//       private:
-
-// using extractor = typename internal_vertex_name< vertex_data_t >::type;
-// using name_t    = std::decay_t< typename extractor::result_type >;
-
-// public:
-
-// using argument_type = name_t;
-// using result_type   = vertex_data_t;
-
-// result_type operator()( const name_t& index ) const
-// {
-//     result_type ret;
-//     ret.index = index;
-//     return ret;
-// }
-// };
-// };
-
 namespace smap
 {
 class topo_map : public rclcpp::Node
@@ -168,14 +81,6 @@ class topo_map : public rclcpp::Node
         this->create_publisher< visualization_msgs::msg::MarkerArray >(
             std::string( this->get_namespace() ) + std::string( "/topo_map/markers" ), 10 );
 
-    // rclcpp::Publisher< visualization_msgs::msg::Marker >::SharedPtr publisher_marker_label =
-    //     this->create_publisher< visualization_msgs::msg::Marker >(
-    //         std::string( this->get_namespace() ) + std::string( "/topo_map/markers/label" ), 10 );
-
-    // rclcpp::Publisher< visualization_msgs::msg::Marker >::SharedPtr publisher_marker_edge =
-    //     this->create_publisher< visualization_msgs::msg::Marker >(
-    //         std::string( this->get_namespace() ) + std::string( "/topo_map/markers/edge" ), 10 );
-
     // Threads
     // std::thread marker_thread;
     topo_marker markers;
@@ -193,19 +98,19 @@ class topo_map : public rclcpp::Node
 
     inline void timer_callback( void )
     {
-        printf( "timer_callback\n" );
+        RCLCPP_DEBUG( this->get_logger(), "timer_callback" );
         this->markers.async_publish_markers();
     }
 
     inline void monitor_callback( void )
     {
-        printf( "monitor_callback\n" );
+        RCLCPP_DEBUG( this->get_logger(), "monitor_callback" );
         this->markers.async_update_markers( this->graph );
     }
 
     inline void pose_callback( const geometry_msgs::msg::PoseStamped::SharedPtr pose )
     {
-        // printf( "pose_callback\n" );
+        RCLCPP_DEBUG( this->get_logger(), "pose_callback" );
         this->add_vertex( pose->pose.position, true );
         // if( boost::num_vertices( this->graph ) == 1 )
         // {
@@ -237,10 +142,7 @@ class topo_map : public rclcpp::Node
 
     void add_vertex( const geometry_msgs::msg::Point& pos, size_t& current, size_t& previous, bool strong_vertex );
 
-    // void add_object( const smap_interfaces::msg::SmapObject& object );
     void add_object( const smap_interfaces::msg::SmapObservation::SharedPtr observation, detector_t& det );
-
-    // void add_object( const smap_interfaces::msg::SmapObject& object, double& angle ); TODO: Revert
 
     inline size_t _add_vertex( size_t v_index, const geometry_msgs::msg::Point& pos, bool strong_vertex )
     {
@@ -261,7 +163,7 @@ class topo_map : public rclcpp::Node
         prop.index = v_index;
         if( auto v = this->graph.vertex_by_property( prop ) ) return *v;
         // Case vertex don't exists
-        printf( "Vertex not found!\n" );
+        RCLCPP_DEBUG( this->get_logger(), "Vertex not found!" );
         return -1;
     }
 
@@ -275,7 +177,7 @@ class topo_map : public rclcpp::Node
         else
         {
             // Case vertex don't exists
-            printf( "Vertex not found!\n" );
+            RCLCPP_DEBUG( this->get_logger(), "Vertex not found!" );
             vertex.index = -1;
         }
     }
@@ -310,9 +212,9 @@ class topo_map : public rclcpp::Node
         prop.index = idx;
         if( auto v = this->graph.vertex_by_property( prop ) )
         {
-            printf(
-                "%s (%i) [%4.1f,%4.1f,%4.1f]\n", prefix.c_str(), (int) this->graph[ *v ].index, this->graph[ *v ].pos.x,
-                this->graph[ *v ].pos.y, this->graph[ *v ].pos.z );
+            RCLCPP_DEBUG(
+                this->get_logger(), "%s (%i) [%4.1f,%4.1f,%4.1f]\n", prefix.c_str(), (int) this->graph[ *v ].index,
+                this->graph[ *v ].pos.x, this->graph[ *v ].pos.y, this->graph[ *v ].pos.z );
         }
     };
 
@@ -322,13 +224,13 @@ class topo_map : public rclcpp::Node
 
     inline void define_reg_classes( std::map< std::string, std::pair< int, int > >& classes )
     {
-        printf( "Defining reg_classes\n" );
+        RCLCPP_DEBUG( this->get_logger(), "Defining reg_classes" );
         this->reg_classes = &classes;
     }
 
     inline void define_reg_detectors( std::vector< detector_t >& dets )
     {
-        printf( "Defining reg_detectors\n" );
+        RCLCPP_DEBUG( this->get_logger(), "Defining reg_detectors" );
         this->reg_detectors = &dets;
     }
 
@@ -372,7 +274,6 @@ class topo_map : public rclcpp::Node
         tf2::Matrix3x3 m( q );
         double row, pitch, yaw;
         m.getEulerYPR( yaw, pitch, row );
-        // printf( "R: %6.2f, P: %6.2f, Y: %6.2f\n", row, pitch, yaw );
         double ret = atan2( p2.position.y - p1.y, p2.position.x - p1.x ) - yaw;
         return atan2( sin( ret ), cos( ret ) );
     }

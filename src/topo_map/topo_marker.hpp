@@ -8,6 +8,7 @@
 #include <visualization_msgs/msg/marker_array.hpp>
 
 // SMAP
+#include "../include/smap_core/aux_functions.hpp"
 #include "../include/smap_core/interface_templates.hpp"
 #include "../include/smap_core/macros.hpp"
 #include "graph.hpp"
@@ -160,7 +161,7 @@ class topo_marker
     inline void publish_markers( void )
     {
         const std::lock_guard< std::mutex > lock( this->mutex );
-        // this->pub->publish( this->array );
+        this->pub->publish( this->array );
     }
 
     inline void async_publish_markers( void )

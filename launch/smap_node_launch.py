@@ -18,7 +18,7 @@ def generate_launch_description():
             # name='smap_node',
             namespace='smap',
             output='screen',
-            # arguments=['--ros-args', '--log-level', 'debug'],
+            arguments=['--ros-args', '--log-level', 'debug'],
     )
 
 

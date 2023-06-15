@@ -5,7 +5,7 @@ namespace smap
 
 void topo_map::observation_callback( const smap_interfaces::msg::SmapObservation::SharedPtr observation )
 {
-    printf( "observation_callback\n" );
+    RCLCPP_DEBUG_EXPRESSION( this->get_logger(), DEBUG_MODE, "observation_callback" );
     RCLCPP_DEBUG( this->get_logger(), "0. Check graph integrity" );
     if( boost::num_vertices( this->graph ) == 0 || this->reg_classes == nullptr || this->reg_detectors == nullptr )
     {
@@ -32,8 +32,11 @@ void topo_map::observation_callback( const smap_interfaces::msg::SmapObservation
             }
         }
     }
+    RCLCPP_DEBUG( this->get_logger(), "1.1 idxs_checked size: %i", (int) idxs_checked.size() );
 
     // 2. Filter possible vertexes
+
+    // TODO: Debug this step. candidates.size() is always 0
     RCLCPP_DEBUG( this->get_logger(), "2. Filter possible vertexes" );
     std::vector< std::vector< thing* > > candidates;
     // int server_class_id = -1;
@@ -64,13 +67,13 @@ void topo_map::observation_callback( const smap_interfaces::msg::SmapObservation
         if( !has_candidate ) idxs_checked.erase( checking );
         else candidates.push_back( local_candidates );
     }
+    RCLCPP_DEBUG( this->get_logger(), "2.1 candidates size: %i", (int) candidates.size() );
 
     // 3. Verify the existence of the detector
     auto det       = this->reg_detectors->begin();
     bool det_found = false;
     for( ; det != this->reg_detectors->end(); det++ )
     {
-        // printf( "det id: %i |%i\n", observation->object.module_id, det->id );
         if( det->id == observation->object.module_id )
         {
             det_found = true;
@@ -86,7 +89,11 @@ void topo_map::observation_callback( const smap_interfaces::msg::SmapObservation
     // 4. Update vertex
     // If true add object otherwise update an existing one
     RCLCPP_DEBUG( this->get_logger(), "3. Update vertex" );
-    if( candidates.size() == 0 ) this->add_object( observation, *det );
+    if( candidates.size() == 0 )
+    {
+        RCLCPP_DEBUG( this->get_logger(), "Object add" );
+        this->add_object( observation, *det );
+    }
     else
     {
         // Select the closest object
@@ -110,14 +117,12 @@ void topo_map::observation_callback( const smap_interfaces::msg::SmapObservation
                 }
             }
         }
-        // TODO: Implement object update
         RCLCPP_DEBUG( this->get_logger(), "Object update" );
         closest->update(
-            smap::semantic_type_t::OBJECT, observation->object.probability_distribution,
-            observation->object.pose.pose.position,
+            observation->object.probability_distribution, observation->object.pose.pose.position,
             std::pair< geometry_msgs::msg::Point, geometry_msgs::msg::Point >(
                 observation->object.aabb.min.point, observation->object.aabb.max.point ),
-            min_distance, (double) observation->direction, *det );
+            observation->object.aabb.confidence, min_distance, (double) observation->direction, *det );
     }
 }
 
@@ -163,16 +168,11 @@ void topo_map::add_vertex( const geometry_msgs::msg::Point& pos, size_t& current
 
     size_t idx;
 
-    // printf( "add_vertex\n" );
     // Initialization
     if( current == (size_t) -1 )
     {
-        // printf( "\tInitialization\n" );
-        // printf( "\t\tcurrent -1\n" );
-        // printf( "\t\tadding Vertex\n" );
         idx     = this->_add_vertex( this->v_index++, pos, strong_vertex );
         current = this->graph[ idx ].index;
-        // this->print_vertex( std::string( "\t\t" ), current );
         return;
     }
 
@@ -184,37 +184,20 @@ void topo_map::add_vertex( const geometry_msgs::msg::Point& pos, size_t& current
     if( ( previous != (size_t) -1 ) && ( closest != (size_t) -1 ) && ( closest != current )
         && ( dist_current <= VERTEX_DISTANCE * NEW_EDGE_FACTOR ) )
     {
-        // printf( "\tConnection/Relocation\n" );
-        if( ( closest != previous ) )
-        {
-            // printf( "\tConnection\n" );
-            // this->print_vertex( std::string( "\t\tCurrent: " ), current );
-            // this->print_vertex( std::string( "\t\tPrevious: " ), previous );
-            // this->print_vertex( std::string( "\t\tClosest: " ), closest );
-            this->add_edge( current, closest );
-        }
-        // else printf( "\tRelocation\n" );
+        if( ( closest != previous ) ) this->add_edge( current, closest );
+
         previous = current;
         current  = closest;
-        // this->print_vertex( std::string( "\t\t/Current: " ), current );
-        // this->print_vertex( std::string( "\t\t/Previous: " ), previous );
-        // this->print_vertex( std::string( "\t\t/Closest: " ), closest );
-        // this->export_graph();
+
         return;
     }
 
     // New vertex
-    if( dist_current < VERTEX_DISTANCE * NEW_EDGE_FACTOR )
-    {
-        // printf( "\tToo Close\n" );
-        return;
-    }
-
-    // printf( "\tNew vertex\n" );
+    if( dist_current < VERTEX_DISTANCE * NEW_EDGE_FACTOR ) return;
 
     if( dist_current > VERTEX_DISTANCE * NEW_EDGE_FACTOR )
     {
-        // printf( "\t\tadding distant Vertex\n" );
+
         int n_new_vertex, count = 1;
         double t;
         geometry_msgs::msg::Point new_point, base_point;
@@ -226,7 +209,7 @@ void topo_map::add_vertex( const geometry_msgs::msg::Point& pos, size_t& current
 
         n_new_vertex = floor( dist_current / VERTEX_DISTANCE );
         t            = ( VERTEX_DISTANCE ) / dist_current;
-        // printf( "\t\t\tCreate support nodes\nn: %i|t: %6.1f\n", n_new_vertex, t );
+
         while( dist_current > VERTEX_DISTANCE && n_new_vertex > 0 )
         {
             new_point.x = ( 1 - t * count ) * base_point.x + t * count * pos.x;
@@ -246,34 +229,18 @@ void topo_map::add_vertex( const geometry_msgs::msg::Point& pos, size_t& current
         return;
     }
 
-    // printf( "\t\tadding close Vertex\n" );
-    // this->print_vertex( std::string( "\t\t\tCurrent: " ), current );
-    // this->print_vertex( std::string( "\t\t\tPrevious: " ), previous );
-    // this->print_vertex( std::string( "\t\t\tClosest: " ), closest );
     idx      = this->_add_vertex( this->v_index++, pos, strong_vertex );
     previous = current;
     current  = this->graph[ idx ].index;
-    // this->print_vertex( std::string( "\t\t\t/Current: " ), current );
-    // this->print_vertex( std::string( "\t\t\t/Previous: " ), previous );
-    // this->print_vertex( std::string( "\t\t\t/Closest: " ), closest );
 
-    // printf( "\t\tadding Edge\n" );
-    // this->print_vertex( std::string( "\t\t\tCurrent: " ), current );
-    // this->print_vertex( std::string( "\t\t\tPrevious: " ), previous );
-    // this->print_vertex( std::string( "\t\t\tClosest: " ), closest );
     this->add_edge( previous, current );
-    // this->print_vertex( std::string( "\t\t\t/Current: " ), current );
-    // this->print_vertex( std::string( "\t\t\t/Previous: " ), previous );
-    // this->print_vertex( std::string( "\t\t\t/Closest: " ), closest );
-    // this->export_graph();
 }
 
-// void topo_map::add_object( const smap_interfaces::msg::SmapObject& object )
 void topo_map::add_object( const smap_interfaces::msg::SmapObservation::SharedPtr observation, detector_t& det )
-// void topo_map::add_object( const smap_interfaces::msg::SmapObject& object, double& angle ) // TODO: Revert
 {
     // TODO: create callback group. Should be mutually exclusive
-    printf( "add_object\n" );
+    RCLCPP_DEBUG( this->get_logger(), "add_object" );
+
     // if( boost::num_vertices( this->graph ) == 0 ) return;
 
     size_t current = -1, previous = -1;
@@ -283,65 +250,63 @@ void topo_map::add_object( const smap_interfaces::msg::SmapObservation::SharedPt
     vertex_data_t pre;
     this->get_vertex( previous, pre );
 
-    if( distance < 2 * VERTEX_DISTANCE )
+    if( distance > 2 * VERTEX_DISTANCE )
     {
-        // TODO: Implement method
-        printf( "append_object\n" );
-        thing new_thing( &( this->reg_classes ) );
-        // probabilities
-        // *this->reg_detectors[]
-        // TODO: Get indexes based on the detector idx key
 
-        // Search for the detector related to the observation
+        int n_new_vertex, count = 1;
+        geometry_msgs::msg::Point new_point, base_point;
+        base_point   = pre.pos;
+        new_point    = pre.pos;
 
-        // printf( "-> Classes: \n" );
-        // // for( auto cls: *this->reg_classes )
-        // //     printf(
-        // //         "\t[%2i] (%s) | (%s) [%2i,%2i]\n", cls.first, ( *this->reg_detectors )[ cls.second.second ],
-        // //         cls.first, cls.second.first, cls.second.second );
-        // for( auto c: det.classes )
-        //     // (*this->reg_classes)[ c.second ]
-        //     printf(
-        //         "\t[%2i] (%s) | [%2i,%2i]\n", c.first, c.second.c_str(), ( *this->reg_classes )[ c.second ].first,
-        //         ( *this->reg_classes )[ c.second ].second );
+        n_new_vertex = floor( distance / VERTEX_DISTANCE );
+        t            = ( VERTEX_DISTANCE ) / distance;
+        while( distance > VERTEX_DISTANCE && n_new_vertex > 0 )
+        {
+            new_point.x = ( 1 - t * count ) * base_point.x + t * count * observation->object.pose.pose.position.x;
+            new_point.y = ( 1 - t * count ) * base_point.y + t * count * observation->object.pose.pose.position.y;
 
-        new_thing.update(
-            smap::semantic_type_t::OBJECT, observation->object.probability_distribution,
-            observation->object.pose.pose.position,
-            std::pair< geometry_msgs::msg::Point, geometry_msgs::msg::Point >(
-                observation->object.aabb.min.point, observation->object.aabb.max.point ),
-            distance, observation->direction, det );
-        // TODO: Append "thing" to list to enable accumulation
-        // pre.related_things.push_back( new_thing );
-        // this->append_object();
-        // printf( "append_object\n" );
-        return;
+            int idx     = this->_add_vertex( this->v_index++, new_point, false );
+            current     = this->graph[ idx ].index;
+
+            this->add_edge( previous, current );
+
+            previous = current;
+            this->get_vertex( previous, pre );
+            distance = this->_calc_distance( pre.pos, observation->object.pose.pose.position );
+            n_new_vertex--;
+            count++;
+        }
     }
 
-    int n_new_vertex, count = 1;
-    geometry_msgs::msg::Point new_point, base_point;
-    base_point   = pre.pos;
-    new_point    = pre.pos;
+    // current = this->get_closest_vertex( observation->object.pose.pose.position, distance );
 
-    n_new_vertex = floor( distance / VERTEX_DISTANCE );
-    t            = ( VERTEX_DISTANCE ) / distance;
-    // printf( "Create support nodes\nn: %i|t: %6.1f\n", n_new_vertex, t );
-    while( distance > VERTEX_DISTANCE && n_new_vertex > 0 )
-    {
-        new_point.x = ( 1 - t * count ) * base_point.x + t * count * observation->object.pose.pose.position.x;
-        new_point.y = ( 1 - t * count ) * base_point.y + t * count * observation->object.pose.pose.position.y;
+    RCLCPP_DEBUG( this->get_logger(), "append_object" );
+    thing new_thing( &( this->reg_classes ) );
+    // probabilities
+    // *this->reg_detectors[]
 
-        int idx     = this->_add_vertex( this->v_index++, new_point, false );
-        current     = this->graph[ idx ].index;
+    // Search for the detector related to the observation
 
-        this->add_edge( previous, current );
+    // printf( "-> Classes: \n" );
+    // // for( auto cls: *this->reg_classes )
+    // //     printf(
+    // //         "\t[%2i] (%s) | (%s) [%2i,%2i]\n", cls.first, ( *this->reg_detectors )[ cls.second.second ],
+    // //         cls.first, cls.second.first, cls.second.second );
+    // for( auto c: det.classes )
+    //     // (*this->reg_classes)[ c.second ]
+    //     printf(
+    //         "\t[%2i] (%s) | [%2i,%2i]\n", c.first, c.second.c_str(), ( *this->reg_classes )[ c.second ].first,
+    //         ( *this->reg_classes )[ c.second ].second );
 
-        previous = current;
-        this->get_vertex( previous, pre );
-        distance = this->_calc_distance( pre.pos, observation->object.pose.pose.position );
-        n_new_vertex--;
-        count++;
-    }
+    new_thing.set(
+        smap::semantic_type_t::OBJECT, observation->object.probability_distribution,
+        observation->object.pose.pose.position,
+        std::pair< geometry_msgs::msg::Point, geometry_msgs::msg::Point >(
+            observation->object.aabb.min.point, observation->object.aabb.max.point ),
+        observation->object.aabb.confidence, distance, observation->direction, det );
+
+    this->graph[ _get_vertex( this->get_closest_vertex( observation->object.pose.pose.position, distance ) ) ]
+        .related_things.push_back( new_thing );
 }
 
 }  // namespace smap

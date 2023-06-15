@@ -31,31 +31,6 @@ topo_marker::topo_marker( void )
     this->histogram.color.g         = 0;
     this->histogram.color.b         = 0;
     this->histogram.color.a         = 1;
-    // std_msgs::msg::ColorRGBA c;
-    // c.r = 255;
-    // c.g = 0;
-    // c.b = 0;
-    // c.a = 1;
-    // for( int i = 0; i < HISTOGRAM_BINS * 3; i++ ) this->histogram.colors.push_back( c );
-
-    // const float theta[ 3 ]          = { 0, 2.0944, 4.1888 };
-    // float t;
-    // std::vector< geometry_msgs::msg::Point > points_aux;
-    // geometry_msgs::msg::Point pt;
-    // for( int i = 0; i < HISTOGRAM_BINS; i++ )
-    // {
-    //     t    = ( 2 * M_PI / HISTOGRAM_BINS );
-    //     pt.x = () points_aux.push_back( pt );
-    // }
-
-    // this->histogram.colors
-    // this->vertex.scale.x         = 0.075 * 4;
-    // this->vertex.scale.y         = 0.075 * 4;
-    // this->vertex.scale.z         = 0.075 * 4;
-    // this->vertex.color.r = 102.0 / ( 102.0 + 51.0 );
-    // this->vertex.color.g = 51.0 / ( 102.0 + 51.0 );
-    // this->vertex.color.b = 0.0;
-    // this->vertex.color.a = 1.0;
 
     // aabb
     this->aabb.header.frame_id    = "/map";
@@ -106,7 +81,6 @@ topo_marker::topo_marker( void )
     this->label.color.a            = 1.0;
 
     // Generating triangles
-    printf( "Generating triangles\n" );  // TODO: remove
     float t;
     triangles_t triangle;
     const float thetas[ 3 ] = { 0, 2.0944, 4.1888 };
@@ -168,20 +142,11 @@ std_msgs::msg::ColorRGBA topo_marker::histogram_color_picker( double min, double
 void topo_marker::update_markers( const graph_t& graph )
 {
     const std::lock_guard< std::mutex > lock( this->mutex );
-    // if( !this->array.markers.empty() ) this->array.markers.clear();
     this->array.markers.clear();
     this->vertex.points.clear();
     this->edge.points.clear();
     this->histogram.points.clear();
     this->histogram.colors.clear();
-
-    // this->histogram.color.r = 255;
-    // this->histogram.color.g = 0;
-    // this->histogram.color.b = 255;
-    // this->histogram.color.a = 1;
-
-    // boost::graph_traits< graph_t >::vertex_iterator vi, vi_end, next;
-    // std::tie( vi, vi_end ) = boost::vertices( graph );
 
     // Vertices
     geometry_msgs::msg::Point up_point, aux_point, d_point;
@@ -196,85 +161,73 @@ void topo_marker::update_markers( const graph_t& graph )
     int obj_id  = 0;
     for( auto e: boost::make_iterator_range( boost::vertices( graph ) ) )
     {
-        printf( "ID: %i\n", (int) graph[ e ].index );
+        printf( "update_markers()| n_objects: %i\n", (int) graph[ e ].related_things.size() );
 
         // edge
-        // for( auto e: boost::make_iterator_range( boost::out_edges( this->_get_vertex( current ), this->graph ) ) )
-        // if( boost::target( e, this->graph ) == this->_get_vertex( previous ) ) return false;
         for( auto edg: boost::make_iterator_range( boost::out_edges( e, graph ) ) )
         {
             this->edge.points.push_back( graph[ e ].pos );
             this->edge.points.push_back( graph[ edg.m_target ].pos );
-            // if( boost::souce( e, this->graph ) )
-            //
-            //
         }
-        // graph[ edg ].
 
         // vertex
         this->vertex.points.push_back( graph[ e ].pos );
         // label
         this->label.pose.position = graph[ e ].pos + up_point;
-        // this->label.pose.position.y = graph[ e ].pos.y + up_point.y;
-        // this->label.pose.position.z = graph[ e ].pos.z + up_point.z;
         this->label.text = graph[ e ].this_thing.get_label() + std::string( "_" ) + std::to_string( graph[ e ].index );
         this->label.id   = graph[ e ].index;
         this->label.header.stamp = clock->now();
         this->array.markers.push_back( this->label );
         // histogram
         double offset_theta, r;
-        thing r_thing;
-        r_thing.pos = graph[ e ].pos;
-        // r_thing.pos.y         = graph[ e ].pos.y;
-        // r_thing.pos.z         = graph[ e ].pos.z;
-        r_thing.aabb.first.x  = 1.51;
-        r_thing.aabb.first.y  = 1.51;
-        r_thing.aabb.first.z  = 1.1;
-        r_thing.aabb.second.x = 1.0;
-        r_thing.aabb.second.y = 1.0;
-        r_thing.aabb.second.z = 0.9;
-        // for( auto& r_thing: graph[ e ].related_things ) // TODO: Revert for
-        // {
-        // Histogram
-        int j = 0;
-        std_msgs::msg::ColorRGBA color;
-        color.r = 0.0;
-        color.g = 1.0;
-        color.b = 0.0;
-        color.a = 1.0;
-        auto it = this->triangles_base.begin();
-        for( int i = 0; i < HISTOGRAM_BINS; i++ )
+        // thing r_thing;
+        // r_thing.pos = graph[ e ].pos;
+        // // r_thing.pos.y         = graph[ e ].pos.y;
+        // // r_thing.pos.z         = graph[ e ].pos.z;
+        // r_thing.aabb.first.x  = 1.51;
+        // r_thing.aabb.first.y  = 1.51;
+        // r_thing.aabb.first.z  = 1.1;
+        // r_thing.aabb.second.x = 1.0;
+        // r_thing.aabb.second.y = 1.0;
+        // r_thing.aabb.second.z = 0.9;
+        for( auto& r_thing: graph[ e ].related_things )
         {
-            offset_theta = ( 2 * M_PI / HISTOGRAM_BINS ) * i;
-            for( j = 0; j < 3; j++, it++ )
+            // Histogram
+            int j = 0;
+            std_msgs::msg::ColorRGBA color;
+            color.r = 0.0;
+            color.g = 1.0;
+            color.b = 0.0;
+            color.a = 1.0;
+            auto it = this->triangles_base.begin();
+            for( int i = 0; i < HISTOGRAM_BINS; i++ )
             {
-                d_point     = abs( r_thing.aabb.second - r_thing.aabb.first );
-                r           = ( d_point.x > d_point.y ? d_point.x : d_point.y ) * 0.7;
-                aux_point.x = ( r + R_TRIANGLES ) * cos( offset_theta );
-                aux_point.y = ( r + R_TRIANGLES ) * sin( offset_theta );
+                offset_theta = ( 2 * M_PI / HISTOGRAM_BINS ) * i;
+                for( j = 0; j < 3; j++, it++ )
+                {
+                    d_point     = abs( r_thing.aabb.second - r_thing.aabb.first );
+                    r           = ( d_point.x > d_point.y ? d_point.x : d_point.y ) * 0.7;
+                    aux_point.x = ( r + R_TRIANGLES ) * cos( offset_theta );
+                    aux_point.y = ( r + R_TRIANGLES ) * sin( offset_theta );
 
-                this->histogram.points.push_back( r_thing.pos + it->point + aux_point );
-                this->histogram.colors.push_back(
-                    this->histogram_color_picker( 0, HISTOGRAM_BINS - 1, i ) );  // TODO: Change i to probability
+                    this->histogram.points.push_back( r_thing.pos + it->point + aux_point );
+                    this->histogram.colors.push_back(
+                        this->histogram_color_picker( 0, 1, log_odds_inv( r_thing.observations.histogram[ i ] ) ) );
+                }
             }
+
+            this->histogram.id           = obj_id;
+            this->histogram.header.stamp = clock->now();
+            this->array.markers.push_back( this->histogram );
+
+            // aabb
+            this->aabb.id            = obj_id;
+            this->aabb.header.stamp  = clock->now();
+            this->aabb.scale         = vec3_abs( r_thing.aabb.second - r_thing.aabb.first );
+            this->aabb.pose.position = r_thing.pos;
+            this->array.markers.push_back( this->aabb );
+            obj_id++;
         }
-
-        this->histogram.id           = obj_id;
-        this->histogram.header.stamp = clock->now();
-        this->array.markers.push_back( this->histogram );
-
-        // aabb
-        this->aabb.id            = obj_id;
-        this->aabb.header.stamp  = clock->now();
-        this->aabb.scale         = vec3_abs( r_thing.aabb.second - r_thing.aabb.first );
-        this->aabb.pose.position = r_thing.pos;
-        this->array.markers.push_back( this->aabb );
-        // bbx_marker.scale.x         = abs( obj.aabb.max.point.x - obj.aabb.min.point.x );
-        // bbx_marker.scale.y         = abs( obj.aabb.max.point.y - obj.aabb.min.point.y );
-        // bbx_marker.scale.z         = abs( obj.aabb.max.point.z - obj.aabb.min.point.z );
-        // bbx_marker.pose.position   = obj.pose.pose.position;
-        obj_id++;
-        // }// TODO: Revert for
     }
 
     this->vertex.header.stamp = clock->now();
@@ -282,7 +235,6 @@ void topo_marker::update_markers( const graph_t& graph )
 
     this->array.markers.push_back( this->edge );
     this->array.markers.push_back( this->vertex );
-    // this->array.markers.push_back( this->label );
     this->pub->publish( this->array );
 }
 }  // namespace smap
