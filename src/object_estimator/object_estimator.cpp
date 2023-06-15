@@ -105,6 +105,39 @@ void object_estimator::euclidean_clustering(
     timer.get_time( this->get_logger(), str, euclidean_clustering_plot );
 }
 
+void object_estimator::estimate_confidence( const pcl::shared_ptr< cloud_t >& object_cloud, float& conf ) const
+{
+    float lims[ 2 ] = { FLT_MIN, FLT_MAX };
+    for( cloud_point_t& point: *object_cloud )
+    {
+        if( point.z < lims[ 0 ] ) lims[ 0 ] = point.z;
+        if( point.z > lims[ 1 ] ) lims[ 1 ] = point.z;
+    }
+
+    conf = ( ( lims[ 1 ] - lims[ 0 ] ) - OBJECT_SIZE_LIM_CONF )
+         / ( ( pcl_lims->second - pcl_lims->first ) - OBJECT_SIZE_LIM_CONF );
+}
+
+void object_estimator::transform_object_pcl(
+    smap_interfaces::msg::SmapObject& obj,
+    const std::shared_ptr< geometry_msgs::msg::TransformStamped >& transform ) const
+{
+    count_time timer;
+
+    // // Centroid
+    // tf2::doTransform< geometry_msgs::msg::PoseStamped >( obj.pose, obj.pose, *transform );
+
+    // // Limits
+    // tf2::doTransform< geometry_msgs::msg::PointStamped >( obj.aabb.min, obj.aabb.min, *transform );
+    // tf2::doTransform< geometry_msgs::msg::PointStamped >( obj.aabb.max, obj.aabb.max, *transform );
+
+    // Point cloud
+    tf2::doTransform< sensor_msgs::msg::PointCloud2 >( obj.pointcloud, obj.pointcloud, *transform );
+
+    const char str[] = "transform";
+    timer.get_time( this->get_logger(), str, transform_plot );
+}
+
 void object_estimator::estimate_object_3D_AABB(
     const pcl::shared_ptr< cloud_t >& object_cloud, smap_interfaces::msg::SmapObject& obj ) const
 {
@@ -136,26 +169,6 @@ void object_estimator::estimate_object_3D_AABB(
 
     const char str[]         = "3D_AABB";
     timer.get_time( this->get_logger(), str, centroid_plot );
-}
-
-void object_estimator::transform_object_pcl(
-    smap_interfaces::msg::SmapObject& obj,
-    const std::shared_ptr< geometry_msgs::msg::TransformStamped >& transform ) const
-{
-    count_time timer;
-
-    // // Centroid
-    // tf2::doTransform< geometry_msgs::msg::PoseStamped >( obj.pose, obj.pose, *transform );
-
-    // // Limits
-    // tf2::doTransform< geometry_msgs::msg::PointStamped >( obj.aabb.min, obj.aabb.min, *transform );
-    // tf2::doTransform< geometry_msgs::msg::PointStamped >( obj.aabb.max, obj.aabb.max, *transform );
-
-    // Point cloud
-    tf2::doTransform< sensor_msgs::msg::PointCloud2 >( obj.pointcloud, obj.pointcloud, *transform );
-
-    const char str[] = "transform";
-    timer.get_time( this->get_logger(), str, transform_plot );
 }
 
 void object_estimator::object_estimation_thread(
@@ -208,7 +221,9 @@ void object_estimator::object_estimation_thread(
         const char str_filtering[] = "filtering_time";
         filter_timer.get_time( this->get_logger(), str_filtering, total_filter_plot );
 
-        // if( this->euclidean_clust ) pcl::toROSMsg( *object_cloud_pcl, obs.object.pointcloud );
+        // Object cloud confidence
+        if( this->euclidean_clust ) this->estimate_confidence( object_cloud_pcl, obs.object.aabb.confidence );
+        else this->estimate_confidence( segment_cloud_pcl, obs.object.aabb.confidence );
 
         // Transform
         if( this->euclidean_clust ) pcl::toROSMsg( *object_cloud_pcl, obs.object.pointcloud );

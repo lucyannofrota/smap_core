@@ -21,17 +21,19 @@ namespace smap
 
 #define ACTIVE_FOV_H 100                                          // Horizontal active FOV
 
-#define OBJECT_ERROR_DISTANCE 0.1  // Max position error of an object and max distance between objects
+#define OBJECT_ERROR_DISTANCE 0.1       // Max position error of an object and max distance between objects
 
-#define R_TRIANGLES 0.025          // Size of the histogram triangles
+#define R_TRIANGLES 0.025               // Size of the histogram triangles
 
-#define HISTOGRAM_BINS 36          // Number of bins of the polar histogram
+#define HISTOGRAM_BINS 36               // Number of bins of the polar histogram
 
-#define HISTOGRAM_MARKER_ALPHA_LIM 0.6
+#define HISTOGRAM_MARKER_ALPHA_LIM 0.6  // Alpha values under this value will be consider 0
 
 #define UNDEFINED_LABEL std::string( "unknown" )
 
 #define MAX_POS_PROB 0.85
+
+#define OBJECT_SIZE_LIM_CONF 0.8  // Objects with size under this value will suffer no confidence penalty
 
 }  // namespace smap
 

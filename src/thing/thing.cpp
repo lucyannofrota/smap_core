@@ -159,7 +159,6 @@ void thing::update(
     }
     else
     {
-        // TODO: Define
         // 1. Histogram update
         // TODO: Test
         this->observations.register_obs( distance, angle, true );

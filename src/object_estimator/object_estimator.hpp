@@ -238,6 +238,13 @@ class object_estimator : public rclcpp::Node
         RCLCPP_INFO( this->get_logger(), "Initializing object_estimator" );
         // this->viewer = std::make_shared<pcl::visualization::PCLVisualizer>(new pcl::visualization::PCLVisualizer ("3D
         // Viewer"));
+        if( ( pcl_lims->second - pcl_lims->first ) < OBJECT_SIZE_LIM_CONF )
+        {
+            RCLCPP_ERROR(
+                this->get_logger(), "pcl_lims difference [%4.2] cannot be smaller than OBJECT_SIZE_LIM_CONF [%4.2].",
+                ( pcl_lims->second - pcl_lims->first ), OBJECT_SIZE_LIM_CONF );
+            this->~object_estimator();
+        }
     }
 
     inline object_estimator( const rclcpp::NodeOptions& options ) : Node( "object_estimator", options )
@@ -264,6 +271,8 @@ class object_estimator : public rclcpp::Node
 
     void estimate_object_3D_AABB(
         const pcl::shared_ptr< cloud_t >& object_cloud, smap_interfaces::msg::SmapObject& obj ) const;
+
+    void estimate_confidence( const pcl::shared_ptr< cloud_t >& object_cloud, float& conf ) const;
 
     void transform_object_pcl(
         smap_interfaces::msg::SmapObject& obj,
