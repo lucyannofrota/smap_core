@@ -35,12 +35,15 @@ bool thing::label_is_equal( uint8_t& module_id, uint8_t& obs_label )
     if( *( this->reg_classes ) == nullptr ) return false;
 
     // Determine the string value of the current label
+    // for( auto reg: ( **this->reg_classes ) )
+    //     printf( "reg: %s|%i|%i\n", reg.first.c_str(), reg.second.first, reg.second.second );
     std::string current_label = this->get_label();
-    if( ( **this->reg_classes ).find( current_label ) == ( **this->reg_classes ).end() )
+    if( ( **this->reg_classes ).find( current_label ) != ( **this->reg_classes ).end() )
     {
         // Compare it's value with the given one
         // 1. Get the pair of indexes
         std::pair< int, int > idxs = ( **this->reg_classes )[ current_label ];
+        // printf( "Label: %s, id1: %i, id2: %i\n", current_label.c_str(), idxs.first, idxs.second );
         // 2. Check if the values detector value matches
         return idxs.second == obs_label;
     }
@@ -87,7 +90,10 @@ void thing::set(
     int i   = 0;
     auto it = probability_distribution.begin();
     for( i = 0; it != probability_distribution.end(); ++it, i++ )
+    {
+        printf( "i: %i| class: %s|value: %f\n", i, detector.classes.at( i ).c_str(), *it );
         this->class_probabilities[ detector.classes.at( i ) ] = log_odds( *it );
+    }
     // for( auto c: **this->reg_classes ) this->class_probabilities[ c.first ] = log_odds( 0 );
     // // Create a map to store this information
     // // int u    = 0;
@@ -170,10 +176,14 @@ void thing::update(
 {
     // 1. Histogram update
     // TODO: Test
+    printf( "1. Histogram update\n" );
     this->observations.register_obs( distance, angle, true );
 
     // 2. Probabilities vector update
+    printf( "2. Probabilities vector update\n" );
     // TODO: Test
+    printf( "2.1.1 this->class_probabilities.size(): %i\n", (int) this->class_probabilities.size() );
+    printf( "2.1.2 ( *this->reg_classes )->size(): %i\n", (int) ( *this->reg_classes )->size() );
     if( this->class_probabilities.size() != ( *this->reg_classes )->size() )
     {
         // find
@@ -187,9 +197,12 @@ void thing::update(
         }
     }
 
+    // 3. Stack vectors
+    printf( "3. stack_vectors\n" );
     stack_vectors( this->class_probabilities, probability_distribution, detector );
 
-    // 3. Position update
+    // 4. Position update
+    printf( "4. Position update\n" );
     // TODO: Test
     this->pos_confidence += log_odds( pos_confidence );
     // Saturation of p. Max value is MAX_POS_PROB

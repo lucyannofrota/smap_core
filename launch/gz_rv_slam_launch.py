@@ -74,7 +74,7 @@ def generate_launch_description():
 
 
     return LaunchDescription([
-        rqt,
+        # rqt,
         launch_file_gazebo,
         launch_nav2,
         launch_slam,

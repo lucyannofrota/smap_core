@@ -12,3 +12,5 @@ pcl_example/
 topo_map_test/
 
 src/debug.txt
+
+src/thing/cls.txt

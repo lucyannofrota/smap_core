@@ -5,16 +5,22 @@ namespace smap
 
 void topo_map::observation_callback( const smap_interfaces::msg::SmapObservation::SharedPtr observation )
 {
-    RCLCPP_DEBUG_EXPRESSION( this->get_logger(), DEBUG_MODE, "observation_callback" );
-    RCLCPP_DEBUG( this->get_logger(), "0. Check graph integrity" );
+    // RCLCPP_DEBUG( this->get_logger(), "observation_callback" );
+    // RCLCPP_DEBUG( this->get_logger(), "0. Check graph integrity" );
+    printf( "observation_callback\n" );
+    printf( "0. Check graph integrity\n" );
     if( boost::num_vertices( this->graph ) == 0 || this->reg_classes == nullptr || this->reg_detectors == nullptr )
     {
         RCLCPP_WARN( this->get_logger(), "No detectors registered." );
         return;
     }
 
+    // printf( "0.1 Map\n" );
+    // std::map<std::string,std::>
+
     // 1. Get all adjacent vertexes 3 layers deep
-    RCLCPP_DEBUG( this->get_logger(), "1. Get all adjacent vertexes 3 layers deep" );
+    // RCLCPP_DEBUG( this->get_logger(), "1. Get all adjacent vertexes 3 layers deep" );
+    printf( "1. Get all adjacent vertexes 3 layers deep\n" );
     std::vector< size_t > idxs_checked, idxs_checking, idxs_to_check;  // Using iterator graph idxs (not v_indexes)
     double min_distance;
     idxs_checking.push_back(
@@ -31,43 +37,102 @@ void topo_map::observation_callback( const smap_interfaces::msg::SmapObservation
                 else idxs_to_check.push_back( to_check );
             }
         }
+        idxs_checking = idxs_to_check;
     }
-    RCLCPP_DEBUG( this->get_logger(), "1.1 idxs_checked size: %i", (int) idxs_checked.size() );
-
+    // RCLCPP_DEBUG( this->get_logger(), "1.1 idxs_checked size: %i", (int) idxs_checked.size() );
+    printf( "1.1 idxs_checked size: %i\n", (int) idxs_checked.size() );
     // 2. Filter possible vertexes
 
     // TODO: Debug this step. candidates.size() is always 0
-    RCLCPP_DEBUG( this->get_logger(), "2. Filter possible vertexes" );
+    // RCLCPP_DEBUG( this->get_logger(), "2. Filter possible vertexes" );
+    printf( "2. Filter possible vertexes\n" );
     std::vector< std::vector< thing* > > candidates;
     // int server_class_id = -1;
-    for( auto checking = idxs_checked.begin(); checking != idxs_checked.end(); checking++ )
+    printf( "2.1.1 idxs_checked.size(): %i\n", (int) idxs_checked.size() );
+    std::vector< thing* > local_candidates;
+    for( auto checking: idxs_checked )
     {
         // Check list of objects inside each vertex
-        std::vector< thing* > local_candidates;
         local_candidates.clear();
         bool has_candidate = false;
-        for( auto obj: this->graph[ *checking ].related_things )
+        printf(
+            "2.1.2 this->graph[ *checking ].related_things.size(): %i\n",
+            (int) this->graph[ checking ].related_things.size() );
+        for( auto& obj: this->graph[ checking ].related_things )
         {
             // Check labels
-            if( !obj.label_is_equal( observation->object.module_id, observation->object.label ) ) continue;
+            if( !obj.label_is_equal( observation->object.module_id, observation->object.label ) )
+            {
+                printf( "2.2.1 Check label: FAIL\n" );
+                // RCLCPP_DEBUG( this->get_logger(), "2.1 Check label: FAIL" );
+                continue;
+            }
+            else
+            {
+                // RCLCPP_DEBUG( this->get_logger(), "2.1 Check label: PASS" );
+                printf( "2.2.1 Check label: PASS\n" );
+            }
 
             // Check active cone
             if( abs( rad2deg(
                     this->compute_direction( observation->object.pose.pose.position, observation->robot_pose.pose ) ) )
                 > ACTIVE_FOV_H )
+            {
+                printf(
+                    "2.2.2 Check active cone [val: %7.2f|rad2deg: %7.2f|abs: %7.2f]: FAIL",
+                    this->compute_direction( observation->object.pose.pose.position, observation->robot_pose.pose ),
+                    rad2deg( this->compute_direction(
+                        observation->object.pose.pose.position, observation->robot_pose.pose ) ),
+                    abs( rad2deg( this->compute_direction(
+                        observation->object.pose.pose.position, observation->robot_pose.pose ) ) ) );
+                // RCLCPP_DEBUG(
+                //     this->get_logger(), "2.2 Check active cone [val: %7.2f|rad2deg: %7.2f|abs: %7.2f]: FAIL",
+                //     this->compute_direction( observation->object.pose.pose.position, observation->robot_pose.pose ),
+                //     rad2deg( this->compute_direction(
+                //         observation->object.pose.pose.position, observation->robot_pose.pose ) ),
+                //     abs( rad2deg( this->compute_direction(
+                //         observation->object.pose.pose.position, observation->robot_pose.pose ) ) ) );
                 continue;
+            }
+            else
+            {
+                // RCLCPP_DEBUG( this->get_logger(), "2.2 Check active cone: PASS" );
+                printf( "2.2.2 Check active cone: PASS\n" );
+            }
 
             // Check position
             if( this->_calc_distance( observation->object.pose.pose.position, obj.pos ) > OBJECT_ERROR_DISTANCE )
+            {
+                // RCLCPP_DEBUG( this->get_logger(), "2.3 Check position: FAIL" );
+                printf( "2.2.3 Check position: FAIL\n" );
                 continue;
+            }
+            else
+            {
+                // RCLCPP_DEBUG( this->get_logger(), "2.3 Check position: PASS" );
+                printf( "2.2.3 Check position: PASS\n" );
+            }
 
             local_candidates.push_back( &obj );
             has_candidate = true;
         }
-        if( !has_candidate ) idxs_checked.erase( checking );
-        else candidates.push_back( local_candidates );
+        // Update candidates
+        // RCLCPP_DEBUG( this->get_logger(), "2.4 Update candidates" );
+        printf( "2.2.4 Update candidates\n" );
+        if( has_candidate ) candidates.push_back( local_candidates );
+        // if( !has_candidate )
+        // {
+        //     printf( "2.2.4.1 Has no candidates [%i]\n", (int) checking );
+        //     // idxs_checked.erase( checking );
+        // }
+        // else if( !local_candidates.empty() )
+        // {
+        //     printf( "2.2.4.2 Has candidates [%i]\n", (int) checking );
+        //     candidates.push_back( local_candidates );
+        // }
     }
-    RCLCPP_DEBUG( this->get_logger(), "2.1 candidates size: %i", (int) candidates.size() );
+    // RCLCPP_DEBUG( this->get_logger(), "2| candidates size: %i", (int) candidates.size() );
+    printf( "2.3 candidates size: %i\n", (int) candidates.size() );
 
     // 3. Verify the existence of the detector
     auto det       = this->reg_detectors->begin();
@@ -82,22 +147,26 @@ void topo_map::observation_callback( const smap_interfaces::msg::SmapObservation
     }
     if( !det_found )  // return if no detector is found
     {
-        RCLCPP_WARN( this->get_logger(), "No detector was found!" );
+        // RCLCPP_WARN( this->get_logger(), "No detector was found!" );
+        printf( "No detector was found!\n" );
         return;
     }
 
     // 4. Update vertex
     // If true add object otherwise update an existing one
-    RCLCPP_DEBUG( this->get_logger(), "3. Update vertex" );
+    // RCLCPP_DEBUG( this->get_logger(), "3. Update vertex" );
+    printf( "3. Update vertex\n" );
     if( candidates.size() == 0 )
     {
-        RCLCPP_DEBUG( this->get_logger(), "Object add" );
+        // RCLCPP_DEBUG( this->get_logger(), "Object add" );
+        printf( "3.1.1 Object add\n" );
         this->add_object( observation, *det );
     }
     else
     {
         // Select the closest object
-        RCLCPP_DEBUG( this->get_logger(), "Select the closest object" );
+        // RCLCPP_DEBUG( this->get_logger(), "Select the closest object" );
+        printf( "3.1.2.1 Select the closest object\n" );
         thing* closest = nullptr;
         for( auto c: candidates )
         {
@@ -117,13 +186,17 @@ void topo_map::observation_callback( const smap_interfaces::msg::SmapObservation
                 }
             }
         }
-        RCLCPP_DEBUG( this->get_logger(), "Object update" );
+        // RCLCPP_DEBUG( this->get_logger(), "Object update" );
         closest->update(
             observation->object.probability_distribution, observation->object.pose.pose.position,
             std::pair< geometry_msgs::msg::Point, geometry_msgs::msg::Point >(
                 observation->object.aabb.min.point, observation->object.aabb.max.point ),
             observation->object.aabb.confidence, min_distance, (double) observation->direction, *det );
     }
+    // // TODO: Remove
+    // float a[ 2 ];
+    // a[ 5 ] = 5;
+    // // TODO: Remove
 }
 
 bool topo_map::add_edge( const size_t& previous, const size_t& current )

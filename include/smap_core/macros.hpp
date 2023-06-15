@@ -23,7 +23,7 @@ namespace smap
 
 #define ACTIVE_FOV_H 100                                          // Horizontal active FOV
 
-#define OBJECT_ERROR_DISTANCE 0.1       // Max position error of an object and max distance between objects
+#define OBJECT_ERROR_DISTANCE 0.2       // Max position error of an object and max distance between objects
 
 #define R_TRIANGLES 0.025               // Size of the histogram triangles
 

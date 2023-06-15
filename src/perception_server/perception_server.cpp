@@ -10,6 +10,9 @@ std::map< std::string, std::pair< int, int > > perception_server::add_detector( 
 
     // classes
     std::map< std::string, std::pair< int, int > > new_classes;
+    int l_id = 0;
+    for( auto& e: this->classes )
+        if( e.second.first > l_id ) l_id = e.second.first;
     for( auto detector_cls: new_detector.classes )
     {
         // Check if exists
@@ -25,10 +28,11 @@ std::map< std::string, std::pair< int, int > > perception_server::add_detector( 
         // append
         if( !rep )
         {
-            new_classes[ detector_cls.second ]   = std::pair< int, int >( this->classes.size(), detector_cls.first );
-            this->classes[ detector_cls.second ] = std::pair< int, int >( this->classes.size(), detector_cls.first );
+            new_classes[ detector_cls.second ]   = std::pair< int, int >( l_id, detector_cls.first );
+            this->classes[ detector_cls.second ] = std::pair< int, int >( l_id, detector_cls.first );
             this->n_classes++;
         }
+        l_id++;
     }
 
     // detector

@@ -59,6 +59,10 @@ class topo_map : public rclcpp::Node
 
     size_t v_index      = 1;
 
+    // Callback group
+    rclcpp::CallbackGroup::SharedPtr map_cb_group =
+        this->create_callback_group( rclcpp::CallbackGroupType::MutuallyExclusive );
+
     // Timers
     rclcpp::TimerBase::SharedPtr marker_timer =
         this->create_wall_timer( std::chrono::milliseconds( 500 ), std::bind( &topo_map::timer_callback, this ) );
@@ -67,14 +71,10 @@ class topo_map : public rclcpp::Node
         std::chrono::milliseconds( 2000 / 2 ), std::bind( &topo_map::monitor_callback, this ) );
 
     // Subscriptions
-    rclcpp::Subscription< geometry_msgs::msg::PoseStamped >::SharedPtr pose_sub =
-        this->create_subscription< geometry_msgs::msg::PoseStamped >(
-            std::string( this->get_namespace() ) + std::string( "/sampler/pose" ), 10,
-            std::bind( &topo_map::pose_callback, this, std::placeholders::_1 ) );
-    rclcpp::Subscription< smap_interfaces::msg::SmapObservation >::SharedPtr object_sub =
-        this->create_subscription< smap_interfaces::msg::SmapObservation >(
-            std::string( this->get_namespace() ) + std::string( "/object_estimator/observations" ), 10,
-            std::bind( &topo_map::observation_callback, this, std::placeholders::_1 ) );
+    rclcpp::SubscriptionOptions sub_options;
+
+    rclcpp::Subscription< geometry_msgs::msg::PoseStamped >::SharedPtr pose_sub;
+    rclcpp::Subscription< smap_interfaces::msg::SmapObservation >::SharedPtr object_sub;
 
     // Publishers
     rclcpp::Publisher< visualization_msgs::msg::MarkerArray >::SharedPtr publisher_marker_vertex =
@@ -194,6 +194,14 @@ class topo_map : public rclcpp::Node
     topo_map( void ) : Node( "topo_map" )
     {
         RCLCPP_INFO( this->get_logger(), "Initializing topo_map" );
+        this->sub_options.callback_group = this->map_cb_group;
+        this->pose_sub                   = this->create_subscription< geometry_msgs::msg::PoseStamped >(
+            std::string( this->get_namespace() ) + std::string( "/sampler/pose" ), 10,
+            std::bind( &topo_map::pose_callback, this, std::placeholders::_1 ), this->sub_options );
+        this->object_sub = this->create_subscription< smap_interfaces::msg::SmapObservation >(
+            std::string( this->get_namespace() ) + std::string( "/object_estimator/observations" ), 10,
+            std::bind( &topo_map::observation_callback, this, std::placeholders::_1 ), this->sub_options );
+
         if( NEW_EDGE_FACTOR > 1 )
         {
             RCLCPP_ERROR( this->get_logger(), "NEW_EDGE_FACTOR must be >= 1" );
@@ -274,7 +282,7 @@ class topo_map : public rclcpp::Node
         tf2::Matrix3x3 m( q );
         double row, pitch, yaw;
         m.getEulerYPR( yaw, pitch, row );
-        double ret = atan2( p2.position.y - p1.y, p2.position.x - p1.x ) - yaw;
+        double ret = atan2( p1.y - p2.position.y, p1.x - p2.position.x ) - yaw;
         return atan2( sin( ret ), cos( ret ) );
     }
 };
