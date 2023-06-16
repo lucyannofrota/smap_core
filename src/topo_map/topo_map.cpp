@@ -5,6 +5,10 @@ namespace smap
 
 void topo_map::observation_callback( const smap_interfaces::msg::SmapObservation::SharedPtr observation )
 {
+    // TODO: observation subtractive behaviors
+    // TODO: Migrate object between nodes
+    // TODO: Correct object angles
+
     // RCLCPP_DEBUG( this->get_logger(), "observation_callback" );
     // RCLCPP_DEBUG( this->get_logger(), "0. Check graph integrity" );
     printf( "observation_callback\n" );
@@ -101,7 +105,19 @@ void topo_map::observation_callback( const smap_interfaces::msg::SmapObservation
             }
 
             // Check position
-            if( this->_calc_distance( observation->object.pose.pose.position, obj.pos ) > OBJECT_ERROR_DISTANCE )
+            if( !( ( ( observation->object.pose.pose.position.x
+                       > observation->object.aabb.min.point.x - OBJECT_TRACKING_TOLERANCE )
+                     && ( observation->object.pose.pose.position.x
+                          < observation->object.aabb.max.point.x + OBJECT_TRACKING_TOLERANCE ) )
+                   && ( ( observation->object.pose.pose.position.y
+                          > observation->object.aabb.min.point.y - OBJECT_TRACKING_TOLERANCE )
+                        && ( observation->object.pose.pose.position.y
+                             < observation->object.aabb.max.point.y + OBJECT_TRACKING_TOLERANCE ) )
+                   && ( ( observation->object.pose.pose.position.z
+                          > observation->object.aabb.min.point.z - OBJECT_TRACKING_TOLERANCE )
+                        && ( observation->object.pose.pose.position.z
+                             < observation->object.aabb.max.point.z + OBJECT_TRACKING_TOLERANCE ) ) )
+                && ( this->_calc_distance( observation->object.pose.pose.position, obj.pos ) > OBJECT_ERROR_DISTANCE ) )
             {
                 // RCLCPP_DEBUG( this->get_logger(), "2.3 Check position: FAIL" );
                 printf( "2.2.3 Check position: FAIL\n" );

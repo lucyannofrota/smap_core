@@ -81,8 +81,12 @@ topo_marker::topo_marker( void )
     this->label.color.a            = 1.0;
 
     // aabb label
-    this->aabb_label    = this->label;
-    this->aabb_label.ns = "object_label";
+    this->aabb_label         = this->label;
+    this->aabb_label.ns      = "object_label";
+    this->aabb_label.color.r = 1.0;
+    this->aabb_label.color.g = 0.0;
+    this->aabb_label.color.b = 1.0;
+    this->aabb_label.color.a = 1.0;
 
     // Generating triangles
     float t;
@@ -232,7 +236,7 @@ void topo_marker::update_markers( const graph_t& graph )
             this->array.markers.push_back( this->aabb );
 
             // aabb label
-            this->aabb_label.pose.position    = r_thing.pos + up_point;
+            this->aabb_label.pose.position    = r_thing.pos + ( up_point * 0.5 );
             this->aabb_label.pose.position.z += this->aabb.scale.z / 2;
             this->aabb_label.text             = r_thing.get_label();
             this->aabb_label.id               = obj_id;
