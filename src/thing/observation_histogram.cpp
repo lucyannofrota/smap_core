@@ -19,6 +19,8 @@ void observation_histogram::register_obs( double distance, double angle, bool po
     const double prob_increase = 0.3;
     double add_value           = prob_increase / ( 1 + distance );
 
+    printf( "\n\nAngle: %f\n\n\n", rad2deg( angle ) );
+
     for( int i = -int( floor( this->l / 2 ) ), j = 0; i <= int( floor( this->l / 2 ) ); i++, j++ )
     {
         int idx = this->histogram.axis().index( angle + this->bin_width * i );

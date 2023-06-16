@@ -53,7 +53,7 @@ class topo_marker
 
   private:
 
-    visualization_msgs::msg::Marker vertex, edge, label, histogram, aabb;
+    visualization_msgs::msg::Marker vertex, edge, label, histogram, aabb, aabb_label;
     // std::vector< marker_data_t > vertex_data;
 
     std::mutex mutex;

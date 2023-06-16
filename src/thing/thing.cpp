@@ -91,7 +91,7 @@ void thing::set(
     auto it = probability_distribution.begin();
     for( i = 0; it != probability_distribution.end(); ++it, i++ )
     {
-        printf( "i: %i| class: %s|value: %f\n", i, detector.classes.at( i ).c_str(), *it );
+        // printf( "i: %i| class: %s|value: %f\n", i, detector.classes.at( i ).c_str(), *it );
         this->class_probabilities[ detector.classes.at( i ) ] = log_odds( *it );
     }
     // for( auto c: **this->reg_classes ) this->class_probabilities[ c.first ] = log_odds( 0 );
