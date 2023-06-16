@@ -9,25 +9,20 @@ observation_histogram::observation_histogram( size_t n_bins )
 {
     this->histogram = boost::histogram::make_histogram(
         boost::histogram::axis::regular< double, boost::histogram::use_default, boost::histogram::use_default, opts >(
-            n_bins, -M_PI, M_PI ) );
+            n_bins, 0, 2 * M_PI ) );
     this->bin_width = ( 2 * M_PI ) / n_bins;
     this->n_bins    = n_bins;
 }
 
 void observation_histogram::register_obs( double distance, double angle, bool positive )
 {
-    const double prob_increase = 0.3;
+    const double prob_increase = 0.3;  // TODO: Parameter
     double add_value           = prob_increase / ( 1 + distance );
 
-    printf( "\n\nAngle: %f\n\n\n", rad2deg( angle ) );
-
+    int idx;
     for( int i = -int( floor( this->l / 2 ) ), j = 0; i <= int( floor( this->l / 2 ) ); i++, j++ )
     {
-        int idx = this->histogram.axis().index( angle + this->bin_width * i );
-        // printf(
-        //     "idx: %2i, factor: %8.4f, weight: %8.4f, add_value: %8.4f, prob_comp: %8.4f\n", idx,
-        //     this->factor, this->weights[ j ], add_value, 0.5 + this->factor * this->weights[ j ] * add_value
-        //     );
+        idx = this->histogram.axis().index( angle + this->bin_width * i );
         if( positive ) this->histogram[ idx ] += log_odds( 0.5 + this->factor * this->weights[ j ] * add_value );
         else this->histogram[ idx ] -= log_odds( 0.5 + this->factor * this->weights[ j ] * add_value );
     }
