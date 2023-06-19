@@ -42,11 +42,12 @@ def generate_launch_description():
     launch_slam = IncludeLaunchDescription(
         PythonLaunchDescriptionSource([
             PathJoinSubstitution([
-                FindPackageShare('slam_toolbox'),
-                'launch/online_async_launch.py'
+                FindPackageShare('nav2_bringup'),
+                'launch/tb3_simulation_launch.py'
             ])
         ]),
         launch_arguments={
+            'slam': 'true',
             'use_sim_time': 'true'
         }.items()
     )
@@ -75,10 +76,10 @@ def generate_launch_description():
 
     return LaunchDescription([
         # rqt,
-        launch_file_gazebo,
-        launch_nav2,
+        # launch_file_gazebo,
+        # launch_nav2,
         launch_slam,
-        launch_rviz,
+        # launch_rviz,
         set_sim_time
         #node
     ])
