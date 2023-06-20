@@ -1,6 +1,14 @@
 #ifndef SMAP_CORE__OBSERVATION_HISTOGRAM_HPP_
 #define SMAP_CORE__OBSERVATION_HISTOGRAM_HPP_
 
+// C Lib
+#include <math.h>
+
+// STL
+#include <memory>
+#include <tuple>
+
+// BOOST
 #include <boost/histogram/axis.hpp>
 #include <boost/histogram/make_histogram.hpp>
 

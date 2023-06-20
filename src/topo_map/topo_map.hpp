@@ -59,6 +59,8 @@ class topo_map : public rclcpp::Node
 
     size_t v_index      = 1;
 
+    int thing_id_count  = 0;
+
     // Callback group
     rclcpp::CallbackGroup::SharedPtr map_cb_group =
         this->create_callback_group( rclcpp::CallbackGroupType::MutuallyExclusive );
@@ -142,7 +144,7 @@ class topo_map : public rclcpp::Node
 
     void add_vertex( const geometry_msgs::msg::Point& pos, size_t& current, size_t& previous, bool strong_vertex );
 
-    void add_object( const smap_interfaces::msg::SmapObservation::SharedPtr observation, detector_t& det );
+    thing& add_object( const smap_interfaces::msg::SmapObservation::SharedPtr observation, detector_t& det );
 
     inline size_t _add_vertex( size_t v_index, const geometry_msgs::msg::Point& pos, bool strong_vertex )
     {

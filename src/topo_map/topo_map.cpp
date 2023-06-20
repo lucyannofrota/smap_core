@@ -135,46 +135,119 @@ void topo_map::observation_callback( const smap_interfaces::msg::SmapObservation
 
     // 4. Update vertex
     // If true add object otherwise update an existing one
+    // geometry_msgs::msg::Point o_pos;
+    thing *closest = nullptr, *closest_valid = nullptr;
+    size_t vert_idx = 0, vert_idx_valid = 0;
     RCLCPP_DEBUG( this->get_logger(), "3. Update vertex" );
     if( candidates.size() == 0 )
     {
         RCLCPP_DEBUG( this->get_logger(), "3.1.1 Object add" );
-        this->add_object( observation, *det );
+        closest = &( this->add_object( observation, *det ) );
     }
     else
     {
         // Select the closest object
         RCLCPP_DEBUG( this->get_logger(), "3.1.2.1 Select the closest object" );
-        thing* closest = nullptr;
-        std::vector< double > distances;
-        // TODO: Compute distances from the object to each node. Check who is the closest and migrate things from one
-        // node to another. USE HYSTERESIS!
+
+        // for( auto c: candidates )
+        // {
+        //     //
+        //     //
+        //     // c.
+        // }
 
         for( auto c: candidates )
         {
             for( auto lc: c.second )
             {
-                if( closest == nullptr )
-                {
-                    closest      = lc;
-                    min_distance = this->_calc_distance( observation->object.pose.pose.position, lc->pos );
-                    continue;
-                }
+                // if( closest == nullptr )
+                // {
+                //     closest      = lc;
+                //     min_distance = this->_calc_distance( observation->object.pose.pose.position, lc->pos );
+                //     continue;
+                // }
 
                 if( this->_calc_distance( observation->object.pose.pose.position, lc->pos ) < min_distance )
                 {
                     closest      = lc;
+                    vert_idx     = c.first;
                     min_distance = this->_calc_distance( observation->object.pose.pose.position, lc->pos );
                 }
             }
         }
         RCLCPP_DEBUG( this->get_logger(), "Object update" );
+        printf( "Object update\n" );
         closest->update(
             observation->object.probability_distribution, observation->object.pose.pose.position,
             std::pair< geometry_msgs::msg::Point, geometry_msgs::msg::Point >(
                 observation->object.aabb.min.point, observation->object.aabb.max.point ),
             observation->object.aabb.confidence, min_distance, (double) observation->direction, *det );
     }
+    // TODO: add object id to marker
+    // TODO: add vertex id to marker
+
+    // // Object combination
+    // double min_distance_valid = DBL_MAX;
+    // for( auto c: candidates )
+    // {
+    //     for( auto lc: c.second )
+    //     {
+    //         if( ( this->_calc_distance( closest->pos, lc->pos ) < min_distance_valid ) && ( lc->id != closest->id ) )
+    //         {
+    //             closest_valid      = lc;
+    //             vert_idx_valid     = c.first;
+    //             min_distance_valid = this->_calc_distance( closest->pos, lc->pos );
+    //         }
+    //     }
+    // }
+    // if( ( min_distance_valid < OBJECT_ERROR_DISTANCE * 0.8 ) && closest_valid->id != closest->id )
+    // {
+    //     int pred_obj_idx = ( closest->id < closest_valid->id ? closest->id : closest_valid->id );
+    //     if( vert_idx == vert_idx_valid )
+    //     {
+    //         // Same vertex
+    //         this->graph[ vert_idx_valid ].related_things.remove_if(
+    //             [ &closest_valid ]( thing& th ) { return th.id == closest_valid->id; } );
+    //         closest->id = pred_obj_idx;
+    //     }
+    //     else
+    //     {
+    //         // Different vertex
+    //         for( auto& th: this->graph[ vert_idx_valid ].related_things )
+    //             if( th.id == closest_valid->id )
+    //             {
+    //                 th    = *closest;
+    //                 th.id = pred_obj_idx;
+    //                 this->graph[ vert_idx ].related_things.remove_if(
+    //                     [ &closest ]( thing& th ) { return th.id == closest->id; } );
+    //                 closest  = &th;
+    //                 vert_idx = vert_idx_valid;
+    //                 break;
+    //             }
+    //     }
+    // }
+
+    // // If necessary, move the object to another vertex
+    // std::vector< std::pair< size_t, double > > distances;
+    // // min_distance = this->_calc_distance( closest->pos, this->graph[ vert_idx ].pos );
+    // std::pair< size_t, double > min_vertex = std::pair< size_t, double >( vert_idx, DBL_MAX );
+    // for( auto& c: candidates )
+    // {
+    //     if( this->_calc_distance( closest->pos, this->graph[ c.first ].pos ) < min_vertex.second )
+    //     {
+    //         min_vertex.first  = c.first;
+    //         min_vertex.second = this->_calc_distance( closest->pos, this->graph[ c.first ].pos );
+    //         // distances.push_back( std::pair< size_t, double >(
+    //         // c.first, this->_calc_distance( closest->pos, this->graph[ c.first ].pos ) ) );
+    //     }
+    // }
+    // if( min_vertex.second < this->_calc_distance( closest->pos, this->graph[ vert_idx ].pos ) )
+    // {
+    //     this->graph[ min_vertex.first ].related_things.push_back( *closest );
+    //     this->graph[ vert_idx ].related_things.remove_if( [ &closest ]( thing& th ) { return th.id == closest->id; }
+    //     );
+    //     // closest became invalid at this point!
+    // }
 }
 
 bool topo_map::add_edge( const size_t& previous, const size_t& current )
@@ -286,7 +359,7 @@ void topo_map::add_vertex( const geometry_msgs::msg::Point& pos, size_t& current
     this->add_edge( previous, current );
 }
 
-void topo_map::add_object( const smap_interfaces::msg::SmapObservation::SharedPtr observation, detector_t& det )
+thing& topo_map::add_object( const smap_interfaces::msg::SmapObservation::SharedPtr observation, detector_t& det )
 {
     // TODO: create callback group. Should be mutually exclusive
     RCLCPP_DEBUG( this->get_logger(), "add_object" );
@@ -346,6 +419,19 @@ void topo_map::add_object( const smap_interfaces::msg::SmapObservation::SharedPt
 
     this->graph[ _get_vertex( this->get_closest_vertex( observation->object.pose.pose.position, distance ) ) ]
         .related_things.push_back( new_thing );
+
+    thing* th_ret = nullptr;
+    for( auto& th:
+         this->graph[ _get_vertex( this->get_closest_vertex( observation->object.pose.pose.position, distance ) ) ]
+             .related_things )
+    {
+        if( th.id == new_thing.id )
+        {
+            th_ret = &th;
+            break;
+        }
+    }
+    return *th_ret;
 }
 
 }  // namespace smap

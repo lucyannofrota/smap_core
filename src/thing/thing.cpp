@@ -169,7 +169,7 @@ void thing::set(
     // }
 }
 
-void thing::update(
+geometry_msgs::msg::Point thing::update(
     const std::vector< float >& probability_distribution, geometry_msgs::msg::Point& point,
     std::pair< geometry_msgs::msg::Point, geometry_msgs::msg::Point > aabb, const float& pos_confidence,
     double distance, double angle, const detector_t& detector )
@@ -177,13 +177,17 @@ void thing::update(
     // 1. Histogram update
     // TODO: Test
     printf( "1. Histogram update\n" );
-    this->observations.register_obs( distance, angle, true );
+    printf( "\tDistance: %f, angle: %f\n", distance, angle );
+    // TODO: Revert
+    // TODO: Allocate thing objects dynamically!
+    // TODO: Test if markers are causing the crashes
+    // this->observations.register_obs( distance, angle, true );
 
     // 2. Probabilities vector update
     printf( "2. Probabilities vector update\n" );
     // TODO: Test
-    printf( "2.1.1 this->class_probabilities.size(): %i\n", (int) this->class_probabilities.size() );
-    printf( "2.1.2 ( *this->reg_classes )->size(): %i\n", (int) ( *this->reg_classes )->size() );
+    // printf( "2.1.1 this->class_probabilities.size(): %i\n", (int) this->class_probabilities.size() );
+    // printf( "2.1.2 ( *this->reg_classes )->size(): %i\n", (int) ( *this->reg_classes )->size() );
     if( this->class_probabilities.size() != ( *this->reg_classes )->size() )
     {
         // find
@@ -214,6 +218,7 @@ void thing::update(
 
     this->aabb.first  = this->aabb.first * p + aabb.first * ( 1 - p );
     this->aabb.second = this->aabb.second * p + aabb.second * ( 1 - p );
+    return this->pos;
 }
 
 int thing::_get_label( void )

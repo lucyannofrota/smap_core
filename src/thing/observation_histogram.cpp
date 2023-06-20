@@ -1,6 +1,6 @@
 #include "observation_histogram.hpp"
 
-#include "../include/smap_core/aux_functions.hpp"
+#include "../../include/smap_core/aux_functions.hpp"
 
 namespace smap
 {

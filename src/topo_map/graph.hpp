@@ -3,6 +3,7 @@
 
 // STL
 // #include <stdlib.h>
+#include <memory>
 
 // BOOST
 #include <boost/graph/adj_list_serialize.hpp>
@@ -20,9 +21,11 @@
 // SMAP
 #include "../thing/thing.hpp"
 
-struct vertex_data_t
+class vertex_data_t
 
 {
+  public:
+
     size_t index = (size_t) -1;
     geometry_msgs::msg::Point pos;
     smap::thing this_thing;
@@ -41,12 +44,17 @@ struct vertex_data_t
         ar& pos.y;
         ar& pos.z;
         ar& this_thing;
-        ar& related_things;
+        // TODO: related_things serialization
+        // ar& related_things;
     }
+
+    vertex_data_t() {}
 };
 
-struct edge_data_t
+class edge_data_t
 {
+  public:
+
     // The cost of the edge will be distance*modifier
 
     double distance = 0;

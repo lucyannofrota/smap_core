@@ -68,8 +68,6 @@ topo_marker::topo_marker( void )
     this->label.ns                 = "labels";
     this->label.type               = visualization_msgs::msg::Marker::TEXT_VIEW_FACING;
     this->label.action             = visualization_msgs::msg::Marker::MODIFY;
-    this->label.scale.x            = 0.05;
-    this->label.scale.y            = 0.05;
     this->label.scale.z            = 0.05;
     this->label.color.r            = 0.0;
     this->label.color.g            = 1.0;
@@ -87,6 +85,7 @@ topo_marker::topo_marker( void )
     this->aabb_label.color.g = 0.0;
     this->aabb_label.color.b = 1.0;
     this->aabb_label.color.a = 1.0;
+    this->aabb_label.scale.z = 0.075;
 
     // Generating triangles
     float t;
@@ -238,9 +237,12 @@ void topo_marker::update_markers( const graph_t& graph )
             // aabb label
             this->aabb_label.pose.position    = r_thing.pos + ( up_point * 0.5 );
             this->aabb_label.pose.position.z += this->aabb.scale.z / 2;
-            this->aabb_label.text             = r_thing.get_label();
-            this->aabb_label.id               = obj_id;
-            this->aabb_label.header.stamp     = clock->now();
+            this->aabb_label.text             = std::string( "l:" ) + r_thing.get_label() + std::string( "|id:" )
+                                  + std::to_string( r_thing.id ) + std::string( "|v:" )
+                                  + std::to_string( graph[ e ].index );
+            std::cout << this->aabb_label.text << std::endl;
+            this->aabb_label.id           = obj_id;
+            this->aabb_label.header.stamp = clock->now();
             this->array.markers.push_back( this->aabb_label );
 
             obj_id++;

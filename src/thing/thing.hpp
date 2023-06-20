@@ -2,6 +2,7 @@
 #define SMAP_CORE__THING_HPP_
 
 // STL
+#include <memory>
 
 // BOOST
 #include <boost/serialization/access.hpp>
@@ -45,6 +46,7 @@ class thing
 
     std::map< std::string, float > class_probabilities;
 
+    int id = -1;
     // Methods
     thing( void ) {}
 
@@ -54,7 +56,11 @@ class thing
         this->reg_classes = class_map;
     }
 
-    thing( semantic_type_t type ) { this->type = type; }
+    thing( semantic_type_t type, int id )
+    {
+        this->type = type;
+        this->id   = id;
+    }
 
     virtual ~thing() {}
 
@@ -73,7 +79,7 @@ class thing
         const geometry_msgs::msg::Point& point, std::pair< geometry_msgs::msg::Point, geometry_msgs::msg::Point > aabb,
         const float& pos_confidence, const double& distance, const double& angle, const detector_t& detector );
 
-    void update(
+    geometry_msgs::msg::Point update(
         const std::vector< float >& probability_distribution, geometry_msgs::msg::Point& point,
         std::pair< geometry_msgs::msg::Point, geometry_msgs::msg::Point > aabb, const float& pos_confidence,
         double distance, double angle, const detector_t& detector );
