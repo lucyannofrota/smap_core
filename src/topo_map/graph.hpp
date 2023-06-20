@@ -21,10 +21,9 @@
 // SMAP
 #include "../thing/thing.hpp"
 
-class vertex_data_t
+struct vertex_data_t
 
 {
-  public:
 
     size_t index = (size_t) -1;
     geometry_msgs::msg::Point pos;
@@ -48,12 +47,11 @@ class vertex_data_t
         // ar& related_things;
     }
 
-    vertex_data_t() {}
+
 };
 
-class edge_data_t
+struct edge_data_t
 {
-  public:
 
     // The cost of the edge will be distance*modifier
 

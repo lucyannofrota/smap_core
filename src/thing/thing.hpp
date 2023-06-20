@@ -47,6 +47,7 @@ class thing
     std::map< std::string, float > class_probabilities;
 
     int id = -1;
+
     // Methods
     thing( void ) {}
 
@@ -99,7 +100,7 @@ class thing
         // TODO: Implement
     }
 
-    int _get_label( void );
+    // int _get_label( void );
 };
 
 }  // namespace smap

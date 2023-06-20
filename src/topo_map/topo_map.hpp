@@ -114,24 +114,6 @@ class topo_map : public rclcpp::Node
     {
         RCLCPP_DEBUG( this->get_logger(), "pose_callback" );
         this->add_vertex( pose->pose.position, true );
-        // if( boost::num_vertices( this->graph ) == 1 )
-        // {
-        //     for( auto e: boost::make_iterator_range( boost::vertices( this->graph ) ) )
-        //     {
-        //         thing t;
-        //         t.pos.x         = 3;
-        //         t.pos.y         = 3;
-        //         t.pos.z         = 3;
-        //         t.aabb.first.x  = 2.5;
-        //         t.aabb.first.y  = 2.5;
-        //         t.aabb.first.z  = 2.5;
-        //         t.aabb.second.x = 3.5;
-        //         t.aabb.second.y = 3.5;
-        //         t.aabb.second.z = 3.5;
-        //         t.type          = semantic_type_t::OBJECT;
-        //         this->graph[ e ].related_things.push_back( t );
-        //     }
-        // }
     }
 
     void observation_callback( const smap_interfaces::msg::SmapObservation::SharedPtr observation );
@@ -150,10 +132,6 @@ class topo_map : public rclcpp::Node
     {
         vertex_data_t vert { v_index, pos, thing( &( this->reg_classes ) ), std::list< smap::thing >(), strong_vertex };
         size_t ret = boost::add_vertex( vert, this->graph );
-        // publish_vertex = true;
-        // if( strong_vertex )
-        //     this->markers.append_vertex(
-        //         pos, v_index, vert.this_thing.get_label() + std::string( "_" ) + std::to_string( v_index ) );
 
         RCLCPP_INFO( this->get_logger(), "Vertex added (%li) [%4.1f,%4.1f,%4.1f]", this->v_index, pos.x, pos.y, pos.z );
         return ret;
@@ -190,6 +168,8 @@ class topo_map : public rclcpp::Node
     {
         return sqrt( pow( p1.x - p2.x, 2 ) + pow( p1.y - p2.y, 2 ) + pow( p1.z - p2.z, 2 ) );
     }
+
+    inline void get_adjacent_vertices( void );
 
   public:
 

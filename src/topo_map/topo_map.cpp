@@ -7,7 +7,6 @@ void topo_map::observation_callback( const smap_interfaces::msg::SmapObservation
 {
     // TODO: observation subtractive behaviors
     // TODO: Migrate object between nodes
-
     RCLCPP_DEBUG( this->get_logger(), "observation_callback" );
     RCLCPP_DEBUG( this->get_logger(), "0. Check graph integrity" );
     if( boost::num_vertices( this->graph ) == 0 || this->reg_classes == nullptr || this->reg_detectors == nullptr )
@@ -16,7 +15,8 @@ void topo_map::observation_callback( const smap_interfaces::msg::SmapObservation
         return;
     }
 
-    RCLCPP_DEBUG( this->get_logger(), "1. Get all adjacent vertexes 3 layers deep" );
+    // 1. Get all adjacent vertexes 3 layers deep
+    RCLCPP_DEBUG( this->get_logger(), "Get all adjacent vertexes 3 layers deep" );
     std::vector< size_t > idxs_checked, idxs_checking, idxs_to_check;  // Using iterator graph idxs (not v_indexes)
     double min_distance;
     idxs_checking.push_back(
@@ -76,8 +76,8 @@ void topo_map::observation_callback( const smap_interfaces::msg::SmapObservation
                         observation->object.pose.pose.position, observation->robot_pose.pose ) ) ) );
                 // RCLCPP_DEBUG(
                 //     this->get_logger(), "2.2 Check active cone [val: %7.2f|rad2deg: %7.2f|abs: %7.2f]: FAIL",
-                //     this->compute_direction( observation->object.pose.pose.position, observation->robot_pose.pose ),
-                //     rad2deg( this->compute_direction(
+                //     this->compute_direction( observation->object.pose.pose.position, observation->robot_pose.pose
+                //     ), rad2deg( this->compute_direction(
                 //         observation->object.pose.pose.position, observation->robot_pose.pose ) ),
                 //     abs( rad2deg( this->compute_direction(
                 //         observation->object.pose.pose.position, observation->robot_pose.pose ) ) ) );
@@ -160,12 +160,12 @@ void topo_map::observation_callback( const smap_interfaces::msg::SmapObservation
         {
             for( auto lc: c.second )
             {
-                // if( closest == nullptr )
-                // {
-                //     closest      = lc;
-                //     min_distance = this->_calc_distance( observation->object.pose.pose.position, lc->pos );
-                //     continue;
-                // }
+                if( closest == nullptr )
+                {
+                    closest      = lc;
+                    min_distance = this->_calc_distance( observation->object.pose.pose.position, lc->pos );
+                    continue;
+                }
 
                 if( this->_calc_distance( observation->object.pose.pose.position, lc->pos ) < min_distance )
                 {
@@ -176,78 +176,74 @@ void topo_map::observation_callback( const smap_interfaces::msg::SmapObservation
             }
         }
         RCLCPP_DEBUG( this->get_logger(), "Object update" );
-        printf( "Object update\n" );
         closest->update(
             observation->object.probability_distribution, observation->object.pose.pose.position,
             std::pair< geometry_msgs::msg::Point, geometry_msgs::msg::Point >(
                 observation->object.aabb.min.point, observation->object.aabb.max.point ),
             observation->object.aabb.confidence, min_distance, (double) observation->direction, *det );
     }
-    // TODO: add object id to marker
-    // TODO: add vertex id to marker
 
-    // // Object combination
-    // double min_distance_valid = DBL_MAX;
-    // for( auto c: candidates )
-    // {
-    //     for( auto lc: c.second )
-    //     {
-    //         if( ( this->_calc_distance( closest->pos, lc->pos ) < min_distance_valid ) && ( lc->id != closest->id ) )
-    //         {
-    //             closest_valid      = lc;
-    //             vert_idx_valid     = c.first;
-    //             min_distance_valid = this->_calc_distance( closest->pos, lc->pos );
-    //         }
-    //     }
-    // }
-    // if( ( min_distance_valid < OBJECT_ERROR_DISTANCE * 0.8 ) && closest_valid->id != closest->id )
-    // {
-    //     int pred_obj_idx = ( closest->id < closest_valid->id ? closest->id : closest_valid->id );
-    //     if( vert_idx == vert_idx_valid )
-    //     {
-    //         // Same vertex
-    //         this->graph[ vert_idx_valid ].related_things.remove_if(
-    //             [ &closest_valid ]( thing& th ) { return th.id == closest_valid->id; } );
-    //         closest->id = pred_obj_idx;
-    //     }
-    //     else
-    //     {
-    //         // Different vertex
-    //         for( auto& th: this->graph[ vert_idx_valid ].related_things )
-    //             if( th.id == closest_valid->id )
-    //             {
-    //                 th    = *closest;
-    //                 th.id = pred_obj_idx;
-    //                 this->graph[ vert_idx ].related_things.remove_if(
-    //                     [ &closest ]( thing& th ) { return th.id == closest->id; } );
-    //                 closest  = &th;
-    //                 vert_idx = vert_idx_valid;
-    //                 break;
-    //             }
-    //     }
-    // }
+    // Object combination
+    double min_distance_valid = DBL_MAX;
+    for( auto c: candidates )
+    {
+        for( auto lc: c.second )
+        {
+            if( ( this->_calc_distance( closest->pos, lc->pos ) < min_distance_valid ) && ( lc->id != closest->id ) )
+            {
+                closest_valid      = lc;
+                vert_idx_valid     = c.first;
+                min_distance_valid = this->_calc_distance( closest->pos, lc->pos );
+            }
+        }
+    }
+    if( ( min_distance_valid < OBJECT_ERROR_DISTANCE * 0.8 ) && closest_valid->id != closest->id )
+    {
+        int pred_obj_idx = ( closest->id < closest_valid->id ? closest->id : closest_valid->id );
+        if( vert_idx == vert_idx_valid )
+        {
+            // Same vertex
+            this->graph[ vert_idx_valid ].related_things.remove_if(
+                [ &closest_valid ]( thing& th ) { return th.id == closest_valid->id; } );
+            closest->id = pred_obj_idx;
+        }
+        else
+        {
+            // Different vertex
+            for( auto& th: this->graph[ vert_idx_valid ].related_things )
+                if( th.id == closest_valid->id )
+                {
+                    th    = *closest;
+                    th.id = pred_obj_idx;
+                    this->graph[ vert_idx ].related_things.remove_if(
+                        [ &closest ]( thing& th ) { return th.id == closest->id; } );
+                    closest  = &th;
+                    vert_idx = vert_idx_valid;
+                    break;
+                }
+        }
+    }
 
-    // // If necessary, move the object to another vertex
-    // std::vector< std::pair< size_t, double > > distances;
-    // // min_distance = this->_calc_distance( closest->pos, this->graph[ vert_idx ].pos );
-    // std::pair< size_t, double > min_vertex = std::pair< size_t, double >( vert_idx, DBL_MAX );
-    // for( auto& c: candidates )
-    // {
-    //     if( this->_calc_distance( closest->pos, this->graph[ c.first ].pos ) < min_vertex.second )
-    //     {
-    //         min_vertex.first  = c.first;
-    //         min_vertex.second = this->_calc_distance( closest->pos, this->graph[ c.first ].pos );
-    //         // distances.push_back( std::pair< size_t, double >(
-    //         // c.first, this->_calc_distance( closest->pos, this->graph[ c.first ].pos ) ) );
-    //     }
-    // }
-    // if( min_vertex.second < this->_calc_distance( closest->pos, this->graph[ vert_idx ].pos ) )
-    // {
-    //     this->graph[ min_vertex.first ].related_things.push_back( *closest );
-    //     this->graph[ vert_idx ].related_things.remove_if( [ &closest ]( thing& th ) { return th.id == closest->id; }
-    //     );
-    //     // closest became invalid at this point!
-    // }
+    // If necessary, move the object to another vertex
+    std::vector< std::pair< size_t, double > > distances;
+    // min_distance = this->_calc_distance( closest->pos, this->graph[ vert_idx ].pos );
+    std::pair< size_t, double > min_vertex = std::pair< size_t, double >( vert_idx, DBL_MAX );
+    for( auto& c: candidates )
+    {
+        if( this->_calc_distance( closest->pos, this->graph[ c.first ].pos ) < min_vertex.second )
+        {
+            min_vertex.first  = c.first;
+            min_vertex.second = this->_calc_distance( closest->pos, this->graph[ c.first ].pos );
+            // distances.push_back( std::pair< size_t, double >(
+            // c.first, this->_calc_distance( closest->pos, this->graph[ c.first ].pos ) ) );
+        }
+    }
+    if( min_vertex.second < this->_calc_distance( closest->pos, this->graph[ vert_idx ].pos ) )
+    {
+        this->graph[ min_vertex.first ].related_things.push_back( *closest );
+        this->graph[ vert_idx ].related_things.remove_if( [ &closest ]( thing& th ) { return th.id == closest->id; } );
+        // closest became invalid at this point!
+    }
 }
 
 bool topo_map::add_edge( const size_t& previous, const size_t& current )

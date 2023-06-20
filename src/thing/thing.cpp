@@ -181,7 +181,7 @@ geometry_msgs::msg::Point thing::update(
     // TODO: Revert
     // TODO: Allocate thing objects dynamically!
     // TODO: Test if markers are causing the crashes
-    // this->observations.register_obs( distance, angle, true );
+    this->observations.register_obs( distance, angle, true );
 
     // 2. Probabilities vector update
     printf( "2. Probabilities vector update\n" );
@@ -221,9 +221,9 @@ geometry_msgs::msg::Point thing::update(
     return this->pos;
 }
 
-int thing::_get_label( void )
-{
-    // Return the numeric value of the class with higher probability
-    return 0;
-}
+// int thing::_get_label( void )
+// {
+//     // Return the numeric value of the class with higher probability
+//     return 0;
+// }
 }  // namespace smap
