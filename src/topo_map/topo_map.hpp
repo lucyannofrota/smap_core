@@ -130,7 +130,9 @@ class topo_map : public rclcpp::Node
 
     inline size_t _add_vertex( size_t v_index, const geometry_msgs::msg::Point& pos, bool strong_vertex )
     {
-        vertex_data_t vert { v_index, pos, thing( &( this->reg_classes ) ), std::list< smap::thing >(), strong_vertex };
+        vertex_data_t vert {
+            v_index, pos, thing( &( this->reg_classes ), ++this->thing_id_count ), std::list< smap::thing >(),
+            strong_vertex };
         size_t ret = boost::add_vertex( vert, this->graph );
 
         RCLCPP_INFO( this->get_logger(), "Vertex added (%li) [%4.1f,%4.1f,%4.1f]", this->v_index, pos.x, pos.y, pos.z );
@@ -169,7 +171,122 @@ class topo_map : public rclcpp::Node
         return sqrt( pow( p1.x - p2.x, 2 ) + pow( p1.y - p2.y, 2 ) + pow( p1.z - p2.z, 2 ) );
     }
 
-    inline void get_adjacent_vertices( void );
+    inline void get_adjacent_vertices(
+        const std::shared_ptr< std::vector< size_t > >& idxs_checked, const geometry_msgs::msg::Point& pos )
+    {
+        RCLCPP_DEBUG( this->get_logger(), "Get all adjacent vertexes 3 layers deep" );
+        std::vector< size_t > idxs_checking, idxs_to_check;  // Using iterator graph idxs (not v_indexes)
+        double min_distance;
+        idxs_checking.push_back( this->_get_vertex( this->get_closest_vertex( pos, min_distance ) ) );
+        for( size_t i = 0; i <= 3; i++ )
+        {
+            idxs_to_check.clear();
+            for( auto& checking: idxs_checking )
+            {
+                idxs_checked->push_back( checking );
+                for( auto to_check: boost::make_iterator_range(
+                         boost::adjacent_vertices( boost::vertex( checking, this->graph ), this->graph ) ) )
+                {
+                    if( std::find( idxs_checked->begin(), idxs_checked->end(), to_check ) != idxs_checked->end() )
+                        continue;
+                    else idxs_to_check.push_back( to_check );
+                }
+            }
+            idxs_checking = idxs_to_check;
+        }
+        RCLCPP_DEBUG( this->get_logger(), "1.1 idxs_checked size: %i", (int) idxs_checked->size() );
+    }
+
+    inline void filter_vertices(
+        const std::shared_ptr< std::vector< size_t > >& idxs_checked,
+        const std::shared_ptr< std::vector< std::pair< size_t, std::vector< thing* > > > >& candidates,
+        const uint8_t& module_id, const uint8_t& label, const geometry_msgs::msg::Point& obj_pos,
+        const geometry_msgs::msg::Pose& robot_pose )
+    {
+        RCLCPP_DEBUG( this->get_logger(), "2. Filter possible vertexes" );
+        RCLCPP_DEBUG( this->get_logger(), "2.1.1 idxs_checked.size(): %i", (int) idxs_checked->size() );
+        std::vector< thing* > local_candidates;
+        for( auto& checking: *idxs_checked )
+        {
+            // Check list of objects inside each vertex
+            local_candidates.clear();
+            bool has_candidate = false;
+
+            RCLCPP_DEBUG(
+                this->get_logger(), "2.1.2 this->graph[ *checking ].related_things.size(): %i",
+                (int) this->graph[ checking ].related_things.size() );
+            for( auto& obj: this->graph[ checking ].related_things )
+            {
+                // Check labels
+                if( !obj.label_is_equal( module_id, label ) )
+                {
+                    RCLCPP_DEBUG( this->get_logger(), "2.2.1 Check label: FAIL" );
+                    continue;
+                }
+                else RCLCPP_DEBUG( this->get_logger(), "2.2.1 Check label: PASS" );
+
+                // Check active cone
+                if( abs( rad2deg( this->compute_direction( obj_pos, robot_pose ) ) ) > ACTIVE_FOV_H )
+                {
+
+                    RCLCPP_DEBUG(
+                        this->get_logger(), "2.2.2 Check active cone [val: %7.2f|rad2deg: %7.2f|abs: %7.2f]: FAIL",
+                        this->compute_direction( obj_pos, robot_pose ),
+                        rad2deg( this->compute_direction( obj_pos, robot_pose ) ),
+                        abs( rad2deg( this->compute_direction( obj_pos, robot_pose ) ) ) );
+                    // RCLCPP_DEBUG(
+                    //     this->get_logger(), "2.2 Check active cone [val: %7.2f|rad2deg: %7.2f|abs: %7.2f]: FAIL",
+                    //     this->compute_direction( obj_pos, robot_pose
+                    //     ), rad2deg( this->compute_direction(
+                    //         obj_pos, robot_pose ) ),
+                    //     abs( rad2deg( this->compute_direction(
+                    //         obj_pos, robot_pose ) ) ) );
+                    continue;
+                }
+                else RCLCPP_DEBUG( this->get_logger(), "2.2.2 Check active cone: PASS" );
+
+                // Check position
+                if( !( ( ( obj_pos.x > obj.aabb.first.x - OBJECT_TRACKING_TOLERANCE )
+                         && ( obj_pos.x < obj.aabb.second.x + OBJECT_TRACKING_TOLERANCE ) )
+                       && ( ( obj_pos.y > obj.aabb.first.y - OBJECT_TRACKING_TOLERANCE )
+                            && ( obj_pos.y < obj.aabb.second.y + OBJECT_TRACKING_TOLERANCE ) )
+                       && ( ( obj_pos.z > obj.aabb.first.z - OBJECT_TRACKING_TOLERANCE )
+                            && ( obj_pos.z < obj.aabb.second.z + OBJECT_TRACKING_TOLERANCE ) ) )
+                    && ( this->_calc_distance( obj_pos, obj.pos ) > OBJECT_ERROR_DISTANCE ) )
+                {
+                    RCLCPP_DEBUG( this->get_logger(), "2.3 Check position: FAIL" );
+                    continue;
+                }
+                else RCLCPP_DEBUG( this->get_logger(), "2.3 Check position: PASS" );
+
+                local_candidates.push_back( &obj );
+                has_candidate = true;
+            }
+            // Update candidates
+            RCLCPP_DEBUG( this->get_logger(), "2.2.4 Update candidate list" );
+            if( has_candidate )
+                candidates->push_back( std::pair< size_t, std::vector< thing* > >( checking, local_candidates ) );
+        }
+        // RCLCPP_DEBUG( this->get_logger(), "2| candidates size: %i", (int) candidates.size() );
+        RCLCPP_DEBUG( this->get_logger(), "2.3 candidate list size: %i", (int) candidates->size() );
+    }
+
+    inline bool is_detector_valid( const uint8_t& module_id, std::vector< detector_t >::iterator& det )
+    {
+        det            = this->reg_detectors->begin();
+        bool det_found = false;
+        for( ; det != this->reg_detectors->end(); det++ )
+        {
+            if( det->id == module_id )
+            {
+                det_found = true;
+                break;
+            }
+        }
+        return det_found;
+    }
+
+    /**/
 
   public:
 
@@ -257,7 +374,7 @@ class topo_map : public rclcpp::Node
         }
     }
 
-    inline double compute_direction( geometry_msgs::msg::Point& p1, geometry_msgs::msg::Pose& p2 )
+    inline double compute_direction( const geometry_msgs::msg::Point& p1, const geometry_msgs::msg::Pose& p2 )
     {
         // Result defined in [-pi,pi]
         tf2::Quaternion q( p2.orientation.x, p2.orientation.y, p2.orientation.z, p2.orientation.w );

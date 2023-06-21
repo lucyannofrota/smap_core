@@ -28,7 +28,7 @@ double thing::get_confidence( void ) const
     return log_odds_inv( this->class_probabilities.at( this->get_label() ) + this->pos_confidence );
 }
 
-bool thing::label_is_equal( uint8_t& module_id, uint8_t& obs_label )
+bool thing::label_is_equal( const uint8_t& module_id, const uint8_t& obs_label )
 {
     (void) module_id;  // TODO: module_id verification
     if( this->reg_classes == nullptr ) return false;
@@ -175,19 +175,12 @@ geometry_msgs::msg::Point thing::update(
     double distance, double angle, const detector_t& detector )
 {
     // 1. Histogram update
-    // TODO: Test
-    printf( "1. Histogram update\n" );
-    printf( "\tDistance: %f, angle: %f\n", distance, angle );
-    // TODO: Revert
-    // TODO: Allocate thing objects dynamically!
-    // TODO: Test if markers are causing the crashes
+    // printf( "1. Histogram update\n" );
+    // printf( "\tDistance: %f, angle: %f\n", distance, angle );
     this->observations.register_obs( distance, angle, true );
 
     // 2. Probabilities vector update
-    printf( "2. Probabilities vector update\n" );
-    // TODO: Test
-    // printf( "2.1.1 this->class_probabilities.size(): %i\n", (int) this->class_probabilities.size() );
-    // printf( "2.1.2 ( *this->reg_classes )->size(): %i\n", (int) ( *this->reg_classes )->size() );
+    // printf( "2. Probabilities vector update\n" );
     if( this->class_probabilities.size() != ( *this->reg_classes )->size() )
     {
         // find
@@ -196,18 +189,15 @@ geometry_msgs::msg::Point thing::update(
             // if class not found add it to the map
             if( this->class_probabilities.find( c.first ) == this->class_probabilities.end() )
                 this->class_probabilities[ c.first ] = log_odds( 0 );
-
-            // TODO: Insert the new probability_distribution
         }
     }
 
     // 3. Stack vectors
-    printf( "3. stack_vectors\n" );
+    // printf( "3. stack_vectors\n" );
     stack_vectors( this->class_probabilities, probability_distribution, detector );
 
     // 4. Position update
-    printf( "4. Position update\n" );
-    // TODO: Test
+    // printf( "4. Position update\n" );
     this->pos_confidence += log_odds( pos_confidence );
     // Saturation of p. Max value is MAX_POS_PROB
     double p = ( log_odds_inv( this->pos_confidence ) > MAX_POS_PROB )

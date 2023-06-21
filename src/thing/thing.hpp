@@ -51,10 +51,10 @@ class thing
     // Methods
     thing( void ) {}
 
-    thing( std::map< std::string, std::pair< int, int > >** class_map )
+    thing( std::map< std::string, std::pair< int, int > >** class_map, int id ) : reg_classes( class_map ), id( id )
     {
         // this->observations = observation_histogram::observation_histogram( 36 );
-        this->reg_classes = class_map;
+        // this->reg_classes = class_map;
     }
 
     thing( semantic_type_t type, int id )
@@ -69,7 +69,7 @@ class thing
 
     double get_confidence( void ) const;
 
-    bool label_is_equal( uint8_t& module_id, uint8_t& obs_label );
+    bool label_is_equal( const uint8_t& module_id, const uint8_t& obs_label );
 
     // std::string get_label( uint8_t module_id );
 

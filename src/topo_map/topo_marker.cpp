@@ -103,11 +103,6 @@ topo_marker::topo_marker( void )
     }
 }
 
-// void topo_marker::_append_histogram( void )
-// {
-//     // HISTOGRAM_BINS
-// }
-
 std_msgs::msg::ColorRGBA topo_marker::histogram_color_picker( double min, double max, double value )
 {
     std_msgs::msg::ColorRGBA color;
@@ -119,32 +114,6 @@ std_msgs::msg::ColorRGBA topo_marker::histogram_color_picker( double min, double
     color.g = 0.0 + value / diff;
     return color;
 }
-
-// void topo_marker::publish_markers( void )
-// {
-//     const std::lock_guard< std::mutex > lock( this->mutex );
-//     this->pub->publish( this->array );
-
-// // bool init_flag            = true;
-// // this->vertex.header.stamp = clock->now();
-// // this->pub->publish( this->vertex );
-// // this->edge.header.stamp = clock->now();
-// // this->pub->publish( this->edge );
-// // this->label.header.stamp = clock->now();
-// // for( auto e: this->vertex_data )
-// // {
-// //     this->label.id            = e.id;     // std::get< 0 >( e );
-// //     this->label.pose.position = e.pos;    // std::get< 1 >( e );
-// //     this->label.text          = e.label;  // std::get< 2 >( e );
-// //     this->pub->publish( this->label );
-// //     // for( auto obj: e.objects )
-// //     // {
-// //     this->_gen_triangles( 1, this->histogram.points, this->histogram.colors );
-// //     this->histogram.pose.position = e.pos;
-// //     this->pub->publish( this->histogram );
-// //     // }
-// // }
-// }
 
 void topo_marker::update_markers( const graph_t& graph )
 {
@@ -168,7 +137,7 @@ void topo_marker::update_markers( const graph_t& graph )
     int obj_id  = 0;
     for( auto e: boost::make_iterator_range( boost::vertices( graph ) ) )
     {
-        printf( "update_markers()| n_objects: %i\n", (int) graph[ e ].related_things.size() );
+        // printf( "update_markers()| n_objects: %i\n", (int) graph[ e ].related_things.size() );
 
         // edge
         for( auto edg: boost::make_iterator_range( boost::out_edges( e, graph ) ) )
@@ -240,7 +209,6 @@ void topo_marker::update_markers( const graph_t& graph )
             this->aabb_label.text             = std::string( "l:" ) + r_thing.get_label() + std::string( "|id:" )
                                   + std::to_string( r_thing.id ) + std::string( "|v:" )
                                   + std::to_string( graph[ e ].index );
-            std::cout << this->aabb_label.text << std::endl;
             this->aabb_label.id           = obj_id;
             this->aabb_label.header.stamp = clock->now();
             this->array.markers.push_back( this->aabb_label );
