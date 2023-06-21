@@ -149,7 +149,7 @@ bool object_estimator::estimate_object_3D_AABB(
 {
     // TODO: Try to use medians
     count_time timer;
-    if( !object_cloud ) return false;
+    if( !object_cloud || object_cloud->points.empty() ) return false;
 
     obj.aabb.min.point.x = object_cloud->points[ 0 ].x;
     obj.aabb.min.point.y = object_cloud->points[ 0 ].y;

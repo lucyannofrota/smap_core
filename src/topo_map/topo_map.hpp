@@ -171,8 +171,7 @@ class topo_map : public rclcpp::Node
         return sqrt( pow( p1.x - p2.x, 2 ) + pow( p1.y - p2.y, 2 ) + pow( p1.z - p2.z, 2 ) );
     }
 
-    inline void get_adjacent_vertices(
-        const std::shared_ptr< std::vector< size_t > >& idxs_checked, const geometry_msgs::msg::Point& pos )
+    inline void get_adjacent_vertices( std::vector< size_t >& idxs_checked, const geometry_msgs::msg::Point& pos )
     {
         RCLCPP_DEBUG( this->get_logger(), "Get all adjacent vertexes 3 layers deep" );
         std::vector< size_t > idxs_checking, idxs_to_check;  // Using iterator graph idxs (not v_indexes)
@@ -183,30 +182,29 @@ class topo_map : public rclcpp::Node
             idxs_to_check.clear();
             for( auto& checking: idxs_checking )
             {
-                idxs_checked->push_back( checking );
+                idxs_checked.push_back( checking );
                 for( auto to_check: boost::make_iterator_range(
                          boost::adjacent_vertices( boost::vertex( checking, this->graph ), this->graph ) ) )
                 {
-                    if( std::find( idxs_checked->begin(), idxs_checked->end(), to_check ) != idxs_checked->end() )
+                    if( std::find( idxs_checked.begin(), idxs_checked.end(), to_check ) != idxs_checked.end() )
                         continue;
                     else idxs_to_check.push_back( to_check );
                 }
             }
             idxs_checking = idxs_to_check;
         }
-        RCLCPP_DEBUG( this->get_logger(), "1.1 idxs_checked size: %i", (int) idxs_checked->size() );
+        RCLCPP_DEBUG( this->get_logger(), "1.1 idxs_checked size: %i", (int) idxs_checked.size() );
     }
 
     inline void filter_vertices(
-        const std::shared_ptr< std::vector< size_t > >& idxs_checked,
-        const std::shared_ptr< std::vector< std::pair< size_t, std::vector< thing* > > > >& candidates,
+        std::vector< size_t >& idxs_checked, std::vector< std::pair< size_t, std::vector< thing* > > >& candidates,
         const uint8_t& module_id, const uint8_t& label, const geometry_msgs::msg::Point& obj_pos,
         const geometry_msgs::msg::Pose& robot_pose )
     {
         RCLCPP_DEBUG( this->get_logger(), "2. Filter possible vertexes" );
-        RCLCPP_DEBUG( this->get_logger(), "2.1.1 idxs_checked.size(): %i", (int) idxs_checked->size() );
+        RCLCPP_DEBUG( this->get_logger(), "2.1.1 idxs_checked.size(): %i", (int) idxs_checked.size() );
         std::vector< thing* > local_candidates;
-        for( auto& checking: *idxs_checked )
+        for( auto& checking: idxs_checked )
         {
             // Check list of objects inside each vertex
             local_candidates.clear();
@@ -265,10 +263,10 @@ class topo_map : public rclcpp::Node
             // Update candidates
             RCLCPP_DEBUG( this->get_logger(), "2.2.4 Update candidate list" );
             if( has_candidate )
-                candidates->push_back( std::pair< size_t, std::vector< thing* > >( checking, local_candidates ) );
+                candidates.push_back( std::pair< size_t, std::vector< thing* > >( checking, local_candidates ) );
         }
         // RCLCPP_DEBUG( this->get_logger(), "2| candidates size: %i", (int) candidates.size() );
-        RCLCPP_DEBUG( this->get_logger(), "2.3 candidate list size: %i", (int) candidates->size() );
+        RCLCPP_DEBUG( this->get_logger(), "2.3 candidate list size: %i", (int) candidates.size() );
     }
 
     inline bool is_detector_valid( const uint8_t& module_id, std::vector< detector_t >::iterator& det )
@@ -286,7 +284,126 @@ class topo_map : public rclcpp::Node
         return det_found;
     }
 
-    /**/
+    inline void vertex_transaction(
+        const smap_interfaces::msg::SmapObservation::SharedPtr observation,
+        std::vector< std::pair< size_t, std::vector< thing* > > >& candidates, std::vector< detector_t >::iterator& det,
+        std::pair< size_t, thing* >& closest )
+    {
+        double min_distance = 0;
+        RCLCPP_DEBUG( this->get_logger(), "3. Update vertex" );
+        if( candidates.size() == 0 )
+        {
+            RCLCPP_DEBUG( this->get_logger(), "3.1.1 Object add" );
+            closest.second = &( this->add_object( observation, *det ) );
+        }
+        else
+        {
+            // Select the closest object
+            RCLCPP_DEBUG( this->get_logger(), "3.1.2.1 Select the closest object" );
+
+            for( auto& c: candidates )
+            {
+                for( auto& lc: c.second )
+                {
+                    if( closest.second == nullptr )
+                    {
+                        closest.second = lc;
+                        closest.first  = c.first;
+                        min_distance   = this->_calc_distance( observation->object.pose.pose.position, lc->pos );
+                        continue;
+                    }
+
+                    if( this->_calc_distance( observation->object.pose.pose.position, lc->pos ) < min_distance )
+                    {
+                        closest.second = lc;
+                        closest.first  = c.first;
+                        min_distance   = this->_calc_distance( observation->object.pose.pose.position, lc->pos );
+                    }
+                }
+            }
+            RCLCPP_DEBUG( this->get_logger(), "Object update" );
+            closest.second->update(
+                observation->object.probability_distribution, observation->object.pose.pose.position,
+                std::pair< geometry_msgs::msg::Point, geometry_msgs::msg::Point >(
+                    observation->object.aabb.min.point, observation->object.aabb.max.point ),
+                observation->object.aabb.confidence, min_distance, (double) observation->direction, *det );
+        }
+    }
+
+    inline void object_combination(
+        std::vector< std::pair< size_t, std::vector< thing* > > >& candidates, std::pair< size_t, thing* >& closest,
+        std::pair< size_t, thing* >& closest_valid )
+    {
+        // TODO: debug pos_confidence
+        double min_distance_valid = DBL_MAX;
+        for( auto c: candidates )
+        {
+            for( auto lc: c.second )
+            {
+                if( ( this->_calc_distance( closest.second->pos, lc->pos ) < min_distance_valid )
+                    && ( lc->id != closest.second->id ) )
+                {
+                    closest_valid.second = lc;
+                    closest_valid.first  = c.first;
+                    min_distance_valid   = this->_calc_distance( closest.second->pos, lc->pos );
+                }
+            }
+        }
+        if( ( min_distance_valid < OBJECT_ERROR_DISTANCE * 0.8 ) && closest_valid.second->id != closest.second->id )
+        {
+            printf( "Object Combination!\n" );
+            int pred_obj_idx =
+                ( closest.second->id < closest_valid.second->id ? closest.second->id : closest_valid.second->id );
+            if( closest.first == closest_valid.first )
+            {
+                // Same vertex
+                this->graph[ closest_valid.first ].related_things.remove_if(
+                    [ &closest_valid ]( thing& th ) { return th.id == closest_valid.second->id; } );
+                closest.second->id = pred_obj_idx;
+            }
+            else
+            {
+                // Different vertex
+                for( auto& th: this->graph[ closest_valid.first ].related_things )
+                    if( th.id == closest_valid.second->id )
+                    {
+                        th    = *closest.second;
+                        th.id = pred_obj_idx;
+                        this->graph[ closest.first ].related_things.remove_if(
+                            [ &closest ]( thing& th ) { return th.id == closest.second->id; } );
+                        closest.second = &th;
+                        closest.first  = closest_valid.first;
+                        break;
+                    }
+            }
+        }
+    }
+
+    inline void object_vert_move( std::vector< size_t >& idxs_checked, std::pair< size_t, thing* >& closest )
+    {
+        std::vector< std::pair< size_t, double > > distances;
+        std::pair< size_t, double > min_vertex = std::pair< size_t, double >( 0, DBL_MAX );
+        for( auto& idx: idxs_checked )
+        {
+            if( ( this->_calc_distance( closest.second->pos, this->graph[ idx ].pos ) < min_vertex.second )
+                && ( idx != closest.first ) )
+            {
+                min_vertex.first  = idx;
+                min_vertex.second = this->_calc_distance( closest.second->pos, this->graph[ idx ].pos );
+            }
+        }
+        if( min_vertex.second < this->_calc_distance( closest.second->pos, this->graph[ closest.first ].pos ) )
+        {
+            printf( "Object move\n" );
+            thing aux   = *closest.second;
+            size_t size = this->graph[ closest.first ].related_things.size();
+            this->graph[ closest.first ].related_things.remove_if(
+                [ &closest ]( thing& th ) { return th.id == closest.second->id; } );
+            if( this->graph[ closest.first ].related_things.size() < size )
+                this->graph[ min_vertex.first ].related_things.push_back( aux );
+            // closest became invalid at this point!
+        }
+    }
 
   public:
 

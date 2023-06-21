@@ -71,7 +71,6 @@ void thing::set(
 {
     // set        = true;
     this->type = type;
-    // TODO: Define initialization
 
     // 1. Histogram initialization
     // printf( "Histogram:\n" );

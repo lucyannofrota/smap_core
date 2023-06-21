@@ -78,21 +78,15 @@ int main( int argc, char** argv )
 {
     rclcpp::init( argc, argv );
     rclcpp::NodeOptions options;
-    printf( "main\n" );            // TODO: remove
     std::shared_ptr< smap::smap_node > _smap_node = std::make_shared< smap::smap_node >();
-    printf( "_smap_node\n" );      // TODO: remove
     std::shared_ptr< smap::topo_map > _topo_map_node = std::make_shared< smap::topo_map >();
-    printf( "_topo_map_node\n" );  // TODO: remove
     std::shared_ptr< smap::object_estimator > _object_estimator_node =
         std::make_shared< smap::object_estimator >( options );
     std::shared_ptr< smap::perception_server > _perception_server_node =
         std::make_shared< smap::perception_server >( options );
-    printf( "_perception_server_node\n" );  // TODO: remove
 
     _topo_map_node->define_reg_classes( _perception_server_node->classes );
-    printf( "define_reg_classes\n" );       // TODO: remove
     _topo_map_node->define_reg_detectors( _perception_server_node->detectors );
-    printf( "define_reg_detectors\n" );     // TODO: remove
     // _smap_node->topological_map = _topological_map_node;
     rclcpp::executors::MultiThreadedExecutor executor;
     executor.add_node( _smap_node );

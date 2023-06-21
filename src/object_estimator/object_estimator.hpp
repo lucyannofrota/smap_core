@@ -230,8 +230,6 @@ class object_estimator : public rclcpp::Node
 
     bool roi_filt = true, voxelization = true, sof = true, euclidean_clust = true, pcl_lock = false;
 
-    // pcl::visualization::PCLVisualizer visu;
-    // std::list<int> box_filter_times;
     // Constructor/Destructor
     inline object_estimator() : Node( "object_estimator" )
     {

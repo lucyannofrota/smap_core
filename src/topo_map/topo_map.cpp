@@ -6,7 +6,6 @@ namespace smap
 void topo_map::observation_callback( const smap_interfaces::msg::SmapObservation::SharedPtr observation )
 {
     // TODO: observation subtractive behaviors
-    // TODO: Migrate object between nodes
     RCLCPP_DEBUG( this->get_logger(), "observation_callback" );
     RCLCPP_DEBUG( this->get_logger(), "0. Check graph integrity" );
     if( boost::num_vertices( this->graph ) == 0 || this->reg_classes == nullptr || this->reg_detectors == nullptr )
@@ -16,14 +15,13 @@ void topo_map::observation_callback( const smap_interfaces::msg::SmapObservation
     }
 
     // 1. Get all adjacent vertexes 3 layers deep
-    std::shared_ptr< std::vector< size_t > > idxs_checked = std::make_shared< std::vector< size_t > >();
-    this->get_adjacent_vertices( idxs_checked, observation->object.pose.pose.position );
+    std::vector< size_t > valid_idxs;
+    this->get_adjacent_vertices( valid_idxs, observation->object.pose.pose.position );
 
     // 2. Filter possible vertexes
-    std::shared_ptr< std::vector< std::pair< size_t, std::vector< thing* > > > > candidates =
-        std::make_shared< std::vector< std::pair< size_t, std::vector< thing* > > > >();
+    std::vector< std::pair< size_t, std::vector< thing* > > > candidates;
     this->filter_vertices(
-        idxs_checked, candidates, observation->object.module_id, observation->object.label,
+        valid_idxs, candidates, observation->object.module_id, observation->object.label,
         observation->object.pose.pose.position, observation->robot_pose.pose );
 
     // 3. Verify the existence of the detector
@@ -35,119 +33,20 @@ void topo_map::observation_callback( const smap_interfaces::msg::SmapObservation
     }
     // 4. Update vertex
     // If true add object otherwise update an existing one
-    thing *closest = nullptr, *closest_valid = nullptr;
-    size_t vert_idx = 0, vert_idx_valid = 0;
-    double min_distance = 0;
-    RCLCPP_DEBUG( this->get_logger(), "3. Update vertex" );
-    if( candidates->size() == 0 )
-    {
-        RCLCPP_DEBUG( this->get_logger(), "3.1.1 Object add" );
-        closest = &( this->add_object( observation, *det ) );
-    }
-    else
-    {
-        // Select the closest object
-        RCLCPP_DEBUG( this->get_logger(), "3.1.2.1 Select the closest object" );
-
-        for( auto& c: *candidates )
-        {
-            for( auto& lc: c.second )
-            {
-                if( closest == nullptr )
-                {
-                    closest      = lc;
-                    min_distance = this->_calc_distance( observation->object.pose.pose.position, lc->pos );
-                    continue;
-                }
-
-                if( this->_calc_distance( observation->object.pose.pose.position, lc->pos ) < min_distance )
-                {
-                    closest      = lc;
-                    vert_idx     = c.first;
-                    min_distance = this->_calc_distance( observation->object.pose.pose.position, lc->pos );
-                }
-            }
-        }
-        RCLCPP_DEBUG( this->get_logger(), "Object update" );
-        closest->update(
-            observation->object.probability_distribution, observation->object.pose.pose.position,
-            std::pair< geometry_msgs::msg::Point, geometry_msgs::msg::Point >(
-                observation->object.aabb.min.point, observation->object.aabb.max.point ),
-            observation->object.aabb.confidence, min_distance, (double) observation->direction, *det );
-    }
+    std::pair< size_t, thing* > closest( 0, nullptr ), closest_valid( 0, nullptr );
+    // thing *closest = nullptr, *closest_valid = nullptr;
+    // size_t vert_idx = 0, vert_idx_valid = 0;
+    this->vertex_transaction( observation, candidates, det, closest );
 
     // Object combination
-    printf( "Object combination\n" );
-    double min_distance_valid = DBL_MAX;
-    for( auto c: *candidates )
-    {
-        for( auto lc: c.second )
-        {
-            if( ( this->_calc_distance( closest->pos, lc->pos ) < min_distance_valid ) && ( lc->id != closest->id ) )
-            {
-                closest_valid      = lc;
-                vert_idx_valid     = c.first;
-                min_distance_valid = this->_calc_distance( closest->pos, lc->pos );
-            }
-        }
-    }
-    if( ( min_distance_valid < OBJECT_ERROR_DISTANCE * 0.8 ) && closest_valid->id != closest->id )
-    {
-        printf( "\tCombination!\n" );
-        int pred_obj_idx = ( closest->id < closest_valid->id ? closest->id : closest_valid->id );
-        if( vert_idx == vert_idx_valid )
-        {
-            // Same vertex
-            this->graph[ vert_idx_valid ].related_things.remove_if(
-                [ &closest_valid ]( thing& th ) { return th.id == closest_valid->id; } );
-            closest->id = pred_obj_idx;
-        }
-        else
-        {
-            // Different vertex
-            for( auto& th: this->graph[ vert_idx_valid ].related_things )
-                if( th.id == closest_valid->id )
-                {
-                    th    = *closest;
-                    th.id = pred_obj_idx;
-                    this->graph[ vert_idx ].related_things.remove_if(
-                        [ &closest ]( thing& th ) { return th.id == closest->id; } );
-                    closest  = &th;
-                    vert_idx = vert_idx_valid;
-                    break;
-                }
-        }
-    }
+    // this->object_combination( candidates, closest, closest_valid );
 
     // If necessary, move the object to another vertex
-    printf( "Object move\n" );
-    std::vector< std::pair< size_t, double > > distances;
-    std::pair< size_t, double > min_vertex = std::pair< size_t, double >( 0, DBL_MAX );
-    for( auto& c: *candidates )
-    {
-        printf( "calc distance\n" );
-        if( ( this->_calc_distance( closest->pos, this->graph[ c.first ].pos ) < min_vertex.second )
-            && ( c.first != vert_idx ) )
-        {
-            printf( "distance ok\n" );
-            min_vertex.first  = c.first;
-            min_vertex.second = this->_calc_distance( closest->pos, this->graph[ c.first ].pos );
-        }
-    }
-    if( min_vertex.second < this->_calc_distance( closest->pos, this->graph[ vert_idx ].pos ) )
-    {
-        printf( "\tMove!\n" );
-        this->graph[ min_vertex.first ].related_things.push_back( *closest );
-        this->graph[ vert_idx ].related_things.remove_if( [ &closest ]( thing& th ) {
-            if( th.id == closest->id )
-            {
-                printf( "DELETE\n" );
-                return true;
-            }
-            return false;
-        } );
-        // closest became invalid at this point!
-    }
+    this->object_vert_move( valid_idxs, closest );
+
+    // SEP
+    // SEP
+    // SEP
 
     // printf( "Object move\n" );
     // std::vector< std::pair< size_t, double > > distances;
