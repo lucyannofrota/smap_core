@@ -4,6 +4,15 @@
 
 #include <math.h>
 
+// ImGui
+#include "imgui/backends/imgui_impl_opengl3.h"
+#include "imgui/backends/imgui_impl_sdl2.h"
+#include "imgui/imgui.h"
+
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_opengl.h>
+
+
 using namespace std::chrono_literals;
 
 // TODO: Check the slider parameters to avoid seg fault

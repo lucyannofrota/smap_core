@@ -1,11 +1,14 @@
 #include "topo_map.hpp"
 
+#include "../../include/smap_core/count_time.hpp"
+
 namespace smap
 {
 
 void topo_map::observation_callback( const smap_interfaces::msg::SmapObservation::SharedPtr observation )
 {
     // TODO: observation subtractive behaviors
+    count_time timer;
     RCLCPP_DEBUG( this->get_logger(), "observation_callback" );
     RCLCPP_DEBUG( this->get_logger(), "0. Check graph integrity" );
     if( boost::num_vertices( this->graph ) == 0 || this->reg_classes == nullptr || this->reg_detectors == nullptr )
@@ -44,44 +47,8 @@ void topo_map::observation_callback( const smap_interfaces::msg::SmapObservation
     // If necessary, move the object to another vertex
     this->object_vert_move( valid_idxs, closest );
 
-    // SEP
-    // SEP
-    // SEP
-
-    // printf( "Object move\n" );
-    // std::vector< std::pair< size_t, double > > distances;
-    // // min_distance = this->_calc_distance( closest->pos, this->graph[ vert_idx ].pos );
-    // std::pair< size_t, double > min_vertex = std::pair< size_t, double >( -1, DBL_MAX );
-    // for( auto& c: *candidates )
-    // {
-    //     printf( "calc distance\n" );
-    //     if( ( this->_calc_distance( closest->pos, this->graph[ c.first ].pos ) < min_vertex.second )
-    //         && ( c.first != vert_idx ) )
-    //     {
-    //         printf( "distance ok\n" );
-    //         min_vertex.first  = c.first;
-    //         min_vertex.second = this->_calc_distance( closest->pos, this->graph[ c.first ].pos );
-    //         // distances.push_back( std::pair< size_t, double >(
-    //         // c.first, this->_calc_distance( closest->pos, this->graph[ c.first ].pos ) ) );
-    //     }
-    // }
-    // // printf(
-    // //     "min_vertex: %f|_calc_distance: %f\n", min_vertex.second,
-    // //     this->_calc_distance( closest->pos, this->graph[ vert_idx ].pos ) );
-    // if( min_vertex.second < this->_calc_distance( closest->pos, this->graph[ vert_idx ].pos ) )
-    // {
-    //     printf( "\tMove!\n" );
-    //     this->graph[ min_vertex.first ].related_things.push_back( *closest );
-    //     this->graph[ vert_idx ].related_things.remove_if( [ &closest ]( thing& th ) {
-    //         if( th.id == closest->id )
-    //         {
-    //             printf( "DELETE\n" );
-    //             return true;
-    //         }
-    //         return false;
-    //     } );
-    //     // closest became invalid at this point!
-    // }
+    const char str[] = "observation_callback";
+    timer.print_time( str );
 }
 
 bool topo_map::add_edge( const size_t& previous, const size_t& current )

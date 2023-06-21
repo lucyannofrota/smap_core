@@ -31,18 +31,11 @@
 #include <pcl_conversions/pcl_conversions.h>
 
 // SMAP
+#include "../../include/smap_core/count_time.hpp"
 #include "smap_interfaces/msg/bounding_box2_d.hpp"
 #include "smap_interfaces/msg/smap_detections.hpp"
 #include "smap_interfaces/msg/smap_object.hpp"
 #include "smap_interfaces/msg/smap_observation.hpp"
-
-// ImGui
-// #include "imgui/backends/imgui_impl_opengl3.h"
-// #include "imgui/backends/imgui_impl_sdl2.h"
-// #include "imgui/imgui.h"
-
-// #include <SDL2/SDL.h>
-// #include <SDL2/SDL_opengl.h>
 
 // using namespace std::chrono_literals;
 
@@ -119,64 +112,64 @@ class thread_queue :
     }
 };
 
-class plot_vec : public std::list< int >
-{
-  private:
+// class plot_vec : public std::list< int >
+// {
+//   private:
 
-    const size_t _max_size = 128;
-    float average;
+// const size_t _max_size = 128;
+// float average;
 
-  public:
+// public:
 
-    inline void push_back( const int& element )
-    {
-        if( std::list< int >::size() >= _max_size ) std::list< int >::pop_front();
-        std::list< int >::push_back( element );
-    }
+// inline void push_back( const int& element )
+// {
+//     if( std::list< int >::size() >= _max_size ) std::list< int >::pop_front();
+//     std::list< int >::push_back( element );
+// }
 
-    inline void get_float_arr_av( float* ptr )
-    {
-        auto it       = this->begin();
-        this->average = 0;
-        for( int i = 0; it != this->end(); ++it, i++ )
-        {
-            ptr[ i ]       = *it;
-            this->average += *it;
-        }
-        this->average /= this->size();
-    }
+// inline void get_float_arr_av( float* ptr )
+// {
+//     auto it       = this->begin();
+//     this->average = 0;
+//     for( int i = 0; it != this->end(); ++it, i++ )
+//     {
+//         ptr[ i ]       = *it;
+//         this->average += *it;
+//     }
+//     this->average /= this->size();
+// }
 
-    inline float get_average( void ) { return this->average; }
-};
+// inline float get_average( void ) { return this->average; }
+// };
 
-class count_time
-{
+// class count_time
+// {
 
-  private:
+// private:
 
-    std::chrono::_V2::system_clock::time_point start, stop;
+// std::chrono::_V2::system_clock::time_point start, stop;
 
-  public:
+// public:
 
-    count_time( void ) { this->start = std::chrono::high_resolution_clock::now(); }
+// count_time( void ) { this->start = std::chrono::high_resolution_clock::now(); }
 
-    int get_time( void )
-    {
-        stop = std::chrono::high_resolution_clock::now();
-        return ( std::chrono::duration_cast< std::chrono::milliseconds >( stop - start ) ).count();
-    }
+// int get_time( void )
+// {
+//     stop = std::chrono::high_resolution_clock::now();
+//     return ( std::chrono::duration_cast< std::chrono::milliseconds >( stop - start ) ).count();
+// }
 
-    void get_time( const rclcpp::Logger& logger, const char* str, plot_vec& vec )
-    {
-        stop = std::chrono::high_resolution_clock::now();
+// void get_time( const rclcpp::Logger& logger, const char* str, plot_vec& vec )
+// {
+//     stop = std::chrono::high_resolution_clock::now();
 
-        vec.push_back( ( std::chrono::duration_cast< std::chrono::milliseconds >( stop - start ) ).count() );
+// vec.push_back( ( std::chrono::duration_cast< std::chrono::milliseconds >( stop - start ) ).count() );
 
-        RCLCPP_DEBUG(
-            logger, "%s %ims", str,
-            ( std::chrono::duration_cast< std::chrono::milliseconds >( stop - start ) ).count() );
-    }
-};
+// RCLCPP_DEBUG(
+//     logger, "%s %ims", str,
+//     ( std::chrono::duration_cast< std::chrono::milliseconds >( stop - start ) ).count() );
+// }
+// };
 
 plot_vec total_thread_time;
 plot_vec box_filter_plot, roi_filter_plot, voxelization_plot, sof_filter_plot, euclidean_clustering_plot,
