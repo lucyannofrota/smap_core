@@ -16,6 +16,7 @@ void object_estimator::box_filter(
     smap_interfaces::msg::SmapObject& obj ) const
 {
     count_time timer;
+    if( !input_cloud ) return;
     pcl::PointIndices::Ptr inliers( new pcl::PointIndices() );
 
     for( size_t h = obj.bb_2d.keypoint_1[ 1 ]; h <= obj.bb_2d.keypoint_2[ 1 ]; h++ )
@@ -35,7 +36,7 @@ void object_estimator::box_filter(
 void object_estimator::roi_filter( const pcl::shared_ptr< cloud_t >& point_cloud ) const
 {
     count_time timer;
-
+    if( !point_cloud ) return;
     point_cloud->erase(
         std::remove_if(
             point_cloud->begin(), point_cloud->end(),
@@ -53,6 +54,7 @@ void object_estimator::roi_filter( const pcl::shared_ptr< cloud_t >& point_cloud
 void object_estimator::pcl_voxelization( const pcl::shared_ptr< cloud_t >& point_cloud ) const
 {
     count_time timer;
+    if( !point_cloud ) return;
     pcl::VoxelGrid< cloud_point_t > vox_grid;
 
     vox_grid.setInputCloud( point_cloud );
@@ -68,6 +70,7 @@ void object_estimator::pcl_voxelization( const pcl::shared_ptr< cloud_t >& point
 void object_estimator::statistical_outlier_filter( const pcl::shared_ptr< cloud_t >& cloud_segment ) const
 {
     count_time timer;
+    if( !cloud_segment ) return;
     pcl::StatisticalOutlierRemoval< cloud_point_t > sor;
     sor.setInputCloud( cloud_segment );
     sor.setMeanK( this->mean_k );  // Greater ther values take more time to compute
@@ -83,6 +86,7 @@ void object_estimator::euclidean_clustering(
     const pcl::shared_ptr< cloud_t >& cloud_segment, const pcl::shared_ptr< cloud_t >& object_cloud ) const
 {
     count_time timer;
+    if( !cloud_segment ) return;
 
     pcl::search::KdTree< cloud_point_t >::Ptr tree( new pcl::search::KdTree< cloud_point_t > );
     std::vector< int > indices;
@@ -105,9 +109,10 @@ void object_estimator::euclidean_clustering(
     timer.get_time( this->get_logger(), str, euclidean_clustering_plot );
 }
 
-void object_estimator::estimate_confidence( const pcl::shared_ptr< cloud_t >& object_cloud, float& conf ) const
+bool object_estimator::estimate_confidence( const pcl::shared_ptr< cloud_t >& object_cloud, float& conf ) const
 {
-    float lims[ 2 ] = { FLT_MIN, FLT_MAX };
+    if( !object_cloud ) return false;
+    float lims[ 2 ] = { FLT_MAX, FLT_MIN };
     for( cloud_point_t& point: *object_cloud )
     {
         if( point.z < lims[ 0 ] ) lims[ 0 ] = point.z;
@@ -116,6 +121,7 @@ void object_estimator::estimate_confidence( const pcl::shared_ptr< cloud_t >& ob
 
     conf = ( ( lims[ 1 ] - lims[ 0 ] ) - OBJECT_SIZE_LIM_CONF )
          / ( ( pcl_lims->second - pcl_lims->first ) - OBJECT_SIZE_LIM_CONF );
+    return true;
 }
 
 void object_estimator::transform_object_pcl(
@@ -138,11 +144,12 @@ void object_estimator::transform_object_pcl(
     timer.get_time( this->get_logger(), str, transform_plot );
 }
 
-void object_estimator::estimate_object_3D_AABB(
+bool object_estimator::estimate_object_3D_AABB(
     const pcl::shared_ptr< cloud_t >& object_cloud, smap_interfaces::msg::SmapObject& obj ) const
 {
     // TODO: Try to use medians
     count_time timer;
+    if( !object_cloud ) return false;
 
     obj.aabb.min.point.x = object_cloud->points[ 0 ].x;
     obj.aabb.min.point.y = object_cloud->points[ 0 ].y;
@@ -169,6 +176,7 @@ void object_estimator::estimate_object_3D_AABB(
 
     const char str[]         = "3D_AABB";
     timer.get_time( this->get_logger(), str, centroid_plot );
+    return true;
 }
 
 void object_estimator::object_estimation_thread(
@@ -177,6 +185,7 @@ void object_estimator::object_estimation_thread(
     const std::shared_ptr< geometry_msgs::msg::PoseStamped >& pose,
     const smap_interfaces::msg::SmapObject::SharedPtr& obj )
 {
+    if( !point_cloud || !transform || !pose || !obj ) return;
 
     // printf("POS [%i,%i]\n",
     //   obj->bb_2d.keypoint_1[0],
@@ -233,7 +242,7 @@ void object_estimator::object_estimation_thread(
         // Parameter Estimation
         count_time estimation_timer;
         pcl::fromROSMsg( obs.object.pointcloud, *object_cloud_pcl );
-        this->estimate_object_3D_AABB( object_cloud_pcl, obs.object );
+        if( !this->estimate_object_3D_AABB( object_cloud_pcl, obs.object ) ) return;
 
         const char str_estimation_time[] = "estimation_time";
         estimation_timer.get_time( this->get_logger(), str_estimation_time, total_estimation_plot );

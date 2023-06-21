@@ -269,10 +269,10 @@ class object_estimator : public rclcpp::Node
     void euclidean_clustering(
         const pcl::shared_ptr< cloud_t >& cloud_segment, const pcl::shared_ptr< cloud_t >& object_cloud ) const;
 
-    void estimate_object_3D_AABB(
+    bool estimate_object_3D_AABB(
         const pcl::shared_ptr< cloud_t >& object_cloud, smap_interfaces::msg::SmapObject& obj ) const;
 
-    void estimate_confidence( const pcl::shared_ptr< cloud_t >& object_cloud, float& conf ) const;
+    bool estimate_confidence( const pcl::shared_ptr< cloud_t >& object_cloud, float& conf ) const;
 
     void transform_object_pcl(
         smap_interfaces::msg::SmapObject& obj,
