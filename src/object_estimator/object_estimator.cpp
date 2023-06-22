@@ -15,7 +15,7 @@
 // SMAP
 // #include "../pcl_processing/include/pcl_processing.hpp"
 // #include "pcl_processing/pcl_processing.hpp"
-#include "../pcl_processing/include/pcl_processing.hpp"
+
 using namespace std::chrono_literals;
 
 // TODO: Check the slider parameters to avoid seg fault
@@ -176,6 +176,11 @@ void object_estimator::detections_callback( const smap_interfaces::msg::SmapDete
     RCLCPP_DEBUG( this->get_logger(), "detections_callback" );
 
     pcl::shared_ptr< cloud_t > pcl_point_cloud( new cloud_t );
+    std::shared_ptr< geometry_msgs::msg::TransformStamped > transform =
+        std::make_shared< geometry_msgs::msg::TransformStamped >( input_msg->robot_to_map );
+    std::shared_ptr< geometry_msgs::msg::PoseStamped > pose =
+        std::make_shared< geometry_msgs::msg::PoseStamped >( input_msg->stamped_pose );
+
     pcl::fromROSMsg( input_msg->pointcloud, *pcl_point_cloud );
 
     // Thread launch
@@ -183,9 +188,17 @@ void object_estimator::detections_callback( const smap_interfaces::msg::SmapDete
     smap_interfaces::msg::SmapObject obj;
     sensor_msgs::msg::PointCloud2 segment_cloud;
 
+    // launch occlusion_matrix_thread
+    // input_msg->
+
+    // std::async(
+    //     std::launch::async, &object_estimator::occlusion_matrix_thread, this, input_msg->pointcloud, transform );
+    std::async(
+        std::launch::async, &object_estimator::occlusion_matrix_thread,
+        std::make_shared< sensor_msgs::msg::PointCloud2 >( input_msg->pointcloud ), transform );
+
     for( auto& obj: input_msg->objects )
     {
-        // BOOST_FOREACH(obj, input_msg->objects){
         if( obj.confidence < 0.70 ) continue;  // TODO: Remove DEBUG
 
         if( obj.label != 62 ) continue;        // TODO: Remove DEBUG
@@ -199,9 +212,7 @@ void object_estimator::detections_callback( const smap_interfaces::msg::SmapDete
         if( !this->pcl_lock ) lock_cloud = pcl_point_cloud;
 
         this->object_estimation_thread(
-            lock_cloud, std::make_shared< geometry_msgs::msg::TransformStamped >( input_msg->robot_to_map ),
-            std::make_shared< geometry_msgs::msg::PoseStamped >( input_msg->stamped_pose ),
-            std::make_shared< smap_interfaces::msg::SmapObject >( obj ) );
+            lock_cloud, transform, pose, std::make_shared< smap_interfaces::msg::SmapObject >( obj ) );
 
         // TODO: Activate multi threading
 
@@ -220,6 +231,7 @@ void object_estimator::detections_callback( const smap_interfaces::msg::SmapDete
             this->get_logger(), "Object detection thread launched! | %i threads running | label: %i",
             this->thread_ctl->size(), obj.label );
     }
+    // input_msg->
     RCLCPP_DEBUG( this->get_logger(), "---Callback complete---" );
 }
 

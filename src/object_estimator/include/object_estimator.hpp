@@ -20,6 +20,7 @@
 #include <pcl_conversions/pcl_conversions.h>
 
 // SMAP
+#include "../../pcl_processing/include/pcl_processing.hpp"
 #include "smap_core/count_time.hpp"
 #include "smap_core/macros.hpp"
 #include "smap_interfaces/msg/bounding_box2_d.hpp"
@@ -105,65 +106,6 @@ class thread_queue :
     }
 };
 
-// class plot_vec : public std::list< int >
-// {
-//   private:
-
-// const size_t _max_size = 128;
-// float average;
-
-// public:
-
-// inline void push_back( const int& element )
-// {
-//     if( std::list< int >::size() >= _max_size ) std::list< int >::pop_front();
-//     std::list< int >::push_back( element );
-// }
-
-// inline void get_float_arr_av( float* ptr )
-// {
-//     auto it       = this->begin();
-//     this->average = 0;
-//     for( int i = 0; it != this->end(); ++it, i++ )
-//     {
-//         ptr[ i ]       = *it;
-//         this->average += *it;
-//     }
-//     this->average /= this->size();
-// }
-
-// inline float get_average( void ) { return this->average; }
-// };
-
-// class count_time
-// {
-
-// private:
-
-// std::chrono::_V2::system_clock::time_point start, stop;
-
-// public:
-
-// count_time( void ) { this->start = std::chrono::high_resolution_clock::now(); }
-
-// int get_time( void )
-// {
-//     stop = std::chrono::high_resolution_clock::now();
-//     return ( std::chrono::duration_cast< std::chrono::milliseconds >( stop - start ) ).count();
-// }
-
-// void get_time( const rclcpp::Logger& logger, const char* str, plot_vec& vec )
-// {
-//     stop = std::chrono::high_resolution_clock::now();
-
-// vec.push_back( ( std::chrono::duration_cast< std::chrono::milliseconds >( stop - start ) ).count() );
-
-// RCLCPP_DEBUG(
-//     logger, "%s %ims", str,
-//     ( std::chrono::duration_cast< std::chrono::milliseconds >( stop - start ) ).count() );
-// }
-// };
-
 plot_vec total_thread_time;
 plot_vec box_filter_plot, roi_filter_plot, voxelization_plot, sof_filter_plot, euclidean_clustering_plot,
     total_filter_plot;
@@ -179,7 +121,7 @@ class object_estimator : public rclcpp::Node
 {
   private:
 
-    const size_t max_threads = 8;  // Should be grater then than 1 because of the function "__compute_timeout"
+    const size_t max_threads = 8;  // Should be grater then 1 because of the function "__compute_timeout"
 
     rclcpp::Subscription< smap_interfaces::msg::SmapDetections >::SharedPtr smap_detections_sub =
         this->create_subscription< smap_interfaces::msg::SmapDetections >(
@@ -195,6 +137,10 @@ class object_estimator : public rclcpp::Node
     rclcpp::Publisher< smap_interfaces::msg::SmapObservation >::SharedPtr object_pub =
         this->create_publisher< smap_interfaces::msg::SmapObservation >(
             std::string( this->get_namespace() ) + std::string( "/object_estimator/observations" ), 10 );
+
+    // rclcpp::Publisher< smap_interfaces::msg::SmapObservation >::SharedPtr object_pub =
+    //     this->create_publisher< smap_interfaces::msg::SmapObservation >(
+    //         std::string( this->get_namespace() ) + std::string( "/object_estimator/occlusion_map" ), 10 );
     std::mutex object_bb_pub_mutex, object_pub_mutex, debug_object_pcl_pub_mutex;
 
     std::shared_ptr< thread_queue > thread_ctl = std::make_shared< thread_queue >( thread_queue( this->max_threads ) );
@@ -327,6 +273,18 @@ class object_estimator : public rclcpp::Node
 
     inline void on_process( void )
     {  // Pooling
+    }
+
+    inline static void occlusion_matrix_thread(
+        const std::shared_ptr< sensor_msgs::msg::PointCloud2 >& ros_pcl,
+        const std::shared_ptr< geometry_msgs::msg::TransformStamped >& transform )
+    {
+        std::unique_ptr< sensor_msgs::msg::PointCloud2 > transformed_ros_pcl =
+            std::make_unique< sensor_msgs::msg::PointCloud2 >();
+        pcl::shared_ptr< cloud_t > transformed_pcl( new cloud_t );
+        tf2::doTransform< sensor_msgs::msg::PointCloud2 >( *ros_pcl, *transformed_ros_pcl, *transform );
+        pcl::fromROSMsg( *ros_pcl, *transformed_pcl );
+        compute_occlusion_matrix( transformed_pcl );
     }
 
   private:

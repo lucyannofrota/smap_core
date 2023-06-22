@@ -1,7 +1,11 @@
 #ifndef SMAP_CORE__PCL_PROCESSING_HPP_
 #define SMAP_CORE__PCL_PROCESSING_HPP_
 
+#define OCCLUSION_MATRIX_ROWS 16
+#define OCCLUSION_MATRIX_COLS 32
+
 // STL
+#include <array>
 #include <memory>
 #include <utility>
 
@@ -17,8 +21,11 @@
 
 namespace smap
 {
-using cloud_point_t = pcl::PointXYZRGB;
-using cloud_t       = pcl::PointCloud< cloud_point_t >;
+using cloud_point_t      = pcl::PointXYZRGB;
+using cloud_t            = pcl::PointCloud< cloud_point_t >;
+using occlusion_matrix_t = std::array<
+    std::array< std::pair< geometry_msgs::msg::Point, geometry_msgs::msg::Point >, OCCLUSION_MATRIX_COLS >,
+    OCCLUSION_MATRIX_ROWS >;
 
 void box_filter(
     const pcl::shared_ptr< cloud_t >& input_cloud, const pcl::shared_ptr< cloud_t >& cloud_segment,
@@ -42,6 +49,8 @@ bool estimate_object_3D_AABB(
 bool estimate_confidence(
     const pcl::shared_ptr< cloud_t >& object_cloud, float& conf,
     const std::shared_ptr< std::pair< float, float > >& pcl_lims, const float& object_size_lim_conf );
+
+void compute_occlusion_matrix( const pcl::shared_ptr< cloud_t >& pcl );
 
 bool check_occlusions( void );
 

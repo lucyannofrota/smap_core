@@ -1,6 +1,7 @@
 #include "include/pcl_processing.hpp"
 
 // PCL
+#include <pcl/filters/crop_box.h>
 #include <pcl/filters/extract_indices.h>
 #include <pcl/filters/statistical_outlier_removal.h>
 #include <pcl/filters/voxel_grid.h>
@@ -139,6 +140,40 @@ bool estimate_confidence(
     conf = ( ( lims[ 1 ] - lims[ 0 ] ) - object_size_lim_conf )
          / ( ( pcl_lims->second - pcl_lims->first ) - object_size_lim_conf );
     return true;
+}
+
+void compute_occlusion_matrix( const pcl::shared_ptr< cloud_t >& pcl )
+{
+    std::unique_ptr< occlusion_matrix_t > occlusion_matrix;
+    auto pcl_it = pcl->begin();
+    pcl::CropBox< cloud_point_t > CropBox;
+    CropBox.setKeepOrganized( true );
+    CropBox.setInputCloud( pcl );
+    // CropBox.setTransform
+    // CropBox.setMin
+    printf( "occlusion pcl ordered?: %i [h,w][%i,%i]\n", (int) pcl->isOrganized(), pcl->height, pcl->width );
+    size_t r = 0, c = 0;
+    int r_l = floor( pcl->height / OCCLUSION_MATRIX_ROWS ), c_l = floor( pcl->width / OCCLUSION_MATRIX_COLS );
+    for( int pcl_r = 0; pcl_r < pcl->height; pcl_r++ )
+    {
+        for( int pcl_c = 0; pcl_c < pcl->width; pcl_c++ )
+        {
+            // loop through pcl points and updates points in each quadrant until the matrix is complete
+            pcl->at( pcl_r, pcl_c );
+            //
+            //
+        }
+    }
+
+    // for( size_t r = 0; r < OCCLUSION_MATRIX_ROWS; r++ )
+    // {
+    //     for( size_t c = 0; c < OCCLUSION_MATRIX_COLS; c++ )
+    //     {
+    //         pcl->at( r, c );
+    //         //
+    //         //
+    //     }
+    // }
 }
 
 bool check_occlusions( void )
