@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(smap_core)
+project(object_estimator)
 
 if (POLICY CMP0074)
   cmake_policy(SET CMP0074 NEW)
@@ -7,14 +7,12 @@ endif()
 
 # find dependencies
     # PCL
-        find_package(PCL 1.1 REQUIRED)
+        # find_package(PCL 1.1 REQUIRED)
         find_package(pcl_conversions REQUIRED)
     # ament
         find_package(ament_cmake REQUIRED)
-        find_package(ament_cmake_ros REQUIRED)
     # standard ros pkgs
         find_package(rclcpp REQUIRED)
-        find_package(std_msgs REQUIRED)
         find_package(sensor_msgs REQUIRED)
         find_package(geometry_msgs REQUIRED)
         find_package(tf2 REQUIRED)
@@ -24,19 +22,38 @@ endif()
         # find_package(rmw_implementation_cmake REQUIRED)
     # smap
         find_package(smap_interfaces REQUIRED)
+        # find_package(pcl_processing REQUIRED PATHS ${CMAKE_CURRENT_SOURCE_DIR}/pcl_processing)
 
 
-######################
-## PCL DEPENDENCIES ##
-######################
+set(INC
+    include/object_estimator.hpp
+)
+    
+set(SRC
+    object_estimator.cpp
+)
+    
+    
+set(DEPENDENCIES
+    rclcpp
+    pcl_conversions
+    smap_interfaces
+    visualization_msgs
+    tf2
+    tf2_geometry_msgs
+    tf2_sensor_msgs
+)
 
-  include_directories(${PCL_INCLUDE_DIRS})
-  link_directories(${PCL_LIBRARY_DIRS})
-  add_definitions(${PCL_DEFINITIONS})
+# ######################
+# ## PCL DEPENDENCIES ##
+# ######################
 
-#######################
-## /PCL DEPENDENCIES ##
-#######################
+#   include_directories(${PCL_INCLUDE_DIRS})
+#   link_directories(${PCL_LIBRARY_DIRS})
+#   add_definitions(${PCL_DEFINITIONS})
+# #######################
+# ## /PCL DEPENDENCIES ##
+# #######################
 
 ######################
 ## object_estimator ##
@@ -67,7 +84,8 @@ endif()
 
     add_library(
       object_estimator
-      object_estimator.cpp
+      ${INC}
+      ${SRC}
       ${IMGUI_SRC}
     )
 
@@ -78,35 +96,36 @@ endif()
     )
 
     target_link_libraries(object_estimator 
-      ${PCL_LIBRARIES} 
+    #   ${PCL_LIBRARIES} 
       GL # imgui
       ${SDL2_LIBRARIES} # imgui
+      pcl_processing
     )
 
     ament_target_dependencies(
       object_estimator
-      rclcpp
-      PCL
-      pcl_conversions
-      smap_interfaces
-      visualization_msgs
-      tf2
-      tf2_geometry_msgs
-      tf2_sensor_msgs
+      ${DEPENDENCIES}
     )
 
-    install(TARGETS object_estimator
-      DESTINATION lib
+    ament_export_include_directories(include)
+    ament_export_libraries(object_estimator)
+    ament_export_dependencies(${DEPENDENCIES})
+
+    install(
+        DIRECTORY include/
+        DESTINATION include/smap_core/object_estimator
     )
+
 
   ## Lib ##
 
   ## Node ##
 
     add_executable(
-      object_estimator_node
-      object_estimator.cpp
-      ${IMGUI_SRC}
+        object_estimator_node
+        ${INC}
+        ${SRC}
+        ${IMGUI_SRC}
     )
 
 
@@ -117,21 +136,15 @@ endif()
     )
 
     target_link_libraries(object_estimator_node 
-      ${PCL_LIBRARIES} 
+    #   ${PCL_LIBRARIES} 
       GL # imgui
       ${SDL2_LIBRARIES} # imgui
+      pcl_processing
     )
 
     ament_target_dependencies(
       object_estimator_node
-      rclcpp
-      PCL
-      pcl_conversions
-      smap_interfaces
-      visualization_msgs
-      tf2
-      tf2_geometry_msgs
-      tf2_sensor_msgs
+      ${DEPENDENCIES}
     )
 
     install(TARGETS object_estimator_node
@@ -143,3 +156,5 @@ endif()
 #######################
 ## /object_estimator ##
 #######################
+
+ament_package()

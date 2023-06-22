@@ -1,6 +1,7 @@
 #include "topo_map.hpp"
 
 #include "../../include/smap_core/count_time.hpp"
+#include "../pcl_processing/include/pcl_processing.hpp"
 
 namespace smap
 {

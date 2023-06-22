@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(smap_core)
+project(topo_map)
 
 
 # find dependencies
@@ -38,7 +38,9 @@ set(Boost_USE_MULTITHREADED ON)
 #################
 
   ## Lib ##
-  add_library(topo_marker topo_marker.cpp )
+  add_library(topo_marker
+    topo_marker.cpp
+  )
 
 target_include_directories(topo_marker PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -77,8 +79,10 @@ install(
 ##############
 
   ## Lib ##
-  add_library(topo_map topo_map.cpp )
-  target_link_libraries(topo_map thing topo_marker ${Boost_LIBRARIES})
+  add_library(topo_map
+    topo_map.cpp
+  )
+  target_link_libraries(topo_map thing topo_marker pcl_processing ${Boost_LIBRARIES})
 target_include_directories(topo_map PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>
@@ -108,8 +112,7 @@ install(
 
 ## Node ##
 
-  add_executable(
-      topo_map_node
+  add_executable(topo_map_node
       topo_map.cpp
   )
 
@@ -123,6 +126,7 @@ install(
         topo_map_node 
         thing
         topo_marker
+        pcl_processing
         ${Boost_LIBRARIES}
   )
 

@@ -8,8 +8,7 @@
 #include <thread>
 
 // ROS
-#include "../../include/smap_core/macros.hpp"
-#include "../../include/smap_core/visibility_control.h"
+#include "smap_core/visibility_control.h"
 
 #include <rclcpp/rclcpp.hpp>
 #include <tf2/convert.h>
@@ -18,24 +17,18 @@
 #include <visualization_msgs/msg/marker.hpp>
 
 // PCL
-#include <pcl/common/centroid.h>
-#include <pcl/filters/conditional_removal.h>
-#include <pcl/filters/extract_indices.h>
-#include <pcl/filters/filter.h>
-#include <pcl/filters/radius_outlier_removal.h>
-#include <pcl/filters/statistical_outlier_removal.h>
-#include <pcl/filters/voxel_grid.h>
-#include <pcl/point_cloud.h>
-#include <pcl/point_types.h>
-#include <pcl/segmentation/extract_clusters.h>
 #include <pcl_conversions/pcl_conversions.h>
 
 // SMAP
-#include "../../include/smap_core/count_time.hpp"
+#include "smap_core/count_time.hpp"
+#include "smap_core/macros.hpp"
 #include "smap_interfaces/msg/bounding_box2_d.hpp"
 #include "smap_interfaces/msg/smap_detections.hpp"
 #include "smap_interfaces/msg/smap_object.hpp"
 #include "smap_interfaces/msg/smap_observation.hpp"
+
+// // SMAP
+// #include "pcl_processing/include/pcl_processing.hpp"
 
 // using namespace std::chrono_literals;
 
@@ -195,10 +188,10 @@ class object_estimator : public rclcpp::Node
 
     rclcpp::Publisher< sensor_msgs::msg::PointCloud2 >::SharedPtr debug_object_pcl_pub =
         this->create_publisher< sensor_msgs::msg::PointCloud2 >(
-            std::string( this->get_namespace() ) + std::string( "/object_estimator/debug/object_pcl" ), 10 );
+            std::string( this->get_namespace() ) + std::string( "/object_estimator/object_pcl" ), 10 );
     rclcpp::Publisher< visualization_msgs::msg::Marker >::SharedPtr object_bb_pub =
         this->create_publisher< visualization_msgs::msg::Marker >(
-            std::string( this->get_namespace() ) + std::string( "/object_estimator/debug/object_bb" ), 10 );
+            std::string( this->get_namespace() ) + std::string( "/object_estimator/object_bb" ), 10 );
     rclcpp::Publisher< smap_interfaces::msg::SmapObservation >::SharedPtr object_pub =
         this->create_publisher< smap_interfaces::msg::SmapObservation >(
             std::string( this->get_namespace() ) + std::string( "/object_estimator/observations" ), 10 );
@@ -247,27 +240,14 @@ class object_estimator : public rclcpp::Node
 
     inline ~object_estimator() {}
 
-    void box_filter(
-        const pcl::shared_ptr< cloud_t >& input_cloud, const pcl::shared_ptr< cloud_t >& cloud_segment,
-        smap_interfaces::msg::SmapObject& obj ) const;
+    // bool estimate_object_3D_AABB(
+    //     const pcl::shared_ptr< cloud_t >& object_cloud, smap_interfaces::msg::SmapObject& obj ) const;
 
-    void roi_filter( const pcl::shared_ptr< cloud_t >& point_cloud ) const;
+    // bool estimate_confidence( const pcl::shared_ptr< cloud_t >& object_cloud, float& conf ) const;
 
-    void pcl_voxelization( const pcl::shared_ptr< cloud_t >& point_cloud ) const;
-
-    void statistical_outlier_filter( const pcl::shared_ptr< cloud_t >& cloud_segment ) const;
-
-    void euclidean_clustering(
-        const pcl::shared_ptr< cloud_t >& cloud_segment, const pcl::shared_ptr< cloud_t >& object_cloud ) const;
-
-    bool estimate_object_3D_AABB(
-        const pcl::shared_ptr< cloud_t >& object_cloud, smap_interfaces::msg::SmapObject& obj ) const;
-
-    bool estimate_confidence( const pcl::shared_ptr< cloud_t >& object_cloud, float& conf ) const;
-
-    void transform_object_pcl(
-        smap_interfaces::msg::SmapObject& obj,
-        const std::shared_ptr< geometry_msgs::msg::TransformStamped >& transform ) const;
+    // void transform_object_pcl(
+    //     smap_interfaces::msg::SmapObject& obj,
+    //     const std::shared_ptr< geometry_msgs::msg::TransformStamped >& transform ) const;
 
     inline void publish_bb( int32_t id, smap_interfaces::msg::SmapObject& obj )
     {

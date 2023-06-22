@@ -56,10 +56,11 @@ include_directories(
 
 
 
+add_subdirectory(src/pcl_processing)
 add_subdirectory(src/object_estimator)
+add_subdirectory(src/thing)
 add_subdirectory(src/perception_server)
 add_subdirectory(src/topo_map)
-add_subdirectory(src/thing)
 
 
 install(

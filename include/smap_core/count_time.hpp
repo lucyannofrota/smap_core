@@ -58,11 +58,11 @@ class count_time
         return ( std::chrono::duration_cast< std::chrono::milliseconds >( stop - start ) ).count();
     }
 
-    inline void print_time( const char* str ) { printf( "%s %ims\n", this->get_time() ); }
+    inline void print_time( const char* str ) { printf( "%s %ims\n", str, this->get_time() ); }
 
     inline void print_time( const rclcpp::Logger& logger, const char* str )
     {
-        RCLCPP_DEBUG( logger, "%s %ims", this->get_time() );
+        RCLCPP_DEBUG( logger, "%s %ims", str, this->get_time() );
     }
 
     inline void get_time( const rclcpp::Logger& logger, const char* str, plot_vec& vec )

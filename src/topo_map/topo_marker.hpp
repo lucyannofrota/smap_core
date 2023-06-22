@@ -13,6 +13,8 @@
 #include "../include/smap_core/macros.hpp"
 #include "graph.hpp"
 
+// TODO: change the strong_marker policy
+
 namespace smap
 {
 

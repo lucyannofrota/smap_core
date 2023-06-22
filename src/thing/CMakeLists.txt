@@ -1,11 +1,10 @@
 cmake_minimum_required(VERSION 3.5)
-project(smap_core)
+project(thing)
 
 
 # find dependencies
     # ament
         find_package(ament_cmake REQUIRED)
-        find_package(ament_cmake_ros REQUIRED)
     # standard ros pkgs
         find_package(rclcpp REQUIRED)
         find_package(geometry_msgs REQUIRED)
@@ -198,3 +197,5 @@ install(
 ###############
 ## /topo_map ##
 ###############
+
+ament_package()

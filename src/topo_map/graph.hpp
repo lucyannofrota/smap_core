@@ -29,7 +29,6 @@ struct vertex_data_t
     geometry_msgs::msg::Point pos;
     smap::thing this_thing;
     std::list< smap::thing > related_things;
-
     bool strong_vertex = false;
 
     friend class boost::serialization::access;
@@ -46,8 +45,6 @@ struct vertex_data_t
         // TODO: related_things serialization
         // ar& related_things;
     }
-
-
 };
 
 struct edge_data_t

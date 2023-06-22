@@ -1,4 +1,4 @@
-#include "object_estimator.hpp"
+#include "include/object_estimator.hpp"
 
 #include "parameter_tuning.hpp"
 
@@ -12,181 +12,16 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_opengl.h>
 
-
+// SMAP
+// #include "../pcl_processing/include/pcl_processing.hpp"
+// #include "pcl_processing/pcl_processing.hpp"
+#include "../pcl_processing/include/pcl_processing.hpp"
 using namespace std::chrono_literals;
 
 // TODO: Check the slider parameters to avoid seg fault
 
 namespace smap
 {
-
-void object_estimator::box_filter(
-    const pcl::shared_ptr< cloud_t >& input_cloud, const pcl::shared_ptr< cloud_t >& cloud_segment,
-    smap_interfaces::msg::SmapObject& obj ) const
-{
-    count_time timer;
-    if( !input_cloud ) return;
-    pcl::PointIndices::Ptr inliers( new pcl::PointIndices() );
-
-    for( size_t h = obj.bb_2d.keypoint_1[ 1 ]; h <= obj.bb_2d.keypoint_2[ 1 ]; h++ )
-        for( size_t w = obj.bb_2d.keypoint_1[ 0 ]; w <= obj.bb_2d.keypoint_2[ 0 ]; w++ )
-            inliers->indices.push_back( ( w ) + input_cloud->width * (h) -1 );
-
-    pcl::ExtractIndices< cloud_point_t > extract;
-    extract.setInputCloud( input_cloud );
-    extract.setIndices( inliers );
-
-    extract.filter( *cloud_segment );
-
-    const char str[] = "box_filter";
-    timer.get_time( this->get_logger(), str, box_filter_plot );
-}
-
-void object_estimator::roi_filter( const pcl::shared_ptr< cloud_t >& point_cloud ) const
-{
-    count_time timer;
-    if( !point_cloud ) return;
-    point_cloud->erase(
-        std::remove_if(
-            point_cloud->begin(), point_cloud->end(),
-            [ this ]( const cloud_point_t& point ) {
-                return (
-                    ( ( point.getVector3fMap() ).norm() < this->pcl_lims->first )
-                    || ( ( point.getVector3fMap() ).norm() > this->pcl_lims->second ) );
-            } ),
-        point_cloud->end() );
-
-    const char str[] = "roi_filter";
-    timer.get_time( this->get_logger(), str, roi_filter_plot );
-}
-
-void object_estimator::pcl_voxelization( const pcl::shared_ptr< cloud_t >& point_cloud ) const
-{
-    count_time timer;
-    if( !point_cloud ) return;
-    pcl::VoxelGrid< cloud_point_t > vox_grid;
-
-    vox_grid.setInputCloud( point_cloud );
-    // vox_grid.setLeafSize (0.01f, 0.01f, 0.01f);
-    vox_grid.setLeafSize( this->leaf_size, this->leaf_size, this->leaf_size );
-    vox_grid.setDownsampleAllData( true );
-    vox_grid.filter( *point_cloud );
-
-    const char str[] = "pcl_vox";
-    timer.get_time( this->get_logger(), str, voxelization_plot );
-}
-
-void object_estimator::statistical_outlier_filter( const pcl::shared_ptr< cloud_t >& cloud_segment ) const
-{
-    count_time timer;
-    if( !cloud_segment ) return;
-    pcl::StatisticalOutlierRemoval< cloud_point_t > sor;
-    sor.setInputCloud( cloud_segment );
-    sor.setMeanK( this->mean_k );  // Greater ther values take more time to compute
-    sor.setStddevMulThresh( this->mu );
-
-    sor.filter( *cloud_segment );
-
-    const char str[] = "statistical_outlier_filter";
-    timer.get_time( this->get_logger(), str, sof_filter_plot );
-}
-
-void object_estimator::euclidean_clustering(
-    const pcl::shared_ptr< cloud_t >& cloud_segment, const pcl::shared_ptr< cloud_t >& object_cloud ) const
-{
-    count_time timer;
-    if( !cloud_segment ) return;
-
-    pcl::search::KdTree< cloud_point_t >::Ptr tree( new pcl::search::KdTree< cloud_point_t > );
-    std::vector< int > indices;
-    pcl::removeNaNFromPointCloud( *cloud_segment, *cloud_segment, indices );
-    tree->setInputCloud( cloud_segment );
-
-    std::vector< pcl::PointIndices > cluster_idx;
-    pcl::EuclideanClusterExtraction< cloud_point_t > ece;
-    ece.setClusterTolerance( this->ClusterTolerance );  // cm
-    ece.setMinClusterSize( 25 );
-    ece.setSearchMethod( tree );
-    ece.setInputCloud( cloud_segment );
-    ece.extract( cluster_idx );
-
-    // Idxs of the biggest cluster
-    if( cluster_idx.size() >= 1 )
-        for( const auto& idx: cluster_idx[ 0 ].indices ) object_cloud->push_back( ( *cloud_segment )[ idx ] );
-
-    const char str[] = "euclidean_clustering";
-    timer.get_time( this->get_logger(), str, euclidean_clustering_plot );
-}
-
-bool object_estimator::estimate_confidence( const pcl::shared_ptr< cloud_t >& object_cloud, float& conf ) const
-{
-    if( !object_cloud ) return false;
-    float lims[ 2 ] = { FLT_MAX, FLT_MIN };
-    for( cloud_point_t& point: *object_cloud )
-    {
-        if( point.z < lims[ 0 ] ) lims[ 0 ] = point.z;
-        if( point.z > lims[ 1 ] ) lims[ 1 ] = point.z;
-    }
-
-    conf = ( ( lims[ 1 ] - lims[ 0 ] ) - OBJECT_SIZE_LIM_CONF )
-         / ( ( pcl_lims->second - pcl_lims->first ) - OBJECT_SIZE_LIM_CONF );
-    return true;
-}
-
-void object_estimator::transform_object_pcl(
-    smap_interfaces::msg::SmapObject& obj,
-    const std::shared_ptr< geometry_msgs::msg::TransformStamped >& transform ) const
-{
-    count_time timer;
-
-    // // Centroid
-    // tf2::doTransform< geometry_msgs::msg::PoseStamped >( obj.pose, obj.pose, *transform );
-
-    // // Limits
-    // tf2::doTransform< geometry_msgs::msg::PointStamped >( obj.aabb.min, obj.aabb.min, *transform );
-    // tf2::doTransform< geometry_msgs::msg::PointStamped >( obj.aabb.max, obj.aabb.max, *transform );
-
-    // Point cloud
-    tf2::doTransform< sensor_msgs::msg::PointCloud2 >( obj.pointcloud, obj.pointcloud, *transform );
-
-    const char str[] = "transform";
-    timer.get_time( this->get_logger(), str, transform_plot );
-}
-
-bool object_estimator::estimate_object_3D_AABB(
-    const pcl::shared_ptr< cloud_t >& object_cloud, smap_interfaces::msg::SmapObject& obj ) const
-{
-    // TODO: Try to use medians
-    count_time timer;
-    if( !object_cloud || object_cloud->points.empty() ) return false;
-
-    obj.aabb.min.point.x = object_cloud->points[ 0 ].x;
-    obj.aabb.min.point.y = object_cloud->points[ 0 ].y;
-    obj.aabb.min.point.z = object_cloud->points[ 0 ].z;
-
-    obj.aabb.max.point.x = object_cloud->points[ 0 ].x;
-    obj.aabb.max.point.y = object_cloud->points[ 0 ].y;
-    obj.aabb.max.point.z = object_cloud->points[ 0 ].z;
-
-    for( cloud_point_t& point: *object_cloud )
-    {
-        if( point.x < obj.aabb.min.point.x ) obj.aabb.min.point.x = point.x;
-        if( point.y < obj.aabb.min.point.y ) obj.aabb.min.point.y = point.y;
-        if( point.z < obj.aabb.min.point.z ) obj.aabb.min.point.z = point.z;
-
-        if( point.x > obj.aabb.max.point.x ) obj.aabb.max.point.x = point.x;
-        if( point.y > obj.aabb.max.point.y ) obj.aabb.max.point.y = point.y;
-        if( point.z > obj.aabb.max.point.z ) obj.aabb.max.point.z = point.z;
-    }
-
-    obj.pose.pose.position.x = ( obj.aabb.min.point.x + obj.aabb.max.point.x ) / 2;
-    obj.pose.pose.position.y = ( obj.aabb.min.point.y + obj.aabb.max.point.y ) / 2;
-    obj.pose.pose.position.z = ( obj.aabb.min.point.z + obj.aabb.max.point.z ) / 2;
-
-    const char str[]         = "3D_AABB";
-    timer.get_time( this->get_logger(), str, centroid_plot );
-    return true;
-}
 
 void object_estimator::object_estimation_thread(
     const pcl::shared_ptr< cloud_t >& point_cloud,
@@ -226,32 +61,85 @@ void object_estimator::object_estimation_thread(
 
         // Cloud filtering
         count_time filter_timer;
-        this->box_filter( point_cloud, segment_cloud_pcl, obs.object );
+        // this->box_filter( point_cloud, segment_cloud_pcl, obs.object );
+        count_time box_filter_timer;
+        box_filter( point_cloud, segment_cloud_pcl, obs.object.bb_2d.keypoint_1, obs.object.bb_2d.keypoint_2 );
+        const char box_filt_str[] = "box_filter";
+        box_filter_timer.get_time( this->get_logger(), box_filt_str, box_filter_plot );
 
-        if( this->roi_filt ) this->roi_filter( segment_cloud_pcl );
+        if( this->roi_filt )
+        {
+            // this->roi_filter( segment_cloud_pcl );
+            count_time roi_filt_timer;
+            roi_filter( segment_cloud_pcl, this->pcl_lims );
+            const char roi_filt_str[] = "roi_filter";
+            roi_filt_timer.get_time( this->get_logger(), roi_filt_str, roi_filter_plot );
+        }
+        if( this->voxelization )
+        {
 
-        if( this->voxelization ) this->pcl_voxelization( segment_cloud_pcl );
+            // this->pcl_voxelization( segment_cloud_pcl );
+            count_time pcl_vox_timer;
+            pcl_voxelization( segment_cloud_pcl, this->leaf_size );
+            const char pcl_vox_str[] = "pcl_vox";
+            pcl_vox_timer.get_time( this->get_logger(), pcl_vox_str, voxelization_plot );
+        }
 
-        if( this->sof ) this->statistical_outlier_filter( segment_cloud_pcl );
+        if( this->sof )
+        {
+            // this->statistical_outlier_filter( segment_cloud_pcl );
+            count_time statistical_outlier_filter_timer;
+            statistical_outlier_filter( segment_cloud_pcl, this->mean_k, this->mu );
+            const char sof_filt_str[] = "statistical_outlier_filter";
+            statistical_outlier_filter_timer.get_time( this->get_logger(), sof_filt_str, sof_filter_plot );
+        }
 
         // Cloud Segmentation
-        if( this->euclidean_clust ) this->euclidean_clustering( segment_cloud_pcl, object_cloud_pcl );
+        if( this->euclidean_clust )
+        {
+            // this->euclidean_clustering( segment_cloud_pcl, object_cloud_pcl );
+            count_time euclidean_clustering_timer;
+            euclidean_clustering( segment_cloud_pcl, object_cloud_pcl, this->ClusterTolerance );
+            const char euc_clust_str[] = "euclidean_clustering";
+            euclidean_clustering_timer.get_time( this->get_logger(), euc_clust_str, euclidean_clustering_plot );
+        }
+
         const char str_filtering[] = "filtering_time";
         filter_timer.get_time( this->get_logger(), str_filtering, total_filter_plot );
 
         // Object cloud confidence
-        if( this->euclidean_clust ) this->estimate_confidence( object_cloud_pcl, obs.object.aabb.confidence );
-        else this->estimate_confidence( segment_cloud_pcl, obs.object.aabb.confidence );
+        if( this->euclidean_clust )
+        {
+            // this->estimate_confidence( object_cloud_pcl, obs.object.aabb.confidence );
+            estimate_confidence( object_cloud_pcl, obs.object.aabb.confidence, this->pcl_lims, OBJECT_SIZE_LIM_CONF );
+        }
+        else
+        {
+            // this->estimate_confidence( segment_cloud_pcl, obs.object.aabb.confidence );
+            estimate_confidence( segment_cloud_pcl, obs.object.aabb.confidence, this->pcl_lims, OBJECT_SIZE_LIM_CONF );
+        }
 
         // Transform
         if( this->euclidean_clust ) pcl::toROSMsg( *object_cloud_pcl, obs.object.pointcloud );
         else pcl::toROSMsg( *segment_cloud_pcl, obs.object.pointcloud );
-        this->transform_object_pcl( obs.object, transform );
+        // this->transform_object_pcl( obs.object, transform );
+        count_time transform_timer;
+        tf2::doTransform< sensor_msgs::msg::PointCloud2 >( obs.object.pointcloud, obs.object.pointcloud, *transform );
+        // transform_object_pcl( obs.object, transform );
+        const char transform_str[] = "transform";
+        transform_timer.get_time( this->get_logger(), transform_str, transform_plot );
 
         // Parameter Estimation
         count_time estimation_timer;
         pcl::fromROSMsg( obs.object.pointcloud, *object_cloud_pcl );
-        if( !this->estimate_object_3D_AABB( object_cloud_pcl, obs.object ) ) return;
+        // if( !this->estimate_object_3D_AABB( object_cloud_pcl, obs.object ) ) return;
+        count_time timer_3D_AABB;
+        if( !estimate_object_3D_AABB(
+                object_cloud_pcl, obs.object.pose.pose.position, obs.object.aabb.min.point,
+                obs.object.aabb.max.point ) )
+            return;
+        const char AABB_str[] = "3D_AABB";
+        timer_3D_AABB.get_time( this->get_logger(), AABB_str, centroid_plot );
 
         const char str_estimation_time[] = "estimation_time";
         estimation_timer.get_time( this->get_logger(), str_estimation_time, total_estimation_plot );

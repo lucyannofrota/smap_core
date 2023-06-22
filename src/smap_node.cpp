@@ -11,9 +11,9 @@
 // #include "smap_object_estimator/object_estimator.hpp"
 
 // SMAP
-#include "../include/smap_core/macros.hpp"
-#include "object_estimator/object_estimator.hpp"
+#include "object_estimator/include/object_estimator.hpp"
 #include "perception_server/perception_server.hpp"
+#include "smap_core/macros.hpp"
 #include "smap_interfaces/msg/smap_data.hpp"
 #include "thing/thing.hpp"
 #include "topo_map/topo_map.hpp"
@@ -78,7 +78,7 @@ int main( int argc, char** argv )
 {
     rclcpp::init( argc, argv );
     rclcpp::NodeOptions options;
-    std::shared_ptr< smap::smap_node > _smap_node = std::make_shared< smap::smap_node >();
+    std::shared_ptr< smap::smap_node > _smap_node    = std::make_shared< smap::smap_node >();
     std::shared_ptr< smap::topo_map > _topo_map_node = std::make_shared< smap::topo_map >();
     std::shared_ptr< smap::object_estimator > _object_estimator_node =
         std::make_shared< smap::object_estimator >( options );
