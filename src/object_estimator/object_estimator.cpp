@@ -161,8 +161,8 @@ void object_estimator::object_estimation_thread(
         const std::lock_guard< std::mutex > object_bb_pub_lock( this->object_bb_pub_mutex );
         this->publish_bb( 0, obs.object );
 
-        const std::lock_guard< std::mutex > debug_object_pcl_pub_lock( this->debug_object_pcl_pub_mutex );
-        this->debug_object_pcl_pub->publish( obs.object.pointcloud );
+        const std::lock_guard< std::mutex > object_pcl_pub_lock( this->object_pcl_pub_mutex );
+        this->object_pcl_pub->publish( obs.object.pointcloud );
     }
     catch( std::exception& e )
     {
@@ -193,9 +193,9 @@ void object_estimator::detections_callback( const smap_interfaces::msg::SmapDete
 
     // std::async(
     //     std::launch::async, &object_estimator::occlusion_matrix_thread, this, input_msg->pointcloud, transform );
-    std::async(
-        std::launch::async, &object_estimator::occlusion_matrix_thread,
-        std::make_shared< sensor_msgs::msg::PointCloud2 >( input_msg->pointcloud ), transform );
+    // std::async(
+    //     std::launch::async, &object_estimator::occlusion_matrix_thread, this,
+    //     std::make_shared< sensor_msgs::msg::PointCloud2 >( input_msg->pointcloud ), transform );
 
     for( auto& obj: input_msg->objects )
     {

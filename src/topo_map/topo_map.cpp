@@ -206,7 +206,7 @@ thing& topo_map::add_object( const smap_interfaces::msg::SmapObservation::Shared
     // current = this->get_closest_vertex( observation->object.pose.pose.position, distance );
 
     RCLCPP_DEBUG( this->get_logger(), "append_object" );
-    thing new_thing( &( this->reg_classes ), ++this->thing_id_count );
+    thing new_thing( this->reg_classes, ++this->thing_id_count );
     // probabilities
     // *this->reg_detectors[]
 

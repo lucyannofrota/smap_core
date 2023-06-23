@@ -1,11 +1,17 @@
 #include "include/pcl_processing.hpp"
 
+// STL
+#include <cmath>
+
 // PCL
 #include <pcl/filters/crop_box.h>
 #include <pcl/filters/extract_indices.h>
 #include <pcl/filters/statistical_outlier_removal.h>
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/segmentation/extract_clusters.h>
+
+// SMAP
+#include "../../../include/smap_core/interface_templates.hpp"
 
 namespace smap
 {
@@ -142,28 +148,76 @@ bool estimate_confidence(
     return true;
 }
 
-void compute_occlusion_matrix( const pcl::shared_ptr< cloud_t >& pcl )
+void compute_occlusion_matrix(
+    const std::shared_ptr< occlusion_matrix_t >& occlusion_matrix, const pcl::shared_ptr< cloud_t >& pcl )
 {
-    std::unique_ptr< occlusion_matrix_t > occlusion_matrix;
-    auto pcl_it = pcl->begin();
-    pcl::CropBox< cloud_point_t > CropBox;
-    CropBox.setKeepOrganized( true );
-    CropBox.setInputCloud( pcl );
-    // CropBox.setTransform
-    // CropBox.setMin
-    printf( "occlusion pcl ordered?: %i [h,w][%i,%i]\n", (int) pcl->isOrganized(), pcl->height, pcl->width );
-    size_t r = 0, c = 0;
+    printf( "\tcompute_occlusion_matrix\n" );
+
+    // size_t r = 0, c = 0;
     int r_l = floor( pcl->height / OCCLUSION_MATRIX_ROWS ), c_l = floor( pcl->width / OCCLUSION_MATRIX_COLS );
-    for( int pcl_r = 0; pcl_r < pcl->height; pcl_r++ )
+    geometry_msgs::msg::Point pt;
+    uint16_t occlusion_r, occlusion_c;
+    // int b = 0;
+    for( uint32_t pcl_r = 0; pcl_r < pcl->height; pcl_r++ )
     {
-        for( int pcl_c = 0; pcl_c < pcl->width; pcl_c++ )
+        occlusion_r           = floor( pcl_r / r_l );
+        auto& occlusion_array = ( *occlusion_matrix )[ occlusion_r ];
+        for( uint32_t pcl_c = 0; pcl_c < pcl->width; pcl_c++ )
         {
-            // loop through pcl points and updates points in each quadrant until the matrix is complete
-            pcl->at( pcl_r, pcl_c );
-            //
-            //
+            occlusion_c = floor( pcl_c / c_l );
+            pt.x        = pcl->at( pcl_c, pcl_r ).x;
+            pt.y        = pcl->at( pcl_c, pcl_r ).y;
+            pt.z        = pcl->at( pcl_c, pcl_r ).z;
+
+            if( !is_valid( pt ) ) continue;
+            if( !std::get< 2 >( occlusion_array[ occlusion_c ] ) )
+            {
+                std::get< 0 >( occlusion_array[ occlusion_c ] ) = pt;
+                std::get< 1 >( occlusion_array[ occlusion_c ] ) = pt;
+                std::get< 2 >( occlusion_array[ occlusion_c ] ) = true;
+                continue;
+            }
+
+            if( pt.x < std::get< 0 >( occlusion_array[ occlusion_c ] ).x )
+                std::get< 0 >( occlusion_array[ occlusion_c ] ).x = pt.x;
+            if( pt.y < std::get< 0 >( occlusion_array[ occlusion_c ] ).y )
+                std::get< 0 >( occlusion_array[ occlusion_c ] ).y = pt.y;
+            if( pt.z < std::get< 0 >( occlusion_array[ occlusion_c ] ).z )
+                std::get< 0 >( occlusion_array[ occlusion_c ] ).z = pt.z;
+            // Max
+            if( pt.x > std::get< 1 >( occlusion_array[ occlusion_c ] ).x )
+                std::get< 1 >( occlusion_array[ occlusion_c ] ).x = pt.x;
+            if( pt.y > std::get< 1 >( occlusion_array[ occlusion_c ] ).y )
+                std::get< 1 >( occlusion_array[ occlusion_c ] ).y = pt.y;
+            if( pt.z > std::get< 1 >( occlusion_array[ occlusion_c ] ).z )
+                std::get< 1 >( occlusion_array[ occlusion_c ] ).z = pt.z;
+            // set_marker(
+            //     (int) ( occlusion_r * OCCLUSION_MATRIX_COLS + occlusion_c ), occlusion_array[ occlusion_c ], clock,
+            //     marker );
+            // pub->publish( marker );
         }
     }
+
+    // for( auto& row_array: *occlusion_matrix )
+    // {
+    //     for( auto& col_array: row_array )
+    //     {
+    //         // // Min
+    //         // if( pt.x < std::get< 0 >( occlusion_array[ occlusion_c ] ).x )
+    //         //     std::get< 0 >( occlusion_array[ occlusion_c ] ).x = pt.x;
+    //         // if( pt.y < std::get< 0 >( occlusion_array[ occlusion_c ] ).y )
+    //         //     std::get< 0 >( occlusion_array[ occlusion_c ] ).y = pt.y;
+    //         // if( pt.z < std::get< 0 >( occlusion_array[ occlusion_c ] ).z )
+    //         //     std::get< 0 >( occlusion_array[ occlusion_c ] ).z = pt.z;
+    //         // // Max
+    //         // if( pt.x > std::get< 1 >( occlusion_array[ occlusion_c ] ).x )
+    //         //     std::get< 1 >( occlusion_array[ occlusion_c ] ).x = pt.x;
+    //         // if( pt.y > std::get< 1 >( occlusion_array[ occlusion_c ] ).y )
+    //         //     std::get< 1 >( occlusion_array[ occlusion_c ] ).y = pt.y;
+    //         // if( pt.z > std::get< 1 >( occlusion_array[ occlusion_c ] ).z )
+    //         //     std::get< 1 >( occlusion_array[ occlusion_c ] ).z = pt.z;
+    //     }
+    // }
 
     // for( size_t r = 0; r < OCCLUSION_MATRIX_ROWS; r++ )
     // {

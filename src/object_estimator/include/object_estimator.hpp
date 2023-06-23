@@ -3,6 +3,7 @@
 
 // STL
 #include <chrono>
+#include <memory>
 #include <mutex>
 #include <stdlib.h>
 #include <thread>
@@ -15,8 +16,11 @@
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <tf2_sensor_msgs/tf2_sensor_msgs.h>
 #include <visualization_msgs/msg/marker.hpp>
+#include <visualization_msgs/msg/marker_array.hpp>
 
 // PCL
+#include <pcl/io/pcd_io.h>    // TODO: Remove
+#include <pcl/point_types.h>  // TODO: Remove
 #include <pcl_conversions/pcl_conversions.h>
 
 // SMAP
@@ -128,7 +132,7 @@ class object_estimator : public rclcpp::Node
             std::string( this->get_namespace() ) + std::string( "/perception/predictions" ), 10,
             std::bind( &smap::object_estimator::detections_callback, this, std::placeholders::_1 ) );
 
-    rclcpp::Publisher< sensor_msgs::msg::PointCloud2 >::SharedPtr debug_object_pcl_pub =
+    rclcpp::Publisher< sensor_msgs::msg::PointCloud2 >::SharedPtr object_pcl_pub =
         this->create_publisher< sensor_msgs::msg::PointCloud2 >(
             std::string( this->get_namespace() ) + std::string( "/object_estimator/object_pcl" ), 10 );
     rclcpp::Publisher< visualization_msgs::msg::Marker >::SharedPtr object_bb_pub =
@@ -138,10 +142,25 @@ class object_estimator : public rclcpp::Node
         this->create_publisher< smap_interfaces::msg::SmapObservation >(
             std::string( this->get_namespace() ) + std::string( "/object_estimator/observations" ), 10 );
 
+    rclcpp::Publisher< sensor_msgs::msg::PointCloud2 >::SharedPtr transf_pcl_pub =
+        this->create_publisher< sensor_msgs::msg::PointCloud2 >(
+            std::string( this->get_namespace() ) + std::string( "/object_estimator/transf_pcl" ), 10 );
+
+    rclcpp::Publisher< visualization_msgs::msg::MarkerArray >::SharedPtr occlusion_boxes_pub =
+        this->create_publisher< visualization_msgs::msg::MarkerArray >(
+            std::string( this->get_namespace() ) + std::string( "/object_estimator/occlusion_boxes" ), 10 );
+    rclcpp::Publisher< visualization_msgs::msg::Marker >::SharedPtr single_occlusion_b_pub =
+        this->create_publisher< visualization_msgs::msg::Marker >(
+            std::string( this->get_namespace() ) + std::string( "/object_estimator/single_occlusion_b" ), 10 );
+
+    visualization_msgs::msg::MarkerArray marker_array;
+    visualization_msgs::msg::Marker box_marker;
+    visualization_msgs::msg::Marker arrow_marker;
+    const std::shared_ptr< occlusion_matrix_t > occlusion_matrix = std::make_shared< occlusion_matrix_t >();
     // rclcpp::Publisher< smap_interfaces::msg::SmapObservation >::SharedPtr object_pub =
     //     this->create_publisher< smap_interfaces::msg::SmapObservation >(
     //         std::string( this->get_namespace() ) + std::string( "/object_estimator/occlusion_map" ), 10 );
-    std::mutex object_bb_pub_mutex, object_pub_mutex, debug_object_pcl_pub_mutex;
+    std::mutex object_bb_pub_mutex, object_pub_mutex, object_pcl_pub_mutex;
 
     std::shared_ptr< thread_queue > thread_ctl = std::make_shared< thread_queue >( thread_queue( this->max_threads ) );
 
@@ -175,6 +194,36 @@ class object_estimator : public rclcpp::Node
                 ( pcl_lims->second - pcl_lims->first ), OBJECT_SIZE_LIM_CONF );
             this->~object_estimator();
         }
+        this->box_marker.header.frame_id      = "map";
+        this->box_marker.header.stamp         = this->get_clock()->now();
+        this->box_marker.type                 = visualization_msgs::msg::Marker::CUBE;
+        this->box_marker.action               = visualization_msgs::msg::Marker::ADD;
+        this->box_marker.pose.orientation.x   = 0;
+        this->box_marker.pose.orientation.y   = 0;
+        this->box_marker.pose.orientation.z   = 0;
+        this->box_marker.pose.orientation.w   = 1;
+        this->box_marker.color.b              = 0;
+        this->box_marker.color.g              = 1;
+        this->box_marker.color.r              = 0;
+        this->box_marker.color.a              = 0.75;
+        this->box_marker.ns                   = "occlusion box";
+
+        this->arrow_marker.header.frame_id    = "map";
+        this->arrow_marker.header.stamp       = this->get_clock()->now();
+        this->arrow_marker.type               = visualization_msgs::msg::Marker::ARROW;
+        this->arrow_marker.action             = visualization_msgs::msg::Marker::ADD;
+        this->arrow_marker.pose.orientation.x = 0;
+        this->arrow_marker.pose.orientation.y = 0;
+        this->arrow_marker.pose.orientation.z = 0;
+        this->arrow_marker.pose.orientation.w = 1;
+        this->arrow_marker.color.b            = 0;
+        this->arrow_marker.color.g            = 0;
+        this->arrow_marker.color.r            = 1;
+        this->arrow_marker.color.a            = 0.5;
+        this->arrow_marker.ns                 = "transform";
+        this->arrow_marker.scale.x            = 1;
+        this->arrow_marker.scale.y            = 1;
+        this->arrow_marker.scale.z            = 1;
     }
 
     inline object_estimator( const rclcpp::NodeOptions& options ) : Node( "object_estimator", options )
@@ -182,6 +231,36 @@ class object_estimator : public rclcpp::Node
         RCLCPP_INFO( this->get_logger(), "Initializing object_estimator" );
         // this->viewer = std::make_shared<pcl::visualization::PCLVisualizer>(new pcl::visualization::PCLVisualizer ("3D
         // Viewer"));
+        this->box_marker.header.frame_id      = "map";
+        this->box_marker.header.stamp         = this->get_clock()->now();
+        this->box_marker.type                 = visualization_msgs::msg::Marker::CUBE;
+        this->box_marker.action               = visualization_msgs::msg::Marker::ADD;
+        this->box_marker.pose.orientation.x   = 0;
+        this->box_marker.pose.orientation.y   = 0;
+        this->box_marker.pose.orientation.z   = 0;
+        this->box_marker.pose.orientation.w   = 1;
+        this->box_marker.color.b              = 0;
+        this->box_marker.color.g              = 1;
+        this->box_marker.color.r              = 0;
+        this->box_marker.color.a              = 0.5;
+        this->box_marker.ns                   = "occlusion box";
+
+        this->arrow_marker.header.frame_id    = "map";
+        this->arrow_marker.header.stamp       = this->get_clock()->now();
+        this->arrow_marker.type               = visualization_msgs::msg::Marker::ARROW;
+        this->arrow_marker.action             = visualization_msgs::msg::Marker::ADD;
+        this->arrow_marker.pose.orientation.x = 0;
+        this->arrow_marker.pose.orientation.y = 0;
+        this->arrow_marker.pose.orientation.z = 0;
+        this->arrow_marker.pose.orientation.w = 1;
+        this->arrow_marker.color.b            = 0;
+        this->arrow_marker.color.g            = 0;
+        this->arrow_marker.color.r            = 1;
+        this->arrow_marker.color.a            = 0.75;
+        this->arrow_marker.ns                 = "transform";
+        this->arrow_marker.scale.x            = 1;
+        this->arrow_marker.scale.y            = 1;
+        this->arrow_marker.scale.z            = 1;
     }
 
     inline ~object_estimator() {}
@@ -275,16 +354,62 @@ class object_estimator : public rclcpp::Node
     {  // Pooling
     }
 
-    inline static void occlusion_matrix_thread(
+    inline void occlusion_matrix_thread(
         const std::shared_ptr< sensor_msgs::msg::PointCloud2 >& ros_pcl,
         const std::shared_ptr< geometry_msgs::msg::TransformStamped >& transform )
     {
+        count_time timer;
+
+        // TODO: make mutually exclusive
+        printf( "occlusion_matrix_thread\n" );
+        if( ros_pcl->data.empty() ) return;
         std::unique_ptr< sensor_msgs::msg::PointCloud2 > transformed_ros_pcl =
             std::make_unique< sensor_msgs::msg::PointCloud2 >();
         pcl::shared_ptr< cloud_t > transformed_pcl( new cloud_t );
         tf2::doTransform< sensor_msgs::msg::PointCloud2 >( *ros_pcl, *transformed_ros_pcl, *transform );
-        pcl::fromROSMsg( *ros_pcl, *transformed_pcl );
-        compute_occlusion_matrix( transformed_pcl );
+        printf( "transform\n" );
+        this->transf_pcl_pub->publish( *transformed_ros_pcl );
+        printf( "transform pub\n" );
+        pcl::fromROSMsg( *transformed_ros_pcl, *transformed_pcl );
+        printf( "pcl-fill\n" );
+
+        for( auto& v: *( this->occlusion_matrix ) )
+            for( auto& e: v ) std::get< 2 >( e ) = false;
+
+        // pcl::io::savePCDFileASCII( "/workspace/my_pcd.pcd", *transformed_pcl );
+        // pcl::io::loadPCDFile( "/workspace/my_pcd.pcd", *transformed_pcl );
+        // pcl::toROSMsg( *transformed_pcl, *transformed_ros_pcl );
+        // transformed_ros_pcl->header.frame_id = "map";
+        // this->transf_pcl_pub->publish( *transformed_ros_pcl );
+        compute_occlusion_matrix(
+            occlusion_matrix, transformed_pcl);
+        printf( "compute_occlusion_matrix\n" );
+
+        printf( "beg occlusion_boxes_pub\n" );
+        marker_array.markers.clear();
+        this->box_marker.id = 0;
+        for( auto& row_array: *occlusion_matrix )
+        {
+            for( auto& col_array: row_array )
+            {
+                if( !std::get< 2 >( col_array ) || !is_valid( std::get< 0 >( col_array ) )
+                    || !is_valid( std::get< 1 >( col_array ) ) )
+                    continue;
+                if( std::get< 1 >( col_array ) == std::get< 0 >( col_array ) ) continue;
+                this->box_marker.header.stamp = this->get_clock()->now();
+                this->box_marker.id++;
+                this->box_marker.scale.x         = abs( std::get< 1 >( col_array ).x - std::get< 0 >( col_array ).x );
+                this->box_marker.scale.y         = abs( std::get< 1 >( col_array ).y - std::get< 0 >( col_array ).y );
+                this->box_marker.scale.z         = abs( std::get< 1 >( col_array ).z - std::get< 0 >( col_array ).z );
+                this->box_marker.pose.position.x = std::get< 0 >( col_array ).x + this->box_marker.scale.x / 2;
+                this->box_marker.pose.position.y = std::get< 0 >( col_array ).y + this->box_marker.scale.y / 2;
+                this->box_marker.pose.position.z = std::get< 0 >( col_array ).z + this->box_marker.scale.z / 2;
+                marker_array.markers.push_back( this->box_marker );
+            }
+        }
+        // this->occlusion_boxes_pub->publish( marker_array );
+        printf( "occlusion_boxes_pub\n" );
+        timer.print_time( "occlusion_matrix_callback" );
     }
 
   private:

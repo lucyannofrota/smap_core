@@ -8,7 +8,6 @@ namespace smap
 std::string thing::get_label( void ) const
 {
     if( this->reg_classes == nullptr ) return UNDEFINED_LABEL;
-    if( *( this->reg_classes ) == nullptr ) return UNDEFINED_LABEL;
     std::string ret = UNDEFINED_LABEL;
     float value     = 0;
     for( auto e: this->class_probabilities )
@@ -32,17 +31,16 @@ bool thing::label_is_equal( const uint8_t& module_id, const uint8_t& obs_label )
 {
     (void) module_id;  // TODO: module_id verification
     if( this->reg_classes == nullptr ) return false;
-    if( *( this->reg_classes ) == nullptr ) return false;
 
     // Determine the string value of the current label
     // for( auto reg: ( **this->reg_classes ) )
     //     printf( "reg: %s|%i|%i\n", reg.first.c_str(), reg.second.first, reg.second.second );
     std::string current_label = this->get_label();
-    if( ( **this->reg_classes ).find( current_label ) != ( **this->reg_classes ).end() )
+    if( this->reg_classes->find( current_label ) != this->reg_classes->end() )
     {
         // Compare it's value with the given one
         // 1. Get the pair of indexes
-        std::pair< int, int > idxs = ( **this->reg_classes )[ current_label ];
+        std::pair< int, int > idxs = ( *this->reg_classes )[ current_label ];
         // printf( "Label: %s, id1: %i, id2: %i\n", current_label.c_str(), idxs.first, idxs.second );
         // 2. Check if the values detector value matches
         return idxs.second == obs_label;
@@ -180,10 +178,10 @@ geometry_msgs::msg::Point thing::update(
 
     // 2. Probabilities vector update
     // printf( "2. Probabilities vector update\n" );
-    if( this->class_probabilities.size() != ( *this->reg_classes )->size() )
+    if( this->class_probabilities.size() != this->reg_classes->size() )
     {
         // find
-        for( auto c: **this->reg_classes )
+        for( auto c: ( *this->reg_classes ) )
         {
             // if class not found add it to the map
             if( this->class_probabilities.find( c.first ) == this->class_probabilities.end() )

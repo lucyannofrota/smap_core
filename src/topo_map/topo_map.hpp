@@ -112,6 +112,7 @@ class topo_map : public rclcpp::Node
 
     inline void pose_callback( const geometry_msgs::msg::PoseStamped::SharedPtr pose )
     {
+        if( this->reg_classes == nullptr ) return;
         RCLCPP_DEBUG( this->get_logger(), "pose_callback" );
         this->add_vertex( pose->pose.position, true );
     }
@@ -120,7 +121,6 @@ class topo_map : public rclcpp::Node
 
     inline void add_vertex( const geometry_msgs::msg::Point& pos, bool strong_vertex )
     {
-
         this->add_vertex( pos, this->current_idx, this->previous_idx, strong_vertex );
     }
 
@@ -131,10 +131,7 @@ class topo_map : public rclcpp::Node
     inline size_t _add_vertex( size_t v_index, const geometry_msgs::msg::Point& pos, bool strong_vertex )
     {
         vertex_data_t vert {
-            v_index,
-            pos,
-            thing( &( this->reg_classes ), ++this->thing_id_count ),
-            std::list< smap::thing >(),
+            v_index, pos, thing( this->reg_classes, ++this->thing_id_count ), std::list< smap::thing >(),
             strong_vertex };
         size_t ret = boost::add_vertex( vert, this->graph );
 
@@ -445,20 +442,20 @@ class topo_map : public rclcpp::Node
         }
     };
 
-    std::map< std::string, std::pair< int, int > >* reg_classes;
+    std::shared_ptr< std::map< std::string, std::pair< int, int > > > reg_classes;
 
-    std::vector< detector_t >* reg_detectors;
+    std::shared_ptr< std::vector< detector_t > > reg_detectors;
 
-    inline void define_reg_classes( std::map< std::string, std::pair< int, int > >& classes )
+    inline void define_reg_classes( std::shared_ptr< std::map< std::string, std::pair< int, int > > >& classes )
     {
         RCLCPP_DEBUG( this->get_logger(), "Defining reg_classes" );
-        this->reg_classes = &classes;
+        this->reg_classes = classes;
     }
 
-    inline void define_reg_detectors( std::vector< detector_t >& dets )
+    inline void define_reg_detectors( std::shared_ptr< std::vector< detector_t > >& dets )
     {
         RCLCPP_DEBUG( this->get_logger(), "Defining reg_detectors" );
-        this->reg_detectors = &dets;
+        this->reg_detectors = dets;
     }
 
     inline void print_graph( void )

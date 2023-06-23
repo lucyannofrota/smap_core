@@ -1,12 +1,13 @@
 #ifndef SMAP_CORE__PCL_PROCESSING_HPP_
 #define SMAP_CORE__PCL_PROCESSING_HPP_
 
-#define OCCLUSION_MATRIX_ROWS 16
-#define OCCLUSION_MATRIX_COLS 32
+#define OCCLUSION_MATRIX_ROWS 16  // 16
+#define OCCLUSION_MATRIX_COLS 32  // 32
 
 // STL
 #include <array>
 #include <memory>
+#include <tuple>
 #include <utility>
 
 // PCL
@@ -15,6 +16,8 @@
 
 // ROS
 #include <geometry_msgs/msg/point.hpp>
+#include <rclcpp/rclcpp.hpp>
+#include <visualization_msgs/msg/marker.hpp>
 
 // TODO: Transpose all PCL related function to this file
 // TODO: Solve compile error
@@ -23,9 +26,9 @@ namespace smap
 {
 using cloud_point_t      = pcl::PointXYZRGB;
 using cloud_t            = pcl::PointCloud< cloud_point_t >;
-using occlusion_matrix_t = std::array<
-    std::array< std::pair< geometry_msgs::msg::Point, geometry_msgs::msg::Point >, OCCLUSION_MATRIX_COLS >,
-    OCCLUSION_MATRIX_ROWS >;
+using occlusion_cell_t   = std::tuple< geometry_msgs::msg::Point, geometry_msgs::msg::Point, bool >;
+using occlusion_array_t  = std::array< occlusion_cell_t, OCCLUSION_MATRIX_COLS >;
+using occlusion_matrix_t = std::array< occlusion_array_t, OCCLUSION_MATRIX_ROWS >;
 
 void box_filter(
     const pcl::shared_ptr< cloud_t >& input_cloud, const pcl::shared_ptr< cloud_t >& cloud_segment,
@@ -50,7 +53,28 @@ bool estimate_confidence(
     const pcl::shared_ptr< cloud_t >& object_cloud, float& conf,
     const std::shared_ptr< std::pair< float, float > >& pcl_lims, const float& object_size_lim_conf );
 
-void compute_occlusion_matrix( const pcl::shared_ptr< cloud_t >& pcl );
+inline void set_marker(
+    int32_t i, occlusion_cell_t cell, rclcpp::Clock::SharedPtr clock, visualization_msgs::msg::Marker& marker )
+{
+    marker.header.stamp    = clock->now();
+    marker.id              = i;
+    marker.scale.x         = abs( std::get< 1 >( cell ).x - std::get< 0 >( cell ).x );
+    marker.scale.y         = abs( std::get< 1 >( cell ).y - std::get< 0 >( cell ).y );
+    marker.scale.z         = abs( std::get< 1 >( cell ).z - std::get< 0 >( cell ).z );
+    marker.pose.position.x = ( std::get< 1 >( cell ).x + std::get< 0 >( cell ).x ) / 2;
+    marker.pose.position.y = ( std::get< 1 >( cell ).y + std::get< 0 >( cell ).y ) / 2;
+    marker.pose.position.z = ( std::get< 1 >( cell ).z + std::get< 0 >( cell ).z ) / 2;
+}
+
+void compute_occlusion_matrix(
+    const std::shared_ptr< occlusion_matrix_t >& occlusion_matrix, const pcl::shared_ptr< cloud_t >& pcl );
+
+inline bool is_valid( geometry_msgs::msg::Point& p )
+{
+    return !(
+        ( std::isnan( p.x ) || std::isnan( p.y ) || std::isnan( p.z ) )
+        || ( ( std::isinf( p.x ) || std::isinf( p.y ) || std::isinf( p.z ) ) ) );
+}
 
 bool check_occlusions( void );
 

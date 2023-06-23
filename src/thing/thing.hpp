@@ -3,6 +3,7 @@
 
 // STL
 #include <memory>
+#include <utility>
 
 // BOOST
 #include <boost/serialization/access.hpp>
@@ -42,7 +43,7 @@ class thing
 
     std::pair< geometry_msgs::msg::Point, geometry_msgs::msg::Point > aabb;  // min, max
 
-    std::map< std::string, std::pair< int, int > >** reg_classes = nullptr;
+    std::shared_ptr< std::map< std::string, std::pair< int, int > > > reg_classes;
 
     std::map< std::string, float > class_probabilities;
 
@@ -51,7 +52,8 @@ class thing
     // Methods
     thing( void ) {}
 
-    thing( std::map< std::string, std::pair< int, int > >** class_map, int id ) : reg_classes( class_map ), id( id )
+    thing( std::shared_ptr< std::map< std::string, std::pair< int, int > > >& class_map, int id ) :
+        reg_classes( class_map ), id( id )
     {
         // this->observations = observation_histogram::observation_histogram( 36 );
         // this->reg_classes = class_map;

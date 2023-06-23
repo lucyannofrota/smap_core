@@ -1,8 +1,14 @@
 #ifndef SMAP_CORE__PERCEPTION_SERVER_HPP_
 #define SMAP_CORE__PERCEPTION_SERVER_HPP_
 
+// STL
+#include <memory>
+#include <string>
+#include <utility>
+
 // ROS
 #include "../../include/smap_core/visibility_control.h"
+
 #include <rclcpp/rclcpp.hpp>
 
 // SMAP
@@ -46,9 +52,10 @@ class perception_server : public rclcpp::Node
 
   public:
 
-    std::map< std::string, std::pair< int, int > > classes;  // pair[server_id, detector_id]
+    std::shared_ptr< std::map< std::string, std::pair< int, int > > > classes =
+        std::make_shared< std::map< std::string, std::pair< int, int > > >();  // pair[server_id, detector_id]
 
-    std::vector< detector_t > detectors;
+    std::shared_ptr< std::vector< detector_t > > detectors = std::make_shared< std::vector< detector_t > >();
 
     // Constructor/Destructor
     inline perception_server() : Node( "perception_server" )
@@ -81,6 +88,8 @@ class perception_server : public rclcpp::Node
     void print_classes( std::string pref, std::map< int, std::string >& classes );
 
     void print_classes( std::string pref, std::map< std::string, std::pair< int, int > >& classes );
+
+    void print_classes( std::string pref, std::shared_ptr< std::map< std::string, std::pair< int, int > > >& classes );
 
     void print_classes( std::string pref, std::vector< std::string >& classes );
 
