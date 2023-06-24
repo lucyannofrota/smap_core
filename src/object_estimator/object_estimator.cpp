@@ -120,6 +120,7 @@ void object_estimator::object_estimation_thread(
         }
 
         // Transform
+        // TODO: check the possibility to apply the transform only to the centroids
         if( this->euclidean_clust ) pcl::toROSMsg( *object_cloud_pcl, obs.object.pointcloud );
         else pcl::toROSMsg( *segment_cloud_pcl, obs.object.pointcloud );
         // this->transform_object_pcl( obs.object, transform );
@@ -191,10 +192,10 @@ void object_estimator::detections_callback( const smap_interfaces::msg::SmapDete
     // launch occlusion_matrix_thread
     // input_msg->
 
-    // std::async(
-    //     std::launch::async, &object_estimator::occlusion_matrix_thread, this, input_msg->pointcloud, transform );
-    // std::async(
-    //     std::launch::async, &object_estimator::occlusion_matrix_thread, this,
+    std::async(
+        std::launch::async, &object_estimator::occlusion_matrix_thread, this,
+        std::make_shared< sensor_msgs::msg::PointCloud2 >( input_msg->pointcloud ), transform );
+    // this->object_estimator::occlusion_matrix_thread(
     //     std::make_shared< sensor_msgs::msg::PointCloud2 >( input_msg->pointcloud ), transform );
 
     for( auto& obj: input_msg->objects )

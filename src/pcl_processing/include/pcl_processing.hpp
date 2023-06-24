@@ -17,6 +17,8 @@
 // ROS
 #include <geometry_msgs/msg/point.hpp>
 #include <rclcpp/rclcpp.hpp>
+#include <sensor_msgs/msg/point_cloud2.hpp>
+#include <sensor_msgs/point_cloud2_iterator.hpp>
 #include <visualization_msgs/msg/marker.hpp>
 
 // TODO: Transpose all PCL related function to this file
@@ -26,7 +28,7 @@ namespace smap
 {
 using cloud_point_t      = pcl::PointXYZRGB;
 using cloud_t            = pcl::PointCloud< cloud_point_t >;
-using occlusion_cell_t   = std::tuple< geometry_msgs::msg::Point, geometry_msgs::msg::Point, bool >;
+using occlusion_cell_t   = std::pair< geometry_msgs::msg::Point, geometry_msgs::msg::Point >;
 using occlusion_array_t  = std::array< occlusion_cell_t, OCCLUSION_MATRIX_COLS >;
 using occlusion_matrix_t = std::array< occlusion_array_t, OCCLUSION_MATRIX_ROWS >;
 
@@ -67,13 +69,21 @@ inline void set_marker(
 }
 
 void compute_occlusion_matrix(
-    const std::shared_ptr< occlusion_matrix_t >& occlusion_matrix, const pcl::shared_ptr< cloud_t >& pcl );
+    const std::shared_ptr< occlusion_matrix_t >& occlusion_matrix,
+    const std::shared_ptr< sensor_msgs::msg::PointCloud2 >& pcl_ros );
 
-inline bool is_valid( geometry_msgs::msg::Point& p )
+inline bool is_valid( const geometry_msgs::msg::Point& p )
 {
     return !(
         ( std::isnan( p.x ) || std::isnan( p.y ) || std::isnan( p.z ) )
         || ( ( std::isinf( p.x ) || std::isinf( p.y ) || std::isinf( p.z ) ) ) );
+}
+
+inline bool is_valid( const double& x,const double& y,const double& z )
+{
+    return !(
+        ( std::isnan( x ) || std::isnan( y ) || std::isnan( z ) )
+        || ( ( std::isinf( x ) || std::isinf( y ) || std::isinf( z ) ) ) );
 }
 
 bool check_occlusions( void );

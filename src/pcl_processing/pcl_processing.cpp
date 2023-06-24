@@ -149,52 +149,71 @@ bool estimate_confidence(
 }
 
 void compute_occlusion_matrix(
-    const std::shared_ptr< occlusion_matrix_t >& occlusion_matrix, const pcl::shared_ptr< cloud_t >& pcl )
+    const std::shared_ptr< occlusion_matrix_t >& occlusion_matrix,
+    const std::shared_ptr< sensor_msgs::msg::PointCloud2 >& pcl_ros )
 {
     printf( "\tcompute_occlusion_matrix\n" );
 
     // size_t r = 0, c = 0;
-    int r_l = floor( pcl->height / OCCLUSION_MATRIX_ROWS ), c_l = floor( pcl->width / OCCLUSION_MATRIX_COLS );
+    int r_l = floor( pcl_ros->height / OCCLUSION_MATRIX_ROWS ), c_l = floor( pcl_ros->width / OCCLUSION_MATRIX_COLS );
     geometry_msgs::msg::Point pt;
     uint16_t occlusion_r, occlusion_c;
     // int b = 0;
-    for( uint32_t pcl_r = 0; pcl_r < pcl->height; pcl_r++ )
+
+    sensor_msgs::PointCloud2Iterator< float > iter_x( *pcl_ros, "x" );
+    sensor_msgs::PointCloud2Iterator< float > iter_y( *pcl_ros, "y" );
+    sensor_msgs::PointCloud2Iterator< float > iter_z( *pcl_ros, "z" );
+    // sensor_msgs::PointCloud2Iterator< uint8_t > iter_r( *pcl_ros, "r" );
+    // sensor_msgs::PointCloud2Iterator< uint8_t > iter_g( *pcl_ros, "g" );
+    // sensor_msgs::PointCloud2Iterator< uint8_t > iter_b( *pcl_ros, "b" );
+
+    for( uint32_t pcl_r = 0; pcl_r < pcl_ros->height; pcl_r++ )
     {
         occlusion_r           = floor( pcl_r / r_l );
         auto& occlusion_array = ( *occlusion_matrix )[ occlusion_r ];
-        for( uint32_t pcl_c = 0; pcl_c < pcl->width; pcl_c++ )
+        for( uint32_t pcl_c = 0; pcl_c < pcl_ros->width; pcl_c++, ++iter_x, ++iter_y, ++iter_z )
         {
             occlusion_c = floor( pcl_c / c_l );
-            pt.x        = pcl->at( pcl_c, pcl_r ).x;
-            pt.y        = pcl->at( pcl_c, pcl_r ).y;
-            pt.z        = pcl->at( pcl_c, pcl_r ).z;
+            // pt.x        = *iter_x;  // pcl->at( pcl_c, pcl_r ).x;
+            // pt.y        = *iter_y;  // pcl->at( pcl_c, pcl_r ).y;
+            // pt.z        = *iter_z;  // pcl->at( pcl_c, pcl_r ).z;
 
-            if( !is_valid( pt ) ) continue;
-            if( !std::get< 2 >( occlusion_array[ occlusion_c ] ) )
-            {
-                std::get< 0 >( occlusion_array[ occlusion_c ] ) = pt;
-                std::get< 1 >( occlusion_array[ occlusion_c ] ) = pt;
-                std::get< 2 >( occlusion_array[ occlusion_c ] ) = true;
-                continue;
-            }
+            if( !is_valid( *iter_x, *iter_y, *iter_z ) ) continue;
 
-            if( pt.x < std::get< 0 >( occlusion_array[ occlusion_c ] ).x )
-                std::get< 0 >( occlusion_array[ occlusion_c ] ).x = pt.x;
-            if( pt.y < std::get< 0 >( occlusion_array[ occlusion_c ] ).y )
-                std::get< 0 >( occlusion_array[ occlusion_c ] ).y = pt.y;
-            if( pt.z < std::get< 0 >( occlusion_array[ occlusion_c ] ).z )
-                std::get< 0 >( occlusion_array[ occlusion_c ] ).z = pt.z;
+            // Min
+            if( *iter_x < occlusion_array[ occlusion_c ].first.x ) occlusion_array[ occlusion_c ].first.x = *iter_x;
+            if( *iter_y < occlusion_array[ occlusion_c ].first.y ) occlusion_array[ occlusion_c ].first.y = *iter_y;
+            if( *iter_z < occlusion_array[ occlusion_c ].first.z ) occlusion_array[ occlusion_c ].first.z = *iter_z;
+
             // Max
-            if( pt.x > std::get< 1 >( occlusion_array[ occlusion_c ] ).x )
-                std::get< 1 >( occlusion_array[ occlusion_c ] ).x = pt.x;
-            if( pt.y > std::get< 1 >( occlusion_array[ occlusion_c ] ).y )
-                std::get< 1 >( occlusion_array[ occlusion_c ] ).y = pt.y;
-            if( pt.z > std::get< 1 >( occlusion_array[ occlusion_c ] ).z )
-                std::get< 1 >( occlusion_array[ occlusion_c ] ).z = pt.z;
-            // set_marker(
-            //     (int) ( occlusion_r * OCCLUSION_MATRIX_COLS + occlusion_c ), occlusion_array[ occlusion_c ], clock,
-            //     marker );
-            // pub->publish( marker );
+            if( *iter_x > occlusion_array[ occlusion_c ].second.x ) occlusion_array[ occlusion_c ].second.x = *iter_x;
+            if( *iter_y > occlusion_array[ occlusion_c ].second.y ) occlusion_array[ occlusion_c ].second.y = *iter_y;
+            if( *iter_z > occlusion_array[ occlusion_c ].second.z ) occlusion_array[ occlusion_c ].second.z = *iter_z;
+
+            // assert( *iter_x == pt.x );
+            // assert( *iter_y == pt.y );
+            // assert( *iter_z == pt.z );
+            // if( !std::get< 2 >( occlusion_array[ occlusion_c ] ) )
+            // {
+            //     std::get< 0 >( occlusion_array[ occlusion_c ] ) = pt;
+            //     std::get< 1 >( occlusion_array[ occlusion_c ] ) = pt;
+            //     std::get< 2 >( occlusion_array[ occlusion_c ] ) = true;
+            //     continue;
+            // }
+
+            // if( pt.x < std::get< 0 >( occlusion_array[ occlusion_c ] ).x )
+            //     std::get< 0 >( occlusion_array[ occlusion_c ] ).x = pt.x;
+            // if( pt.y < std::get< 0 >( occlusion_array[ occlusion_c ] ).y )
+            //     std::get< 0 >( occlusion_array[ occlusion_c ] ).y = pt.y;
+            // if( pt.z < std::get< 0 >( occlusion_array[ occlusion_c ] ).z )
+            //     std::get< 0 >( occlusion_array[ occlusion_c ] ).z = pt.z;
+            // // Max
+            // if( pt.x > std::get< 1 >( occlusion_array[ occlusion_c ] ).x )
+            //     std::get< 1 >( occlusion_array[ occlusion_c ] ).x = pt.x;
+            // if( pt.y > std::get< 1 >( occlusion_array[ occlusion_c ] ).y )
+            //     std::get< 1 >( occlusion_array[ occlusion_c ] ).y = pt.y;
+            // if( pt.z > std::get< 1 >( occlusion_array[ occlusion_c ] ).z )
+            //     std::get< 1 >( occlusion_array[ occlusion_c ] ).z = pt.z;
         }
     }
 

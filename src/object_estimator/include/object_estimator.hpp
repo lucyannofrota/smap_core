@@ -363,52 +363,66 @@ class object_estimator : public rclcpp::Node
         // TODO: make mutually exclusive
         printf( "occlusion_matrix_thread\n" );
         if( ros_pcl->data.empty() ) return;
-        std::unique_ptr< sensor_msgs::msg::PointCloud2 > transformed_ros_pcl =
-            std::make_unique< sensor_msgs::msg::PointCloud2 >();
-        pcl::shared_ptr< cloud_t > transformed_pcl( new cloud_t );
-        tf2::doTransform< sensor_msgs::msg::PointCloud2 >( *ros_pcl, *transformed_ros_pcl, *transform );
-        printf( "transform\n" );
-        this->transf_pcl_pub->publish( *transformed_ros_pcl );
-        printf( "transform pub\n" );
-        pcl::fromROSMsg( *transformed_ros_pcl, *transformed_pcl );
-        printf( "pcl-fill\n" );
+        // std::unique_ptr< sensor_msgs::msg::PointCloud2 > transformed_ros_pcl =
+        //     std::make_unique< sensor_msgs::msg::PointCloud2 >();
+        // pcl::shared_ptr< cloud_t > transformed_pcl( new cloud_t );
+
+        // Voxelization
+        // pcl::fromROSMsg( *ros_pcl, *transformed_pcl );
+
+        // pcl_voxelization( transformed_pcl, this->leaf_size );
+
+        // pcl::toROSMsg( *transformed_pcl, *transformed_ros_pcl );
+
+        // tf2::doTransform< sensor_msgs::msg::PointCloud2 >( *transformed_ros_pcl, *transformed_ros_pcl, *transform );
+        // printf( "transform\n" );
+        // this->transf_pcl_pub->publish( *transformed_ros_pcl );
+        // printf( "transform pub\n" );
+        // pcl::fromROSMsg( *transformed_ros_pcl, *transformed_pcl );
+        // printf( "pcl-fill\n" );
+
+        // printf( "\tisOrganized: %i\n", transformed_pcl->isOrganized() );
+        // printf( "\tis_dense: %i\n", transformed_pcl->is_dense );
 
         for( auto& v: *( this->occlusion_matrix ) )
-            for( auto& e: v ) std::get< 2 >( e ) = false;
+            for( auto& e: v )
+            {
+                e.first.x  = DBL_MAX;
+                e.first.y  = DBL_MAX;
+                e.first.z  = DBL_MAX;
 
-        // pcl::io::savePCDFileASCII( "/workspace/my_pcd.pcd", *transformed_pcl );
-        // pcl::io::loadPCDFile( "/workspace/my_pcd.pcd", *transformed_pcl );
-        // pcl::toROSMsg( *transformed_pcl, *transformed_ros_pcl );
-        // transformed_ros_pcl->header.frame_id = "map";
-        // this->transf_pcl_pub->publish( *transformed_ros_pcl );
-        compute_occlusion_matrix(
-            occlusion_matrix, transformed_pcl);
-        printf( "compute_occlusion_matrix\n" );
+                e.second.x = DBL_MIN;
+                e.second.y = DBL_MIN;
+                e.second.z = DBL_MIN;
+            }
 
-        printf( "beg occlusion_boxes_pub\n" );
+        compute_occlusion_matrix( occlusion_matrix, ros_pcl );
+        // printf( "compute_occlusion_matrix\n" );
+
+        // TODO: Transform only the centroid point of the cube
+
+        // printf( "beg occlusion_boxes_pub\n" );
         marker_array.markers.clear();
         this->box_marker.id = 0;
         for( auto& row_array: *occlusion_matrix )
         {
             for( auto& col_array: row_array )
             {
-                if( !std::get< 2 >( col_array ) || !is_valid( std::get< 0 >( col_array ) )
-                    || !is_valid( std::get< 1 >( col_array ) ) )
-                    continue;
-                if( std::get< 1 >( col_array ) == std::get< 0 >( col_array ) ) continue;
+                if( !is_valid( col_array.first ) || !is_valid( col_array.second ) ) continue;
+                if( col_array.first == col_array.second ) continue;
                 this->box_marker.header.stamp = this->get_clock()->now();
                 this->box_marker.id++;
-                this->box_marker.scale.x         = abs( std::get< 1 >( col_array ).x - std::get< 0 >( col_array ).x );
-                this->box_marker.scale.y         = abs( std::get< 1 >( col_array ).y - std::get< 0 >( col_array ).y );
-                this->box_marker.scale.z         = abs( std::get< 1 >( col_array ).z - std::get< 0 >( col_array ).z );
-                this->box_marker.pose.position.x = std::get< 0 >( col_array ).x + this->box_marker.scale.x / 2;
-                this->box_marker.pose.position.y = std::get< 0 >( col_array ).y + this->box_marker.scale.y / 2;
-                this->box_marker.pose.position.z = std::get< 0 >( col_array ).z + this->box_marker.scale.z / 2;
+                this->box_marker.scale.x         = abs( col_array.second.x - col_array.first.x );
+                this->box_marker.scale.y         = abs( col_array.second.y - col_array.first.y );
+                this->box_marker.scale.z         = abs( col_array.second.z - col_array.first.z );
+                this->box_marker.pose.position.x = col_array.first.x + this->box_marker.scale.x / 2;
+                this->box_marker.pose.position.y = col_array.first.y + this->box_marker.scale.y / 2;
+                this->box_marker.pose.position.z = col_array.first.z + this->box_marker.scale.z / 2;
                 marker_array.markers.push_back( this->box_marker );
             }
         }
-        // this->occlusion_boxes_pub->publish( marker_array );
-        printf( "occlusion_boxes_pub\n" );
+        this->occlusion_boxes_pub->publish( marker_array );
+
         timer.print_time( "occlusion_matrix_callback" );
     }
 
