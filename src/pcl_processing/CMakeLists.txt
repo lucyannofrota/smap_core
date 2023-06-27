@@ -27,6 +27,8 @@ add_definitions(${PCL_DEFINITIONS})
             find_package(std_msgs REQUIRED)
             find_package(sensor_msgs REQUIRED)
             find_package(geometry_msgs REQUIRED)
+            find_package(tf2 REQUIRED)
+            find_package(tf2_geometry_msgs REQUIRED)
         # smap
             # find_package(smap_interfaces REQUIRED)
 
@@ -49,6 +51,8 @@ set(DEPENDENCIES
     PCL
     pcl_conversions
     smap_interfaces
+    tf2
+    tf2_geometry_msgs
 )
 
 # include_directories(${PCL_INCLUDE_DIRS})

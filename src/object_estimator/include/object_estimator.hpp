@@ -371,47 +371,6 @@ class object_estimator : public rclcpp::Node
     {  // Pooling
     }
 
-    inline void set_AABB(
-        std::array< geometry_msgs::msg::PointStamped, 8 >& AABB, const geometry_msgs::msg::Point& min,
-        const geometry_msgs::msg::Point& max )
-    {
-        // [0]
-        AABB[ 0 ].point = min;
-
-        // [1]
-        AABB[ 1 ].point.x = min.x;
-        AABB[ 1 ].point.y = min.y;
-        AABB[ 1 ].point.z = max.z;
-
-        // [2]
-        AABB[ 2 ].point.x = min.x;
-        AABB[ 2 ].point.y = max.y;
-        AABB[ 2 ].point.z = min.z;
-
-        // [3]
-        AABB[ 3 ].point.x = max.x;
-        AABB[ 3 ].point.y = min.y;
-        AABB[ 3 ].point.z = min.z;
-
-        // [4]
-        AABB[ 4 ].point.x = min.x;
-        AABB[ 4 ].point.y = max.y;
-        AABB[ 4 ].point.z = max.z;
-
-        // [5]
-        AABB[ 5 ].point.x = max.x;
-        AABB[ 5 ].point.y = min.y;
-        AABB[ 5 ].point.z = max.z;
-
-        // [6]
-        AABB[ 6 ].point.x = max.x;
-        AABB[ 6 ].point.y = max.y;
-        AABB[ 6 ].point.z = min.z;
-
-        // [7]
-        AABB[ 7 ].point = max;
-    }
-
     // inline void transform_AABB(
     //     std::array< geometry_msgs::msg::PointStamped, 8 >& AABB,
     //     const std::shared_ptr< geometry_msgs::msg::TransformStamped >& transform )
@@ -420,98 +379,9 @@ class object_estimator : public rclcpp::Node
     //     //
     // }
 
-    inline void occlusion_matrix_thread(
+    void occlusion_matrix_thread(
         const std::shared_ptr< sensor_msgs::msg::PointCloud2 >& ros_pcl,
-        const std::shared_ptr< geometry_msgs::msg::TransformStamped >& transform )
-    {
-        count_time timer;
-
-        // TODO: make mutually exclusive
-        printf( "occlusion_matrix_thread\n" );
-        if( ros_pcl->data.empty() ) return;
-        if( !is_valid(
-                transform->transform.translation.x, transform->transform.translation.y,
-                transform->transform.translation.z )
-            || !is_valid(
-                transform->transform.rotation.x, transform->transform.rotation.y, transform->transform.rotation.z )
-            || std::isnan( transform->transform.rotation.w ) || std::isinf( transform->transform.rotation.w ) )
-            printf( "\t\tInvalid transform\n" );
-
-        for( auto& v: this->occlusion_matrix )
-        {
-            for( auto& e: v )
-            {
-                e.first.x  = std::numeric_limits< double >::infinity();
-                e.first.y  = std::numeric_limits< double >::infinity();
-                e.first.z  = std::numeric_limits< double >::infinity();
-
-                e.second.x = -std::numeric_limits< double >::infinity();
-                e.second.y = -std::numeric_limits< double >::infinity();
-                e.second.z = -std::numeric_limits< double >::infinity();
-            }
-        }
-
-        // std::unique_ptr< sensor_msgs::msg::PointCloud2 > cloud = std::make_unique< sensor_msgs::msg::PointCloud2 >();
-        // tf2::doTransform( *ros_pcl, *cloud, *transform );
-        // this->transf_pcl_pub->publish( *cloud );
-
-        compute_occlusion_matrix( occlusion_matrix, ros_pcl, this->pcl_lims );
-
-        marker_array.markers.clear();
-        std::array< geometry_msgs::msg::PointStamped, 8 > AABB;
-        geometry_msgs::msg::Point min, max;
-        this->box_marker.id = 0;
-        for( auto& row_array: occlusion_matrix )
-        {
-            for( auto& element: row_array )
-            {
-                if( ( element.first == element.second ) || ( !is_valid( element.first ) )
-                    || ( !is_valid( element.second ) ) )
-                    continue;
-
-                set_AABB( AABB, element.first, element.second );
-
-                min = AABB[ 0 ].point;
-                max = AABB[ 0 ].point;
-                for( size_t idx = 0; idx < 8; idx++ )
-                {
-                    tf2::doTransform< geometry_msgs::msg::PointStamped >( AABB[ idx ], AABB[ idx ], *transform );
-                    if( idx == 0 )
-                    {
-                        min = AABB[ idx ].point;
-                        max = AABB[ idx ].point;
-                        continue;
-                    }
-                    else
-                    {
-                        // Min
-                        if( AABB[ idx ].point.x < min.x ) min.x = AABB[ idx ].point.x;
-                        if( AABB[ idx ].point.y < min.y ) min.y = AABB[ idx ].point.y;
-                        if( AABB[ idx ].point.z < min.z ) min.z = AABB[ idx ].point.z;
-                        // Max
-                        if( AABB[ idx ].point.x > max.x ) max.x = AABB[ idx ].point.x;
-                        if( AABB[ idx ].point.y > max.y ) max.y = AABB[ idx ].point.y;
-                        if( AABB[ idx ].point.z > max.z ) max.z = AABB[ idx ].point.z;
-                    }
-                }
-                this->box_marker.header.stamp = this->get_clock()->now();
-                this->box_marker.id++;
-                this->box_marker.scale.x = abs( max.x - min.x );
-                this->box_marker.scale.y = abs( max.y - min.y );
-                this->box_marker.scale.z = abs( max.z - min.z );
-                if( this->box_marker.scale.x == 0 || this->box_marker.scale.y == 0 || this->box_marker.scale.z == 0 )
-                    continue;
-                this->box_marker.pose.position.x = ( min.x + max.x ) / 2;
-                this->box_marker.pose.position.y = ( min.y + max.y ) / 2;
-                this->box_marker.pose.position.z = ( min.z + max.z ) / 2;
-                this->marker_array.markers.push_back( this->box_marker );
-            }
-        }
-
-        this->occlusion_boxes_pub->publish( marker_array );
-
-        timer.print_time( "occlusion_matrix_callback" );
-    }
+        const std::shared_ptr< geometry_msgs::msg::TransformStamped >& transform );
 
   private:
 };

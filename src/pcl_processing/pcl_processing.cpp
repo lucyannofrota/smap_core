@@ -10,8 +10,13 @@
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/segmentation/extract_clusters.h>
 
+// ROS
+#include <tf2/convert.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+
 // SMAP
 #include "../../../include/smap_core/interface_templates.hpp"
+#include "smap_core/macros.hpp"
 
 namespace smap
 {
@@ -152,6 +157,7 @@ bool estimate_confidence(
 
 void compute_occlusion_matrix(
     occlusion_matrix_t& occlusion_matrix, const std::shared_ptr< sensor_msgs::msg::PointCloud2 >& pcl_ros,
+    const std::shared_ptr< geometry_msgs::msg::TransformStamped >& transform,
     const std::shared_ptr< std::pair< float, float > >& pcl_lims )
 {
 
@@ -164,6 +170,7 @@ void compute_occlusion_matrix(
     sensor_msgs::PointCloud2Iterator< float > iter_y( *pcl_ros, "y" );
     sensor_msgs::PointCloud2Iterator< float > iter_z( *pcl_ros, "z" );
 
+    // Fill the matrix on the point cloud frame
     for( uint32_t pcl_r = 0; pcl_r < pcl_ros->height; pcl_r++ )
     {
         occlusion_r           = floor( pcl_r / r_l );
@@ -186,6 +193,61 @@ void compute_occlusion_matrix(
             if( *iter_x > occlusion_array[ occlusion_c ].second.x ) occlusion_array[ occlusion_c ].second.x = *iter_x;
             if( *iter_y > occlusion_array[ occlusion_c ].second.y ) occlusion_array[ occlusion_c ].second.y = *iter_y;
             if( *iter_z > occlusion_array[ occlusion_c ].second.z ) occlusion_array[ occlusion_c ].second.z = *iter_z;
+        }
+    }
+
+    // Transpose matrix to the world frame
+    std::array< geometry_msgs::msg::PointStamped, 8 > AABB;
+    geometry_msgs::msg::Point min, max;
+    for( auto& row_array: occlusion_matrix )
+    {
+        for( auto& element: row_array )
+        {
+            if( ( element.first == element.second ) || ( !is_valid( element.first ) )
+                || ( !is_valid( element.second ) ) )
+                continue;
+
+            set_AABB( AABB, element.first, element.second );
+
+            min = AABB[ 0 ].point;
+            max = AABB[ 0 ].point;
+            for( size_t idx = 0; idx < 8; idx++ )
+            {
+                tf2::doTransform< geometry_msgs::msg::PointStamped >( AABB[ idx ], AABB[ idx ], *transform );
+                if( idx == 0 )
+                {
+                    min = AABB[ idx ].point;
+                    max = AABB[ idx ].point;
+                    continue;
+                }
+                else
+                {
+                    // Min
+                    if( AABB[ idx ].point.x < min.x ) min.x = AABB[ idx ].point.x;
+                    if( AABB[ idx ].point.y < min.y ) min.y = AABB[ idx ].point.y;
+                    if( AABB[ idx ].point.z < min.z ) min.z = AABB[ idx ].point.z;
+                    // Max
+                    if( AABB[ idx ].point.x > max.x ) max.x = AABB[ idx ].point.x;
+                    if( AABB[ idx ].point.y > max.y ) max.y = AABB[ idx ].point.y;
+                    if( AABB[ idx ].point.z > max.z ) max.z = AABB[ idx ].point.z;
+                }
+            }
+            double sx = abs( max.x - min.x );
+            double sy = abs( max.y - min.y );
+            double sz = abs( max.z - min.z );
+            if( ( ( sx == 0 ) || ( sy == 0 ) || ( sz == 0 ) ) || ( sx * sy * sz > MAX_VOLUME ) )
+            {
+                element.first.x  = std::numeric_limits< double >::infinity();
+                element.first.y  = std::numeric_limits< double >::infinity();
+                element.first.z  = std::numeric_limits< double >::infinity();
+                element.second.x = -std::numeric_limits< double >::infinity();
+                element.second.y = -std::numeric_limits< double >::infinity();
+                element.second.z = -std::numeric_limits< double >::infinity();
+                continue;
+            }
+
+            element.first  = min;
+            element.second = max;
         }
     }
 }

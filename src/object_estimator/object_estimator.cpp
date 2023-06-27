@@ -238,6 +238,66 @@ void object_estimator::detections_callback( const smap_interfaces::msg::SmapDete
     RCLCPP_DEBUG( this->get_logger(), "---Callback complete---" );
 }
 
+void object_estimator::occlusion_matrix_thread(
+    const std::shared_ptr< sensor_msgs::msg::PointCloud2 >& ros_pcl,
+    const std::shared_ptr< geometry_msgs::msg::TransformStamped >& transform )
+{
+    count_time timer;
+
+    // TODO: make mutually exclusive
+    printf( "occlusion_matrix_thread\n" );
+    if( ros_pcl->data.empty() ) return;
+    if( !is_valid(
+            transform->transform.translation.x, transform->transform.translation.y, transform->transform.translation.z )
+        || !is_valid(
+            transform->transform.rotation.x, transform->transform.rotation.y, transform->transform.rotation.z )
+        || std::isnan( transform->transform.rotation.w ) || std::isinf( transform->transform.rotation.w ) )
+        printf( "\t\tInvalid transform\n" );
+
+    for( auto& v: this->occlusion_matrix )
+    {
+        for( auto& e: v )
+        {
+            e.first.x  = std::numeric_limits< double >::infinity();
+            e.first.y  = std::numeric_limits< double >::infinity();
+            e.first.z  = std::numeric_limits< double >::infinity();
+
+            e.second.x = -std::numeric_limits< double >::infinity();
+            e.second.y = -std::numeric_limits< double >::infinity();
+            e.second.z = -std::numeric_limits< double >::infinity();
+        }
+    }
+
+    compute_occlusion_matrix( occlusion_matrix, ros_pcl, transform, this->pcl_lims );
+
+    marker_array.markers.clear();
+    std::array< geometry_msgs::msg::PointStamped, 8 > AABB;
+    geometry_msgs::msg::Point min, max;
+    this->box_marker.id = 0;
+    for( auto& row_array: occlusion_matrix )
+    {
+        for( auto& element: row_array )
+        {
+            if( ( !is_valid( element.first ) ) || ( !is_valid( element.second ) ) ) continue;
+            this->box_marker.header.stamp = this->get_clock()->now();
+            this->box_marker.id++;
+            this->box_marker.scale.x         = abs( element.second.x - element.first.x );
+            this->box_marker.scale.y         = abs( element.second.y - element.first.y );
+            this->box_marker.scale.z         = abs( element.second.z - element.first.z );
+            this->box_marker.pose.position.x = ( element.first.x + element.second.x ) / 2;
+            this->box_marker.pose.position.y = ( element.first.y + element.second.y ) / 2;
+            this->box_marker.pose.position.z = ( element.first.z + element.second.z ) / 2;
+            this->marker_array.markers.push_back( this->box_marker );
+        }
+    }
+
+    this->occlusion_boxes_pub->publish( marker_array );
+
+    // Use the occlusion matrix
+
+    timer.print_time( "occlusion_matrix_callback" );
+}
+
 }  // namespace smap
 
 int main( int argc, char** argv )

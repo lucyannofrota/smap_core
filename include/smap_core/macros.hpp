@@ -27,7 +27,7 @@ namespace smap
 
 #define OBJECT_TRACKING_FACTOR 1 / 2
 
-#define OBJECT_TRACKING_TOLERANCE OBJECT_ERROR_DISTANCE*OBJECT_TRACKING_FACTOR
+#define OBJECT_TRACKING_TOLERANCE OBJECT_ERROR_DISTANCE* OBJECT_TRACKING_FACTOR
 
 #define R_TRIANGLES 0.025               // Size of the histogram triangles
 
@@ -40,6 +40,8 @@ namespace smap
 #define MAX_POS_PROB 0.85
 
 #define OBJECT_SIZE_LIM_CONF 0.8  // Objects with size under this value will suffer no confidence penalty
+
+#define MAX_VOLUME 1.2
 
 }  // namespace smap
 

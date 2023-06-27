@@ -16,6 +16,8 @@
 
 // ROS
 #include <geometry_msgs/msg/point.hpp>
+#include <geometry_msgs/msg/point_stamped.hpp>
+#include <geometry_msgs/msg/transform_stamped.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <sensor_msgs/point_cloud2_iterator.hpp>
@@ -70,7 +72,49 @@ inline void set_marker(
 
 void compute_occlusion_matrix(
     occlusion_matrix_t& occlusion_matrix, const std::shared_ptr< sensor_msgs::msg::PointCloud2 >& pcl_ros,
+    const std::shared_ptr< geometry_msgs::msg::TransformStamped >& transform,
     const std::shared_ptr< std::pair< float, float > >& pcl_lims );
+
+inline void set_AABB(
+    std::array< geometry_msgs::msg::PointStamped, 8 >& AABB, const geometry_msgs::msg::Point& min,
+    const geometry_msgs::msg::Point& max )
+{
+    // [0]
+    AABB[ 0 ].point = min;
+
+    // [1]
+    AABB[ 1 ].point.x = min.x;
+    AABB[ 1 ].point.y = min.y;
+    AABB[ 1 ].point.z = max.z;
+
+    // [2]
+    AABB[ 2 ].point.x = min.x;
+    AABB[ 2 ].point.y = max.y;
+    AABB[ 2 ].point.z = min.z;
+
+    // [3]
+    AABB[ 3 ].point.x = max.x;
+    AABB[ 3 ].point.y = min.y;
+    AABB[ 3 ].point.z = min.z;
+
+    // [4]
+    AABB[ 4 ].point.x = min.x;
+    AABB[ 4 ].point.y = max.y;
+    AABB[ 4 ].point.z = max.z;
+
+    // [5]
+    AABB[ 5 ].point.x = max.x;
+    AABB[ 5 ].point.y = min.y;
+    AABB[ 5 ].point.z = max.z;
+
+    // [6]
+    AABB[ 6 ].point.x = max.x;
+    AABB[ 6 ].point.y = max.y;
+    AABB[ 6 ].point.z = min.z;
+
+    // [7]
+    AABB[ 7 ].point = max;
+}
 
 inline bool is_valid( const geometry_msgs::msg::Point& p )
 {
