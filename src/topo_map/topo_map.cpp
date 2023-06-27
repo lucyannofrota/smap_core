@@ -1,10 +1,21 @@
 #include "topo_map.hpp"
 
 #include "../../include/smap_core/count_time.hpp"
-#include "../pcl_processing/include/pcl_processing.hpp"
+#include "../object_estimator/include/occlusion_map.hpp"
+
+// #include "../pcl_processing/include/pcl_processing.hpp"
 
 namespace smap
 {
+
+// inline double& occlusion_map_indexer(
+//     std_msgs::msg::Float64MultiArray& occ_mat, const size_t& r, const size_t& c, const size_t& lims,
+//     const size_t& comp )
+// {
+//     return occ_mat.data
+//         [ occ_mat.layout.dim[ 0 ].stride * r + occ_mat.layout.dim[ 1 ].stride * c
+//           + occ_mat.layout.dim[ 2 ].stride * lims + comp ];
+// }
 
 void topo_map::observation_callback( const smap_interfaces::msg::SmapObservation::SharedPtr observation )
 {
@@ -50,6 +61,42 @@ void topo_map::observation_callback( const smap_interfaces::msg::SmapObservation
 
     const char str[] = "observation_callback";
     timer.print_time( str );
+}
+
+void topo_map::occlusion_map_callback( const smap_interfaces::msg::OcclusionMap::SharedPtr msg )
+{
+    static occlusion_map_t occlusion_map;
+    from_msg( *msg, occlusion_map );
+    //
+    //
+    printf( "\n\nTOPO_MAP\n\n\n" );
+    for( auto& row: occlusion_map )
+    {
+        for( auto& col: row )
+        {
+            for( auto& lim: col ) printf( "[%6.2f,%6.2f,%6.2f]|", lim.x, lim.y, lim.z );
+            printf( "\t" );
+        }
+        printf( "\n" );
+    }
+
+    // TODO: Use the occlusion map
+
+    // for( size_t r = 0; r < msg->layout.dim[ 0 ].size; r++ )
+    // {
+    //     for( size_t c = 0; c < msg->layout.dim[ 1 ].size; c++ )
+    //     {
+    //         for( size_t lims = 0; lims < msg->layout.dim[ 2 ].size; lims++ )
+    //         {
+    //             printf( "[" );
+    //             for( size_t comps = 0; comps < msg->layout.dim[ 3 ].size; comps++ )
+    //                 printf( "%6.2f,", occlusion_map_indexer( *msg, r, c, lims, comps ) );
+    //             printf( "]|" );
+    //         }
+    //         printf( "]\t" );
+    //     }
+    //     printf( "\n" );
+    // }
 }
 
 bool topo_map::add_edge( const size_t& previous, const size_t& current )

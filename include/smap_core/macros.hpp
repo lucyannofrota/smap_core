@@ -43,6 +43,9 @@ namespace smap
 
 #define MAX_VOLUME 1.2
 
+#define OCCLUSION_MAP_ROWS 2  // 16
+#define OCCLUSION_MAP_COLS 3  // 32
+
 }  // namespace smap
 
 #endif  // SMAP_CORE__MACROS_HPP_

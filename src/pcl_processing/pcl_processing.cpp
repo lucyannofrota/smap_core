@@ -155,14 +155,18 @@ bool estimate_confidence(
     return true;
 }
 
-void compute_occlusion_matrix(
-    occlusion_matrix_t& occlusion_matrix, const std::shared_ptr< sensor_msgs::msg::PointCloud2 >& pcl_ros,
+std::pair< int, int > compute_occlusion_map(
+    occlusion_map_t& occlusion_map, const std::shared_ptr< sensor_msgs::msg::PointCloud2 >& pcl_ros,
     const std::shared_ptr< geometry_msgs::msg::TransformStamped >& transform,
     const std::shared_ptr< std::pair< float, float > >& pcl_lims )
 {
 
-    int r_l = ceil( pcl_ros->height / ( (float) OCCLUSION_MATRIX_ROWS ) ),
-        c_l = ceil( pcl_ros->width / ( (float) OCCLUSION_MATRIX_COLS ) );
+    std::pair< int, int > ret(
+        ceil( pcl_ros->height / ( (double) OCCLUSION_MAP_ROWS ) ),
+        ceil( pcl_ros->width / ( (double) OCCLUSION_MAP_COLS ) ) );
+
+    // int r_l = ceil( pcl_ros->height / ( (double) OCCLUSION_MAP_ROWS ) ),
+    //     c_l = ceil( pcl_ros->width / ( (double) OCCLUSION_MAP_COLS ) );
     geometry_msgs::msg::Point pt;
     uint16_t occlusion_r, occlusion_c;
 
@@ -170,14 +174,14 @@ void compute_occlusion_matrix(
     sensor_msgs::PointCloud2Iterator< float > iter_y( *pcl_ros, "y" );
     sensor_msgs::PointCloud2Iterator< float > iter_z( *pcl_ros, "z" );
 
-    // Fill the matrix on the point cloud frame
+    // Fill the map on the point cloud frame
     for( uint32_t pcl_r = 0; pcl_r < pcl_ros->height; pcl_r++ )
     {
-        occlusion_r           = floor( pcl_r / r_l );
-        auto& occlusion_array = occlusion_matrix[ occlusion_r ];
+        occlusion_r           = floor( pcl_r / ret.first );
+        auto& occlusion_array = occlusion_map[ occlusion_r ];
         for( uint32_t pcl_c = 0; pcl_c < pcl_ros->width; pcl_c++, ++iter_x, ++iter_y, ++iter_z )
         {
-            occlusion_c = floor( pcl_c / c_l );
+            occlusion_c = floor( pcl_c / ret.second );
 
             if( ( !is_valid( *iter_x, *iter_y, *iter_z ) )
                 || ( ( norm( *iter_x, *iter_y, *iter_z ) < pcl_lims->first )
@@ -185,29 +189,28 @@ void compute_occlusion_matrix(
                 continue;
 
             // Min
-            if( *iter_x < occlusion_array[ occlusion_c ].first.x ) occlusion_array[ occlusion_c ].first.x = *iter_x;
-            if( *iter_y < occlusion_array[ occlusion_c ].first.y ) occlusion_array[ occlusion_c ].first.y = *iter_y;
-            if( *iter_z < occlusion_array[ occlusion_c ].first.z ) occlusion_array[ occlusion_c ].first.z = *iter_z;
+            if( *iter_x < occlusion_array[ occlusion_c ][ 0 ].x ) occlusion_array[ occlusion_c ][ 0 ].x = *iter_x;
+            if( *iter_y < occlusion_array[ occlusion_c ][ 0 ].y ) occlusion_array[ occlusion_c ][ 0 ].y = *iter_y;
+            if( *iter_z < occlusion_array[ occlusion_c ][ 0 ].z ) occlusion_array[ occlusion_c ][ 0 ].z = *iter_z;
 
             // Max
-            if( *iter_x > occlusion_array[ occlusion_c ].second.x ) occlusion_array[ occlusion_c ].second.x = *iter_x;
-            if( *iter_y > occlusion_array[ occlusion_c ].second.y ) occlusion_array[ occlusion_c ].second.y = *iter_y;
-            if( *iter_z > occlusion_array[ occlusion_c ].second.z ) occlusion_array[ occlusion_c ].second.z = *iter_z;
+            if( *iter_x > occlusion_array[ occlusion_c ][ 1 ].x ) occlusion_array[ occlusion_c ][ 1 ].x = *iter_x;
+            if( *iter_y > occlusion_array[ occlusion_c ][ 1 ].y ) occlusion_array[ occlusion_c ][ 1 ].y = *iter_y;
+            if( *iter_z > occlusion_array[ occlusion_c ][ 1 ].z ) occlusion_array[ occlusion_c ][ 1 ].z = *iter_z;
         }
     }
 
-    // Transpose matrix to the world frame
+    // Transpose map to the world frame
     std::array< geometry_msgs::msg::PointStamped, 8 > AABB;
     geometry_msgs::msg::Point min, max;
-    for( auto& row_array: occlusion_matrix )
+    for( auto& row_array: occlusion_map )
     {
         for( auto& element: row_array )
         {
-            if( ( element.first == element.second ) || ( !is_valid( element.first ) )
-                || ( !is_valid( element.second ) ) )
+            if( ( element[ 0 ] == element[ 1 ] ) || ( !is_valid( element[ 0 ] ) ) || ( !is_valid( element[ 1 ] ) ) )
                 continue;
 
-            set_AABB( AABB, element.first, element.second );
+            set_AABB( AABB, element[ 0 ], element[ 1 ] );
 
             min = AABB[ 0 ].point;
             max = AABB[ 0 ].point;
@@ -237,19 +240,20 @@ void compute_occlusion_matrix(
             double sz = abs( max.z - min.z );
             if( ( ( sx == 0 ) || ( sy == 0 ) || ( sz == 0 ) ) || ( sx * sy * sz > MAX_VOLUME ) )
             {
-                element.first.x  = std::numeric_limits< double >::infinity();
-                element.first.y  = std::numeric_limits< double >::infinity();
-                element.first.z  = std::numeric_limits< double >::infinity();
-                element.second.x = -std::numeric_limits< double >::infinity();
-                element.second.y = -std::numeric_limits< double >::infinity();
-                element.second.z = -std::numeric_limits< double >::infinity();
+                element[ 0 ].x = std::numeric_limits< double >::infinity();
+                element[ 0 ].y = std::numeric_limits< double >::infinity();
+                element[ 0 ].z = std::numeric_limits< double >::infinity();
+                element[ 1 ].x = -std::numeric_limits< double >::infinity();
+                element[ 1 ].y = -std::numeric_limits< double >::infinity();
+                element[ 1 ].z = -std::numeric_limits< double >::infinity();
                 continue;
             }
 
-            element.first  = min;
-            element.second = max;
+            element[ 0 ] = min;
+            element[ 1 ] = max;
         }
     }
+    return ret;
 }
 
 bool check_occlusions( void )

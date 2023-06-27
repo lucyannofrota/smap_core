@@ -1,9 +1,6 @@
 #ifndef SMAP_CORE__PCL_PROCESSING_HPP_
 #define SMAP_CORE__PCL_PROCESSING_HPP_
 
-#define OCCLUSION_MATRIX_ROWS 16  // 16
-#define OCCLUSION_MATRIX_COLS 32  // 32
-
 // STL
 #include <array>
 #include <memory>
@@ -21,18 +18,21 @@
 #include <rclcpp/rclcpp.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <sensor_msgs/point_cloud2_iterator.hpp>
+#include <std_msgs/msg/float64_multi_array.hpp>
+#include <std_msgs/msg/multi_array_dimension.hpp>
 #include <visualization_msgs/msg/marker.hpp>
+
+// SMAP
+#include "../../../include/smap_core/macros.hpp"
+#include "../../object_estimator/include/occlusion_map.hpp"
 
 // TODO: Transpose all PCL related function to this file
 // TODO: Solve compile error
 
 namespace smap
 {
-using cloud_point_t      = pcl::PointXYZRGB;
-using cloud_t            = pcl::PointCloud< cloud_point_t >;
-using occlusion_cell_t   = std::pair< geometry_msgs::msg::Point, geometry_msgs::msg::Point >;
-using occlusion_array_t  = std::array< occlusion_cell_t, OCCLUSION_MATRIX_COLS >;
-using occlusion_matrix_t = std::array< occlusion_array_t, OCCLUSION_MATRIX_ROWS >;
+using cloud_point_t = pcl::PointXYZRGB;
+using cloud_t       = pcl::PointCloud< cloud_point_t >;
 
 void box_filter(
     const pcl::shared_ptr< cloud_t >& input_cloud, const pcl::shared_ptr< cloud_t >& cloud_segment,
@@ -70,8 +70,8 @@ inline void set_marker(
     marker.pose.position.z = ( std::get< 1 >( cell ).z + std::get< 0 >( cell ).z ) / 2;
 }
 
-void compute_occlusion_matrix(
-    occlusion_matrix_t& occlusion_matrix, const std::shared_ptr< sensor_msgs::msg::PointCloud2 >& pcl_ros,
+std::pair< int, int > compute_occlusion_map(
+    occlusion_map_t& occlusion_map, const std::shared_ptr< sensor_msgs::msg::PointCloud2 >& pcl_ros,
     const std::shared_ptr< geometry_msgs::msg::TransformStamped >& transform,
     const std::shared_ptr< std::pair< float, float > >& pcl_lims );
 
@@ -131,6 +131,15 @@ inline bool is_valid( const double& x, const double& y, const double& z )
 }
 
 bool check_occlusions( void );
+
+inline double& occlusion_map_indexer(
+    std_msgs::msg::Float64MultiArray& occ_mat, const size_t& r, const size_t& c, const size_t& lims,
+    const size_t& comp )
+{
+    return occ_mat.data
+        [ occ_mat.layout.dim[ 0 ].stride * r + occ_mat.layout.dim[ 1 ].stride * c
+          + occ_mat.layout.dim[ 2 ].stride * lims + comp ];
+}
 
 }  // namespace smap
 

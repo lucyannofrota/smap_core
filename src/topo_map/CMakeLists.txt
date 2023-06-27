@@ -94,6 +94,7 @@ ament_target_dependencies(
   geometry_msgs
   smap_interfaces
   visualization_msgs
+  std_msgs
 )
 
 # Causes the visibility macros to use dllexport rather than dllimport,
@@ -136,6 +137,7 @@ install(
       geometry_msgs
       smap_interfaces
       visualization_msgs
+      std_msgs
   )
 
   install(TARGETS topo_map_node

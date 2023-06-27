@@ -15,6 +15,8 @@
 // SMAP
 // #include "../pcl_processing/include/pcl_processing.hpp"
 // #include "pcl_processing/pcl_processing.hpp"
+#include "../../include/smap_core/aux_functions.hpp"
+#include "include/occlusion_map.hpp"
 
 using namespace std::chrono_literals;
 
@@ -189,16 +191,18 @@ void object_estimator::detections_callback( const smap_interfaces::msg::SmapDete
     smap_interfaces::msg::SmapObject obj;
     sensor_msgs::msg::PointCloud2 segment_cloud;
 
-    // launch occlusion_matrix_thread
+    // launch occlusion_map_thread
     // input_msg->
 
-    printf( "Launching occlusion_matrix_thread\n" );
-    std::async(
-        std::launch::async, &object_estimator::occlusion_matrix_thread, this,
-        std::make_shared< sensor_msgs::msg::PointCloud2 >( input_msg->pointcloud ), transform );
+    printf( "Launching occlusion_map_thread\n" );
 
-    // this->object_estimator::occlusion_matrix_thread(
+    // std::async(
+    //     std::launch::async, &object_estimator::validation_thread, this,
     //     std::make_shared< sensor_msgs::msg::PointCloud2 >( input_msg->pointcloud ), transform );
+
+    std::async(
+        std::launch::async, &object_estimator::occlusion_map_thread, this,
+        std::make_shared< sensor_msgs::msg::PointCloud2 >( input_msg->pointcloud ), transform );
 
     for( auto& obj: input_msg->objects )
     {
@@ -238,14 +242,34 @@ void object_estimator::detections_callback( const smap_interfaces::msg::SmapDete
     RCLCPP_DEBUG( this->get_logger(), "---Callback complete---" );
 }
 
-void object_estimator::occlusion_matrix_thread(
+void object_estimator::occlusion_map_thread(
     const std::shared_ptr< sensor_msgs::msg::PointCloud2 >& ros_pcl,
     const std::shared_ptr< geometry_msgs::msg::TransformStamped >& transform )
 {
-    count_time timer;
+    // Defining msg
+    // int b = 1;
+    // // this->occlusion_map.data.clear();
+    // for( int i = 0; i < 3; i++ )
+    // {
+    //     for( int j = 0; j < 3; j++ )
+    //     {
+    //         for( int k = 0; k < 2; k++ )
+    //         {
+    //             for( int comp = 0; comp < 3; comp++ )
+    //             {
+    //                 //
+    //                 occlusion_map_indexer( this->occlusion_map, i, j, k, comp ) =
+    //                     ( k == 0 ? -1 : 1 ) * b * ( comp == 1 ? -1 : 1 );
+    //             }
+    //         }
+    //         b++;
+    //     }
+    // }
+    // this->occlusion_map_pub->publish( this->occlusion_map );
+    // vec.resize()
 
     // TODO: make mutually exclusive
-    printf( "occlusion_matrix_thread\n" );
+    printf( "occlusion_map_thread\n" );
     if( ros_pcl->data.empty() ) return;
     if( !is_valid(
             transform->transform.translation.x, transform->transform.translation.y, transform->transform.translation.z )
@@ -254,48 +278,79 @@ void object_estimator::occlusion_matrix_thread(
         || std::isnan( transform->transform.rotation.w ) || std::isinf( transform->transform.rotation.w ) )
         printf( "\t\tInvalid transform\n" );
 
-    for( auto& v: this->occlusion_matrix )
+    // Initialize values in occlusion_map
+    // for( size_t i = 0; i < 3; i++ )
+    // {
+    //     for( size_t j = 0; j < 3; j++ )
+    //     {
+    //         for( size_t k = 0; k < 2; k++ )
+    //         {
+    //             for( size_t comp = 0; comp < 3; comp++ )
+    //             {
+    //                 occlusion_map_indexer( this->occlusion_map, i, j, k, comp ) =
+    //                     ( k == 0 ? -1 : 1 ) * std::numeric_limits< double >::infinity();
+    //             }
+    //         }
+    //     }
+    // }
+    occlusion_map_t occlusion_map;
+    for( auto& v: occlusion_map )
     {
         for( auto& e: v )
         {
-            e.first.x  = std::numeric_limits< double >::infinity();
-            e.first.y  = std::numeric_limits< double >::infinity();
-            e.first.z  = std::numeric_limits< double >::infinity();
+            e[ 0 ].x = std::numeric_limits< double >::infinity();
+            e[ 0 ].y = std::numeric_limits< double >::infinity();
+            e[ 0 ].z = std::numeric_limits< double >::infinity();
 
-            e.second.x = -std::numeric_limits< double >::infinity();
-            e.second.y = -std::numeric_limits< double >::infinity();
-            e.second.z = -std::numeric_limits< double >::infinity();
+            e[ 1 ].x = -std::numeric_limits< double >::infinity();
+            e[ 1 ].y = -std::numeric_limits< double >::infinity();
+            e[ 1 ].z = -std::numeric_limits< double >::infinity();
         }
     }
 
-    compute_occlusion_matrix( occlusion_matrix, ros_pcl, transform, this->pcl_lims );
+    auto cell_dims = compute_occlusion_map( occlusion_map, ros_pcl, transform, this->pcl_lims );
 
     marker_array.markers.clear();
     std::array< geometry_msgs::msg::PointStamped, 8 > AABB;
     geometry_msgs::msg::Point min, max;
     this->box_marker.id = 0;
-    for( auto& row_array: occlusion_matrix )
+    for( auto& row_array: occlusion_map )
     {
         for( auto& element: row_array )
         {
-            if( ( !is_valid( element.first ) ) || ( !is_valid( element.second ) ) ) continue;
+            if( ( !is_valid( element[ 0 ] ) ) || ( !is_valid( element[ 1 ] ) ) ) continue;
             this->box_marker.header.stamp = this->get_clock()->now();
             this->box_marker.id++;
-            this->box_marker.scale.x         = abs( element.second.x - element.first.x );
-            this->box_marker.scale.y         = abs( element.second.y - element.first.y );
-            this->box_marker.scale.z         = abs( element.second.z - element.first.z );
-            this->box_marker.pose.position.x = ( element.first.x + element.second.x ) / 2;
-            this->box_marker.pose.position.y = ( element.first.y + element.second.y ) / 2;
-            this->box_marker.pose.position.z = ( element.first.z + element.second.z ) / 2;
+            this->box_marker.scale.x         = abs( element[ 1 ].x - element[ 0 ].x );
+            this->box_marker.scale.y         = abs( element[ 1 ].y - element[ 0 ].y );
+            this->box_marker.scale.z         = abs( element[ 1 ].z - element[ 0 ].z );
+            this->box_marker.pose.position.x = ( element[ 0 ].x + element[ 1 ].x ) / 2;
+            this->box_marker.pose.position.y = ( element[ 0 ].y + element[ 1 ].y ) / 2;
+            this->box_marker.pose.position.z = ( element[ 0 ].z + element[ 1 ].z ) / 2;
             this->marker_array.markers.push_back( this->box_marker );
         }
     }
 
     this->occlusion_boxes_pub->publish( marker_array );
 
-    // Use the occlusion matrix
+    // Publish the occlusion map
+    // msg.map.resize();
 
-    timer.print_time( "occlusion_matrix_callback" );
+    // for(auto )
+    to_msg( occlusion_map, this->occ_map, cell_dims );
+
+    printf( "\n\nOBJECT_ESTIMATOR\n\n\n" );
+    for( auto& row: occlusion_map )
+    {
+        for( auto& col: row )
+        {
+            for( auto& lim: col ) printf( "[%6.2f,%6.2f,%6.2f]|", lim.x, lim.y, lim.z );
+            printf( "\t" );
+        }
+        printf( "\n" );
+    }
+
+    this->occlusion_map_pub->publish( this->occ_map );
 }
 
 }  // namespace smap

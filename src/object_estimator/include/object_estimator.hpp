@@ -14,6 +14,8 @@
 #include "smap_core/visibility_control.h"
 
 #include <rclcpp/rclcpp.hpp>
+#include <std_msgs/msg/float64_multi_array.hpp>
+#include <std_msgs/msg/multi_array_dimension.hpp>
 #include <tf2/convert.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <tf2_sensor_msgs/tf2_sensor_msgs.h>
@@ -30,11 +32,11 @@
 #include "smap_core/count_time.hpp"
 #include "smap_core/macros.hpp"
 #include "smap_interfaces/msg/bounding_box2_d.hpp"
+#include "smap_interfaces/msg/occlusion_map.hpp"
 #include "smap_interfaces/msg/smap_detections.hpp"
 #include "smap_interfaces/msg/smap_object.hpp"
 #include "smap_interfaces/msg/smap_observation.hpp"
 
-// // SMAP
 // #include "pcl_processing/include/pcl_processing.hpp"
 
 // using namespace std::chrono_literals;
@@ -144,21 +146,22 @@ class object_estimator : public rclcpp::Node
         this->create_publisher< smap_interfaces::msg::SmapObservation >(
             std::string( this->get_namespace() ) + std::string( "/object_estimator/observations" ), 10 );
 
-    rclcpp::Publisher< sensor_msgs::msg::PointCloud2 >::SharedPtr transf_pcl_pub =
-        this->create_publisher< sensor_msgs::msg::PointCloud2 >(
-            std::string( this->get_namespace() ) + std::string( "/object_estimator/transf_pcl" ), 10 );
-
     rclcpp::Publisher< visualization_msgs::msg::MarkerArray >::SharedPtr occlusion_boxes_pub =
         this->create_publisher< visualization_msgs::msg::MarkerArray >(
             std::string( this->get_namespace() ) + std::string( "/object_estimator/occlusionBoxes" ), 10 );
-    rclcpp::Publisher< visualization_msgs::msg::Marker >::SharedPtr single_occlusion_b_pub =
-        this->create_publisher< visualization_msgs::msg::Marker >(
-            std::string( this->get_namespace() ) + std::string( "/object_estimator/single_occlusion_b" ), 10 );
+
+    rclcpp::Publisher< smap_interfaces::msg::OcclusionMap >::SharedPtr occlusion_map_pub =
+        this->create_publisher< smap_interfaces::msg::OcclusionMap >(
+            std::string( this->get_namespace() ) + std::string( "/object_estimator/occlusion_map" ), 10 );
 
     visualization_msgs::msg::MarkerArray marker_array;
-    visualization_msgs::msg::Marker box_marker, box_marker_2;
+    visualization_msgs::msg::Marker box_marker;
     visualization_msgs::msg::Marker AABB_points;
-    occlusion_matrix_t occlusion_matrix;
+
+    smap_interfaces::msg::OcclusionMap occ_map;
+
+    // std_msgs::msg::Float64MultiArray occlusion_map;
+
     // rclcpp::Publisher< smap_interfaces::msg::SmapObservation >::SharedPtr object_pub =
     //     this->create_publisher< smap_interfaces::msg::SmapObservation >(
     //         std::string( this->get_namespace() ) + std::string( "/object_estimator/occlusion_map" ), 10 );
@@ -196,89 +199,43 @@ class object_estimator : public rclcpp::Node
                 ( pcl_lims->second - pcl_lims->first ), OBJECT_SIZE_LIM_CONF );
             this->~object_estimator();
         }
-        this->box_marker.header.frame_id      = "map";
-        this->box_marker.header.stamp         = this->get_clock()->now();
-        this->box_marker.type                 = visualization_msgs::msg::Marker::CUBE;
-        this->box_marker.action               = visualization_msgs::msg::Marker::ADD;
-        this->box_marker.pose.orientation.x   = 0;
-        this->box_marker.pose.orientation.y   = 0;
-        this->box_marker.pose.orientation.z   = 0;
-        this->box_marker.pose.orientation.w   = 1;
-        this->box_marker.color.b              = 0;
-        this->box_marker.color.g              = 1;
-        this->box_marker.color.r              = 0;
-        this->box_marker.color.a              = 0.2;
-        this->box_marker.ns                   = "occlusion box";
+        this->box_marker.header.frame_id    = "map";
+        this->box_marker.header.stamp       = this->get_clock()->now();
+        this->box_marker.type               = visualization_msgs::msg::Marker::CUBE;
+        this->box_marker.action             = visualization_msgs::msg::Marker::ADD;
+        this->box_marker.pose.orientation.x = 0;
+        this->box_marker.pose.orientation.y = 0;
+        this->box_marker.pose.orientation.z = 0;
+        this->box_marker.pose.orientation.w = 1;
+        this->box_marker.color.b            = 0;
+        this->box_marker.color.g            = 1;
+        this->box_marker.color.r            = 0;
+        this->box_marker.color.a            = 0.2;
+        this->box_marker.ns                 = "occlusion box";
 
-        this->box_marker_2.header.frame_id    = "map";
-        this->box_marker_2.header.stamp       = this->get_clock()->now();
-        this->box_marker_2.type               = visualization_msgs::msg::Marker::CUBE;
-        this->box_marker_2.action             = visualization_msgs::msg::Marker::ADD;
-        this->box_marker_2.pose.orientation.x = 0;
-        this->box_marker_2.pose.orientation.y = 0;
-        this->box_marker_2.pose.orientation.z = 0;
-        this->box_marker_2.pose.orientation.w = 1;
-        this->box_marker_2.color.b            = 1;
-        this->box_marker_2.color.g            = 0;
-        this->box_marker_2.color.r            = 0;
-        this->box_marker_2.color.a            = 0.2;
-        this->box_marker_2.ns                 = "occlusion box _2";
+        // Layout
+        // const int r = 3, c = 3, lims = 2, comps = 3;
+        // this->occlusion_map.layout.dim.push_back( std_msgs::msg::MultiArrayDimension() );
+        // this->occlusion_map.layout.dim[ 0 ].label  = "height";
+        // this->occlusion_map.layout.dim[ 0 ].size   = r;
+        // this->occlusion_map.layout.dim[ 0 ].stride = c * lims * comps;
+        // this->occlusion_map.layout.dim.push_back( std_msgs::msg::MultiArrayDimension() );
+        // this->occlusion_map.layout.dim[ 1 ].label  = "width";
+        // this->occlusion_map.layout.dim[ 1 ].size   = c;
+        // this->occlusion_map.layout.dim[ 1 ].stride = lims * comps;
+        // this->occlusion_map.layout.dim.push_back( std_msgs::msg::MultiArrayDimension() );
+        // this->occlusion_map.layout.dim[ 2 ].label  = "limits";
+        // this->occlusion_map.layout.dim[ 2 ].size   = lims;
+        // this->occlusion_map.layout.dim[ 2 ].stride = comps;
+        // this->occlusion_map.layout.dim.push_back( std_msgs::msg::MultiArrayDimension() );
+        // this->occlusion_map.layout.dim[ 3 ].label  = "components";
+        // this->occlusion_map.layout.dim[ 3 ].size   = comps;
+        // this->occlusion_map.layout.dim[ 3 ].stride = 1;
+        // this->occlusion_map.layout.data_offset     = 0;
 
-        this->AABB_points.header.frame_id     = "map";
-        this->AABB_points.header.stamp        = this->get_clock()->now();
-        this->AABB_points.type                = visualization_msgs::msg::Marker::POINTS;
-        this->AABB_points.action              = visualization_msgs::msg::Marker::ADD;
-        this->AABB_points.pose.orientation.x  = 0;
-        this->AABB_points.pose.orientation.y  = 0;
-        this->AABB_points.pose.orientation.z  = 0;
-        this->AABB_points.pose.orientation.w  = 1;
-        this->AABB_points.color.b             = 0;
-        this->AABB_points.color.g             = 0;
-        this->AABB_points.color.r             = 1;
-        this->AABB_points.color.a             = 0.5;
-        this->AABB_points.ns                  = "transform";
-        this->AABB_points.scale.x             = 0.2;
-        this->AABB_points.scale.y             = 0.2;
-        this->AABB_points.scale.z             = 0.2;
+        // this->occlusion_map.data.resize( r * c * lims * comps );
+        this->occ_map.map.resize( OCCLUSION_MAP_ROWS * OCCLUSION_MAP_COLS * 2 );
     }
-
-    // inline object_estimator( const rclcpp::NodeOptions& options ) : Node( "object_estimator", options )
-    // {
-    //     RCLCPP_INFO( this->get_logger(), "Initializing object_estimator" );
-    //     // this->viewer = std::make_shared<pcl::visualization::PCLVisualizer>(new pcl::visualization::PCLVisualizer
-    //     ("3D
-    //     // Viewer"));
-    //     this->box_marker.header.frame_id      = "map";
-    //     this->box_marker.header.stamp         = this->get_clock()->now();
-    //     this->box_marker.type                 = visualization_msgs::msg::Marker::CUBE;
-    //     this->box_marker.action               = visualization_msgs::msg::Marker::ADD;
-    //     this->box_marker.pose.orientation.x   = 0;
-    //     this->box_marker.pose.orientation.y   = 0;
-    //     this->box_marker.pose.orientation.z   = 0;
-    //     this->box_marker.pose.orientation.w   = 1;
-    //     this->box_marker.color.b              = 0;
-    //     this->box_marker.color.g              = 1;
-    //     this->box_marker.color.r              = 0;
-    //     this->box_marker.color.a              = 0.2;
-    //     this->box_marker.ns                   = "occlusion box";
-
-    // this->AABB_points.header.frame_id    = "map";
-    // this->AABB_points.header.stamp       = this->get_clock()->now();
-    // this->AABB_points.type               = visualization_msgs::msg::Marker::ARROW;
-    // this->AABB_points.action             = visualization_msgs::msg::Marker::ADD;
-    // this->AABB_points.pose.orientation.x = 0;
-    // this->AABB_points.pose.orientation.y = 0;
-    // this->AABB_points.pose.orientation.z = 0;
-    // this->AABB_points.pose.orientation.w = 1;
-    // this->AABB_points.color.b            = 0;
-    // this->AABB_points.color.g            = 0;
-    // this->AABB_points.color.r            = 1;
-    // this->AABB_points.color.a            = 0.5;
-    // this->AABB_points.ns                 = "transform";
-    // this->AABB_points.scale.x            = 1;
-    // this->AABB_points.scale.y            = 1;
-    // this->AABB_points.scale.z            = 1;
-    // }
 
     inline ~object_estimator() {}
 
@@ -371,17 +328,34 @@ class object_estimator : public rclcpp::Node
     {  // Pooling
     }
 
-    // inline void transform_AABB(
-    //     std::array< geometry_msgs::msg::PointStamped, 8 >& AABB,
-    //     const std::shared_ptr< geometry_msgs::msg::TransformStamped >& transform )
-    // {
-    //     //
-    //     //
-    // }
-
-    void occlusion_matrix_thread(
+    void occlusion_map_thread(
         const std::shared_ptr< sensor_msgs::msg::PointCloud2 >& ros_pcl,
         const std::shared_ptr< geometry_msgs::msg::TransformStamped >& transform );
+
+    // void validation_thread(
+    //     const std::shared_ptr< sensor_msgs::msg::PointCloud2 >& ros_pcl,
+    //     const std::shared_ptr< geometry_msgs::msg::TransformStamped >& transform )
+    // {
+    //     printf( "Validation thread\n" );
+
+    //     // Launch occlusion map thread
+    //     count_time timer_occlusion_map;
+    //     occlusion_map_t occlusion_map;
+    //     // std::future< void > occlusion_map_thread_future = std::async(
+    //     //     std::launch::async, &object_estimator::occlusion_map_thread, this, std::ref( occlusion_map ),
+    //     //     ros_pcl, transform );
+
+    //     // Processing
+    //     printf( "Validation processing\n" );
+    //     // Processing
+
+    //     // Wait for occlusion map thread completion
+    //     // occlusion_map_thread_future.wait();
+    //     timer_occlusion_map.print_time( "occlusion_map_thread" );
+    //     printf( "Validation end\n" );
+    //     //
+    //     //
+    // };
 
   private:
 };

@@ -18,6 +18,7 @@ endif()
         find_package(tf2 REQUIRED)
         find_package(tf2_ros REQUIRED)
         find_package(visualization_msgs REQUIRED)
+        find_package(std_msgs REQUIRED)
         # find_package(std_srvs REQUIRED)
         # find_package(rmw_implementation_cmake REQUIRED)
     # smap
@@ -42,6 +43,7 @@ set(DEPENDENCIES
     tf2
     tf2_geometry_msgs
     tf2_sensor_msgs
+    std_msgs
 )
 
 # ######################
