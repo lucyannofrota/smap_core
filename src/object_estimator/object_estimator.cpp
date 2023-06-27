@@ -192,9 +192,11 @@ void object_estimator::detections_callback( const smap_interfaces::msg::SmapDete
     // launch occlusion_matrix_thread
     // input_msg->
 
+    printf( "Launching occlusion_matrix_thread\n" );
     std::async(
         std::launch::async, &object_estimator::occlusion_matrix_thread, this,
         std::make_shared< sensor_msgs::msg::PointCloud2 >( input_msg->pointcloud ), transform );
+
     // this->object_estimator::occlusion_matrix_thread(
     //     std::make_shared< sensor_msgs::msg::PointCloud2 >( input_msg->pointcloud ), transform );
 

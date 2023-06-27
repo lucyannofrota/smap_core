@@ -3,6 +3,8 @@
 
 // STL
 #include <chrono>
+#include <cmath>
+#include <limits>
 #include <memory>
 #include <mutex>
 #include <stdlib.h>
@@ -148,15 +150,15 @@ class object_estimator : public rclcpp::Node
 
     rclcpp::Publisher< visualization_msgs::msg::MarkerArray >::SharedPtr occlusion_boxes_pub =
         this->create_publisher< visualization_msgs::msg::MarkerArray >(
-            std::string( this->get_namespace() ) + std::string( "/object_estimator/occlusion_boxes" ), 10 );
+            std::string( this->get_namespace() ) + std::string( "/object_estimator/occlusionBoxes" ), 10 );
     rclcpp::Publisher< visualization_msgs::msg::Marker >::SharedPtr single_occlusion_b_pub =
         this->create_publisher< visualization_msgs::msg::Marker >(
             std::string( this->get_namespace() ) + std::string( "/object_estimator/single_occlusion_b" ), 10 );
 
     visualization_msgs::msg::MarkerArray marker_array;
-    visualization_msgs::msg::Marker box_marker;
-    visualization_msgs::msg::Marker arrow_marker;
-    const std::shared_ptr< occlusion_matrix_t > occlusion_matrix = std::make_shared< occlusion_matrix_t >();
+    visualization_msgs::msg::Marker box_marker, box_marker_2;
+    visualization_msgs::msg::Marker AABB_points;
+    occlusion_matrix_t occlusion_matrix;
     // rclcpp::Publisher< smap_interfaces::msg::SmapObservation >::SharedPtr object_pub =
     //     this->create_publisher< smap_interfaces::msg::SmapObservation >(
     //         std::string( this->get_namespace() ) + std::string( "/object_estimator/occlusion_map" ), 10 );
@@ -205,63 +207,78 @@ class object_estimator : public rclcpp::Node
         this->box_marker.color.b              = 0;
         this->box_marker.color.g              = 1;
         this->box_marker.color.r              = 0;
-        this->box_marker.color.a              = 0.75;
+        this->box_marker.color.a              = 0.2;
         this->box_marker.ns                   = "occlusion box";
 
-        this->arrow_marker.header.frame_id    = "map";
-        this->arrow_marker.header.stamp       = this->get_clock()->now();
-        this->arrow_marker.type               = visualization_msgs::msg::Marker::ARROW;
-        this->arrow_marker.action             = visualization_msgs::msg::Marker::ADD;
-        this->arrow_marker.pose.orientation.x = 0;
-        this->arrow_marker.pose.orientation.y = 0;
-        this->arrow_marker.pose.orientation.z = 0;
-        this->arrow_marker.pose.orientation.w = 1;
-        this->arrow_marker.color.b            = 0;
-        this->arrow_marker.color.g            = 0;
-        this->arrow_marker.color.r            = 1;
-        this->arrow_marker.color.a            = 0.5;
-        this->arrow_marker.ns                 = "transform";
-        this->arrow_marker.scale.x            = 1;
-        this->arrow_marker.scale.y            = 1;
-        this->arrow_marker.scale.z            = 1;
+        this->box_marker_2.header.frame_id    = "map";
+        this->box_marker_2.header.stamp       = this->get_clock()->now();
+        this->box_marker_2.type               = visualization_msgs::msg::Marker::CUBE;
+        this->box_marker_2.action             = visualization_msgs::msg::Marker::ADD;
+        this->box_marker_2.pose.orientation.x = 0;
+        this->box_marker_2.pose.orientation.y = 0;
+        this->box_marker_2.pose.orientation.z = 0;
+        this->box_marker_2.pose.orientation.w = 1;
+        this->box_marker_2.color.b            = 1;
+        this->box_marker_2.color.g            = 0;
+        this->box_marker_2.color.r            = 0;
+        this->box_marker_2.color.a            = 0.2;
+        this->box_marker_2.ns                 = "occlusion box _2";
+
+        this->AABB_points.header.frame_id     = "map";
+        this->AABB_points.header.stamp        = this->get_clock()->now();
+        this->AABB_points.type                = visualization_msgs::msg::Marker::POINTS;
+        this->AABB_points.action              = visualization_msgs::msg::Marker::ADD;
+        this->AABB_points.pose.orientation.x  = 0;
+        this->AABB_points.pose.orientation.y  = 0;
+        this->AABB_points.pose.orientation.z  = 0;
+        this->AABB_points.pose.orientation.w  = 1;
+        this->AABB_points.color.b             = 0;
+        this->AABB_points.color.g             = 0;
+        this->AABB_points.color.r             = 1;
+        this->AABB_points.color.a             = 0.5;
+        this->AABB_points.ns                  = "transform";
+        this->AABB_points.scale.x             = 0.2;
+        this->AABB_points.scale.y             = 0.2;
+        this->AABB_points.scale.z             = 0.2;
     }
 
-    inline object_estimator( const rclcpp::NodeOptions& options ) : Node( "object_estimator", options )
-    {
-        RCLCPP_INFO( this->get_logger(), "Initializing object_estimator" );
-        // this->viewer = std::make_shared<pcl::visualization::PCLVisualizer>(new pcl::visualization::PCLVisualizer ("3D
-        // Viewer"));
-        this->box_marker.header.frame_id      = "map";
-        this->box_marker.header.stamp         = this->get_clock()->now();
-        this->box_marker.type                 = visualization_msgs::msg::Marker::CUBE;
-        this->box_marker.action               = visualization_msgs::msg::Marker::ADD;
-        this->box_marker.pose.orientation.x   = 0;
-        this->box_marker.pose.orientation.y   = 0;
-        this->box_marker.pose.orientation.z   = 0;
-        this->box_marker.pose.orientation.w   = 1;
-        this->box_marker.color.b              = 0;
-        this->box_marker.color.g              = 1;
-        this->box_marker.color.r              = 0;
-        this->box_marker.color.a              = 0.5;
-        this->box_marker.ns                   = "occlusion box";
+    // inline object_estimator( const rclcpp::NodeOptions& options ) : Node( "object_estimator", options )
+    // {
+    //     RCLCPP_INFO( this->get_logger(), "Initializing object_estimator" );
+    //     // this->viewer = std::make_shared<pcl::visualization::PCLVisualizer>(new pcl::visualization::PCLVisualizer
+    //     ("3D
+    //     // Viewer"));
+    //     this->box_marker.header.frame_id      = "map";
+    //     this->box_marker.header.stamp         = this->get_clock()->now();
+    //     this->box_marker.type                 = visualization_msgs::msg::Marker::CUBE;
+    //     this->box_marker.action               = visualization_msgs::msg::Marker::ADD;
+    //     this->box_marker.pose.orientation.x   = 0;
+    //     this->box_marker.pose.orientation.y   = 0;
+    //     this->box_marker.pose.orientation.z   = 0;
+    //     this->box_marker.pose.orientation.w   = 1;
+    //     this->box_marker.color.b              = 0;
+    //     this->box_marker.color.g              = 1;
+    //     this->box_marker.color.r              = 0;
+    //     this->box_marker.color.a              = 0.2;
+    //     this->box_marker.ns                   = "occlusion box";
 
-        this->arrow_marker.header.frame_id    = "map";
-        this->arrow_marker.header.stamp       = this->get_clock()->now();
-        this->arrow_marker.type               = visualization_msgs::msg::Marker::ARROW;
-        this->arrow_marker.action             = visualization_msgs::msg::Marker::ADD;
-        this->arrow_marker.pose.orientation.x = 0;
-        this->arrow_marker.pose.orientation.y = 0;
-        this->arrow_marker.pose.orientation.z = 0;
-        this->arrow_marker.pose.orientation.w = 1;
-        this->arrow_marker.color.b            = 0;
-        this->arrow_marker.color.g            = 0;
-        this->arrow_marker.color.r            = 1;
-        this->arrow_marker.color.a            = 0.75;
-        this->arrow_marker.ns                 = "transform";
-        this->arrow_marker.scale.x            = 1;
-        this->arrow_marker.scale.y            = 1;
-        this->arrow_marker.scale.z            = 1;
-    }
+    // this->AABB_points.header.frame_id    = "map";
+    // this->AABB_points.header.stamp       = this->get_clock()->now();
+    // this->AABB_points.type               = visualization_msgs::msg::Marker::ARROW;
+    // this->AABB_points.action             = visualization_msgs::msg::Marker::ADD;
+    // this->AABB_points.pose.orientation.x = 0;
+    // this->AABB_points.pose.orientation.y = 0;
+    // this->AABB_points.pose.orientation.z = 0;
+    // this->AABB_points.pose.orientation.w = 1;
+    // this->AABB_points.color.b            = 0;
+    // this->AABB_points.color.g            = 0;
+    // this->AABB_points.color.r            = 1;
+    // this->AABB_points.color.a            = 0.5;
+    // this->AABB_points.ns                 = "transform";
+    // this->AABB_points.scale.x            = 1;
+    // this->AABB_points.scale.y            = 1;
+    // this->AABB_points.scale.z            = 1;
+    // }
 
     inline ~object_estimator() {}
 
@@ -354,6 +371,55 @@ class object_estimator : public rclcpp::Node
     {  // Pooling
     }
 
+    inline void set_AABB(
+        std::array< geometry_msgs::msg::PointStamped, 8 >& AABB, const geometry_msgs::msg::Point& min,
+        const geometry_msgs::msg::Point& max )
+    {
+        // [0]
+        AABB[ 0 ].point = min;
+
+        // [1]
+        AABB[ 1 ].point.x = min.x;
+        AABB[ 1 ].point.y = min.y;
+        AABB[ 1 ].point.z = max.z;
+
+        // [2]
+        AABB[ 2 ].point.x = min.x;
+        AABB[ 2 ].point.y = max.y;
+        AABB[ 2 ].point.z = min.z;
+
+        // [3]
+        AABB[ 3 ].point.x = max.x;
+        AABB[ 3 ].point.y = min.y;
+        AABB[ 3 ].point.z = min.z;
+
+        // [4]
+        AABB[ 4 ].point.x = min.x;
+        AABB[ 4 ].point.y = max.y;
+        AABB[ 4 ].point.z = max.z;
+
+        // [5]
+        AABB[ 5 ].point.x = max.x;
+        AABB[ 5 ].point.y = min.y;
+        AABB[ 5 ].point.z = max.z;
+
+        // [6]
+        AABB[ 6 ].point.x = max.x;
+        AABB[ 6 ].point.y = max.y;
+        AABB[ 6 ].point.z = min.z;
+
+        // [7]
+        AABB[ 7 ].point = max;
+    }
+
+    // inline void transform_AABB(
+    //     std::array< geometry_msgs::msg::PointStamped, 8 >& AABB,
+    //     const std::shared_ptr< geometry_msgs::msg::TransformStamped >& transform )
+    // {
+    //     //
+    //     //
+    // }
+
     inline void occlusion_matrix_thread(
         const std::shared_ptr< sensor_msgs::msg::PointCloud2 >& ros_pcl,
         const std::shared_ptr< geometry_msgs::msg::TransformStamped >& transform )
@@ -363,64 +429,85 @@ class object_estimator : public rclcpp::Node
         // TODO: make mutually exclusive
         printf( "occlusion_matrix_thread\n" );
         if( ros_pcl->data.empty() ) return;
-        // std::unique_ptr< sensor_msgs::msg::PointCloud2 > transformed_ros_pcl =
-        //     std::make_unique< sensor_msgs::msg::PointCloud2 >();
-        // pcl::shared_ptr< cloud_t > transformed_pcl( new cloud_t );
+        if( !is_valid(
+                transform->transform.translation.x, transform->transform.translation.y,
+                transform->transform.translation.z )
+            || !is_valid(
+                transform->transform.rotation.x, transform->transform.rotation.y, transform->transform.rotation.z )
+            || std::isnan( transform->transform.rotation.w ) || std::isinf( transform->transform.rotation.w ) )
+            printf( "\t\tInvalid transform\n" );
 
-        // Voxelization
-        // pcl::fromROSMsg( *ros_pcl, *transformed_pcl );
-
-        // pcl_voxelization( transformed_pcl, this->leaf_size );
-
-        // pcl::toROSMsg( *transformed_pcl, *transformed_ros_pcl );
-
-        // tf2::doTransform< sensor_msgs::msg::PointCloud2 >( *transformed_ros_pcl, *transformed_ros_pcl, *transform );
-        // printf( "transform\n" );
-        // this->transf_pcl_pub->publish( *transformed_ros_pcl );
-        // printf( "transform pub\n" );
-        // pcl::fromROSMsg( *transformed_ros_pcl, *transformed_pcl );
-        // printf( "pcl-fill\n" );
-
-        // printf( "\tisOrganized: %i\n", transformed_pcl->isOrganized() );
-        // printf( "\tis_dense: %i\n", transformed_pcl->is_dense );
-
-        for( auto& v: *( this->occlusion_matrix ) )
+        for( auto& v: this->occlusion_matrix )
+        {
             for( auto& e: v )
             {
-                e.first.x  = DBL_MAX;
-                e.first.y  = DBL_MAX;
-                e.first.z  = DBL_MAX;
+                e.first.x  = std::numeric_limits< double >::infinity();
+                e.first.y  = std::numeric_limits< double >::infinity();
+                e.first.z  = std::numeric_limits< double >::infinity();
 
-                e.second.x = DBL_MIN;
-                e.second.y = DBL_MIN;
-                e.second.z = DBL_MIN;
-            }
-
-        compute_occlusion_matrix( occlusion_matrix, ros_pcl );
-        // printf( "compute_occlusion_matrix\n" );
-
-        // TODO: Transform only the centroid point of the cube
-
-        // printf( "beg occlusion_boxes_pub\n" );
-        marker_array.markers.clear();
-        this->box_marker.id = 0;
-        for( auto& row_array: *occlusion_matrix )
-        {
-            for( auto& col_array: row_array )
-            {
-                if( !is_valid( col_array.first ) || !is_valid( col_array.second ) ) continue;
-                if( col_array.first == col_array.second ) continue;
-                this->box_marker.header.stamp = this->get_clock()->now();
-                this->box_marker.id++;
-                this->box_marker.scale.x         = abs( col_array.second.x - col_array.first.x );
-                this->box_marker.scale.y         = abs( col_array.second.y - col_array.first.y );
-                this->box_marker.scale.z         = abs( col_array.second.z - col_array.first.z );
-                this->box_marker.pose.position.x = col_array.first.x + this->box_marker.scale.x / 2;
-                this->box_marker.pose.position.y = col_array.first.y + this->box_marker.scale.y / 2;
-                this->box_marker.pose.position.z = col_array.first.z + this->box_marker.scale.z / 2;
-                marker_array.markers.push_back( this->box_marker );
+                e.second.x = -std::numeric_limits< double >::infinity();
+                e.second.y = -std::numeric_limits< double >::infinity();
+                e.second.z = -std::numeric_limits< double >::infinity();
             }
         }
+
+        // std::unique_ptr< sensor_msgs::msg::PointCloud2 > cloud = std::make_unique< sensor_msgs::msg::PointCloud2 >();
+        // tf2::doTransform( *ros_pcl, *cloud, *transform );
+        // this->transf_pcl_pub->publish( *cloud );
+
+        compute_occlusion_matrix( occlusion_matrix, ros_pcl, this->pcl_lims );
+
+        marker_array.markers.clear();
+        std::array< geometry_msgs::msg::PointStamped, 8 > AABB;
+        geometry_msgs::msg::Point min, max;
+        this->box_marker.id = 0;
+        for( auto& row_array: occlusion_matrix )
+        {
+            for( auto& element: row_array )
+            {
+                if( ( element.first == element.second ) || ( !is_valid( element.first ) )
+                    || ( !is_valid( element.second ) ) )
+                    continue;
+
+                set_AABB( AABB, element.first, element.second );
+
+                min = AABB[ 0 ].point;
+                max = AABB[ 0 ].point;
+                for( size_t idx = 0; idx < 8; idx++ )
+                {
+                    tf2::doTransform< geometry_msgs::msg::PointStamped >( AABB[ idx ], AABB[ idx ], *transform );
+                    if( idx == 0 )
+                    {
+                        min = AABB[ idx ].point;
+                        max = AABB[ idx ].point;
+                        continue;
+                    }
+                    else
+                    {
+                        // Min
+                        if( AABB[ idx ].point.x < min.x ) min.x = AABB[ idx ].point.x;
+                        if( AABB[ idx ].point.y < min.y ) min.y = AABB[ idx ].point.y;
+                        if( AABB[ idx ].point.z < min.z ) min.z = AABB[ idx ].point.z;
+                        // Max
+                        if( AABB[ idx ].point.x > max.x ) max.x = AABB[ idx ].point.x;
+                        if( AABB[ idx ].point.y > max.y ) max.y = AABB[ idx ].point.y;
+                        if( AABB[ idx ].point.z > max.z ) max.z = AABB[ idx ].point.z;
+                    }
+                }
+                this->box_marker.header.stamp = this->get_clock()->now();
+                this->box_marker.id++;
+                this->box_marker.scale.x = abs( max.x - min.x );
+                this->box_marker.scale.y = abs( max.y - min.y );
+                this->box_marker.scale.z = abs( max.z - min.z );
+                if( this->box_marker.scale.x == 0 || this->box_marker.scale.y == 0 || this->box_marker.scale.z == 0 )
+                    continue;
+                this->box_marker.pose.position.x = ( min.x + max.x ) / 2;
+                this->box_marker.pose.position.y = ( min.y + max.y ) / 2;
+                this->box_marker.pose.position.z = ( min.z + max.z ) / 2;
+                this->marker_array.markers.push_back( this->box_marker );
+            }
+        }
+
         this->occlusion_boxes_pub->publish( marker_array );
 
         timer.print_time( "occlusion_matrix_callback" );

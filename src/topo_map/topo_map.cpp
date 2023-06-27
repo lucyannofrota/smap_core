@@ -72,7 +72,7 @@ size_t topo_map::get_closest_vertex( const geometry_msgs::msg::Point pos, double
 {
     auto pair      = boost::vertices( this->graph );
     size_t closest = -1;
-    min            = DBL_MAX;
+    min            = std::numeric_limits< double >::max();
     double distance;
     for( auto it = pair.first; it != pair.second; ++it )
     {

@@ -16,6 +16,7 @@ observation_histogram::observation_histogram( size_t n_bins )
 
 void observation_histogram::register_obs( double distance, double angle, bool positive )
 {
+    printf( "reg_obs\n" );
     const double prob_increase = 0.3;  // TODO: Parameter
     double add_value           = prob_increase / ( 1 + distance );
 
@@ -30,6 +31,7 @@ void observation_histogram::register_obs( double distance, double angle, bool po
 
 bool observation_histogram::object_is_valid( double current_angle )
 {
+    printf( "object_is_valid\n" );
     const double upper_sat_threshold = 0.90, upper_threshold = 0.7, lower_threshold = 0.4;
     size_t pos_bins = 0, neg_bins = 0;
     int idx;

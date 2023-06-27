@@ -63,10 +63,10 @@ class perception_server : public rclcpp::Node
         RCLCPP_INFO( this->get_logger(), "Initializing perception_server" );
     }
 
-    inline perception_server( const rclcpp::NodeOptions& options ) : Node( "perception_server", options )
-    {
-        RCLCPP_INFO( this->get_logger(), "Initializing perception_server" );
-    }
+    // inline perception_server( const rclcpp::NodeOptions& options ) : Node( "perception_server", options )
+    // {
+    //     RCLCPP_INFO( this->get_logger(), "Initializing perception_server" );
+    // }
 
     inline ~perception_server() {}
 

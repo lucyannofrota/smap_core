@@ -103,4 +103,11 @@ inline double gPoint_distance( geometry_msgs::msg::Point a, geometry_msgs::msg::
     return sqrt( a.x + a.y + a.z );
 }
 
+// norm
+
+inline double norm( const double& x, const double& y, const double& z )
+{
+    return sqrt( pow( x, 2 ) + pow( y, 2 ) + pow( z, 2 ) );
+}
+
 #endif  // SMAP_CORE__TEMPLATES_HPP_

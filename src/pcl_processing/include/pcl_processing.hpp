@@ -69,8 +69,8 @@ inline void set_marker(
 }
 
 void compute_occlusion_matrix(
-    const std::shared_ptr< occlusion_matrix_t >& occlusion_matrix,
-    const std::shared_ptr< sensor_msgs::msg::PointCloud2 >& pcl_ros );
+    occlusion_matrix_t& occlusion_matrix, const std::shared_ptr< sensor_msgs::msg::PointCloud2 >& pcl_ros,
+    const std::shared_ptr< std::pair< float, float > >& pcl_lims );
 
 inline bool is_valid( const geometry_msgs::msg::Point& p )
 {
@@ -79,7 +79,7 @@ inline bool is_valid( const geometry_msgs::msg::Point& p )
         || ( ( std::isinf( p.x ) || std::isinf( p.y ) || std::isinf( p.z ) ) ) );
 }
 
-inline bool is_valid( const double& x,const double& y,const double& z )
+inline bool is_valid( const double& x, const double& y, const double& z )
 {
     return !(
         ( std::isnan( x ) || std::isnan( y ) || std::isnan( z ) )

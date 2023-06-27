@@ -77,13 +77,11 @@ class smap_node : public rclcpp::Node
 int main( int argc, char** argv )
 {
     rclcpp::init( argc, argv );
-    rclcpp::NodeOptions options;
-    std::shared_ptr< smap::smap_node > _smap_node    = std::make_shared< smap::smap_node >();
-    std::shared_ptr< smap::topo_map > _topo_map_node = std::make_shared< smap::topo_map >();
-    std::shared_ptr< smap::object_estimator > _object_estimator_node =
-        std::make_shared< smap::object_estimator >( options );
-    std::shared_ptr< smap::perception_server > _perception_server_node =
-        std::make_shared< smap::perception_server >( options );
+    // rclcpp::NodeOptions options;
+    std::shared_ptr< smap::smap_node > _smap_node                      = std::make_shared< smap::smap_node >();
+    std::shared_ptr< smap::topo_map > _topo_map_node                   = std::make_shared< smap::topo_map >();
+    std::shared_ptr< smap::object_estimator > _object_estimator_node   = std::make_shared< smap::object_estimator >();
+    std::shared_ptr< smap::perception_server > _perception_server_node = std::make_shared< smap::perception_server >();
 
     _topo_map_node->define_reg_classes( _perception_server_node->classes );
     _topo_map_node->define_reg_detectors( _perception_server_node->detectors );

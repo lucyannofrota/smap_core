@@ -2,6 +2,8 @@
 #define SMAP_CORE__TOPO_MAP_HPP_
 
 // STL
+#include <cmath>
+#include <limits>
 
 // BOOST
 #include <boost/graph/graph_utility.hpp>
@@ -335,7 +337,7 @@ class topo_map : public rclcpp::Node
         std::pair< size_t, thing* >& closest_valid )
     {
         // TODO: debug pos_confidence
-        double min_distance_valid = DBL_MAX;
+        double min_distance_valid = std::numeric_limits< double >::infinity();
         for( auto c: candidates )
         {
             for( auto lc: c.second )
@@ -382,7 +384,7 @@ class topo_map : public rclcpp::Node
     inline void object_vert_move( std::vector< size_t >& idxs_checked, std::pair< size_t, thing* >& closest )
     {
         std::vector< std::pair< size_t, double > > distances;
-        std::pair< size_t, double > min_vertex = std::pair< size_t, double >( 0, DBL_MAX );
+        std::pair< size_t, double > min_vertex = std::pair< size_t, double >( 0, std::numeric_limits< double >::max() );
         for( auto& idx: idxs_checked )
         {
             if( ( this->_calc_distance( closest.second->pos, this->graph[ idx ].pos ) < min_vertex.second )
