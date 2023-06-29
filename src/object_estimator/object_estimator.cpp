@@ -344,7 +344,7 @@ void object_estimator::occlusion_map_thread(
     // for(auto )
     // TODO: Check the memory access of the occlusion_map
     to_msg( occlusion_map, this->occ_map, cell_dims );  // REVERT
-    this->occ_map.robot_pose = robot_pose.pose;         // REVERT
+    this->occ_map.camera_pose = robot_pose.pose;        // REVERT
 
     // printf( "\n\nOBJECT_ESTIMATOR\n\n\n" );
     // for( auto& row: occlusion_map )

@@ -42,10 +42,10 @@ namespace smap
 
 #define OBJECT_SIZE_LIM_CONF 0.8  // Objects with size under this value will suffer no confidence penalty
 
-#define MAX_VOLUME 1.2
+#define MAX_OCCLUSION_CELL_VOLUME 0.5
 
-#define OCCLUSION_MAP_ROWS 16  // 16
-#define OCCLUSION_MAP_COLS 32  // 32
+#define OCCLUSION_MAP_ROWS 32  // 16
+#define OCCLUSION_MAP_COLS 64  // 32
 
 #define OCCLUSION_ANGULAR_TOL 20
 

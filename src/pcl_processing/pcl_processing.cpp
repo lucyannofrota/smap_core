@@ -238,7 +238,7 @@ std::pair< int, int > compute_occlusion_map(
             double sx = abs( max.x - min.x );
             double sy = abs( max.y - min.y );
             double sz = abs( max.z - min.z );
-            if( ( ( sx == 0 ) || ( sy == 0 ) || ( sz == 0 ) ) || ( sx * sy * sz > MAX_VOLUME ) )
+            if( ( ( sx == 0 ) || ( sy == 0 ) || ( sz == 0 ) ) || ( sx * sy * sz > MAX_OCCLUSION_CELL_VOLUME ) )
             {
                 element[ 0 ].x = std::numeric_limits< double >::infinity();
                 element[ 0 ].y = std::numeric_limits< double >::infinity();
