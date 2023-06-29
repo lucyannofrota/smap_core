@@ -39,7 +39,7 @@ inline geometry_msgs::msg::Point operator-( const geometry_msgs::msg::Point& a, 
 }
 
 //*
-inline geometry_msgs::msg::Point operator*( const geometry_msgs::msg::Point& a, double b )
+inline geometry_msgs::msg::Point operator*( const geometry_msgs::msg::Point& a, const double b )
 {
     geometry_msgs::msg::Point ret;
     ret.x = a.x * b;
@@ -48,7 +48,7 @@ inline geometry_msgs::msg::Point operator*( const geometry_msgs::msg::Point& a, 
     return ret;
 }
 
-inline geometry_msgs::msg::Point operator*=( geometry_msgs::msg::Point& a, double b )
+inline geometry_msgs::msg::Point operator*=( geometry_msgs::msg::Point& a, const double b )
 {
     a.x = a.x * b;
     a.y = a.y * b;
@@ -64,6 +64,16 @@ inline geometry_msgs::msg::Point operator*=( geometry_msgs::msg::Point& a, const
     return a;
 }
 
+// /
+inline geometry_msgs::msg::Point operator/( const geometry_msgs::msg::Point& a, const double b )
+{
+    geometry_msgs::msg::Point ret;
+    ret.x = a.x / b;
+    ret.y = a.y / b;
+    ret.z = a.z / b;
+    return ret;
+}
+
 // ==
 inline bool operator==( geometry_msgs::msg::Point& a, const geometry_msgs::msg::Point& b )
 {
@@ -75,7 +85,7 @@ inline bool operator==( geometry_msgs::msg::Point& a, const geometry_msgs::msg::
 }
 
 // abs()
-inline geometry_msgs::msg::Point abs( geometry_msgs::msg::Point a )
+inline geometry_msgs::msg::Point abs( const geometry_msgs::msg::Point a )
 {
     geometry_msgs::msg::Point ret;
     ret.x = abs( a.x );
@@ -84,7 +94,7 @@ inline geometry_msgs::msg::Point abs( geometry_msgs::msg::Point a )
     return ret;
 }
 
-inline geometry_msgs::msg::Vector3 vec3_abs( geometry_msgs::msg::Point a )
+inline geometry_msgs::msg::Vector3 vec3_abs( const geometry_msgs::msg::Point a )
 {
     geometry_msgs::msg::Vector3 ret;
     ret.x = abs( a.x );

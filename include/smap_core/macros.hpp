@@ -4,6 +4,7 @@
 // STL
 #include "visibility_control.h"
 
+#include <math.h>
 #include <string>
 
 namespace smap
@@ -43,8 +44,10 @@ namespace smap
 
 #define MAX_VOLUME 1.2
 
-#define OCCLUSION_MAP_ROWS 2  // 16
-#define OCCLUSION_MAP_COLS 3  // 32
+#define OCCLUSION_MAP_ROWS 16  // 16
+#define OCCLUSION_MAP_COLS 32  // 32
+
+#define OCCLUSION_ANGULAR_TOL 20
 
 }  // namespace smap
 

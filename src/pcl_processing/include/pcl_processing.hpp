@@ -75,60 +75,46 @@ std::pair< int, int > compute_occlusion_map(
     const std::shared_ptr< geometry_msgs::msg::TransformStamped >& transform,
     const std::shared_ptr< std::pair< float, float > >& pcl_lims );
 
-inline void set_AABB(
-    std::array< geometry_msgs::msg::PointStamped, 8 >& AABB, const geometry_msgs::msg::Point& min,
-    const geometry_msgs::msg::Point& max )
-{
-    // [0]
-    AABB[ 0 ].point = min;
+// inline void set_AABB(
+//     std::array< geometry_msgs::msg::PointStamped, 8 >& AABB, const geometry_msgs::msg::Point& min,
+//     const geometry_msgs::msg::Point& max )
+// {
+//     // [0]
+//     AABB[ 0 ].point = min;
 
-    // [1]
-    AABB[ 1 ].point.x = min.x;
-    AABB[ 1 ].point.y = min.y;
-    AABB[ 1 ].point.z = max.z;
+// // [1]
+// AABB[ 1 ].point.x = min.x;
+// AABB[ 1 ].point.y = min.y;
+// AABB[ 1 ].point.z = max.z;
 
-    // [2]
-    AABB[ 2 ].point.x = min.x;
-    AABB[ 2 ].point.y = max.y;
-    AABB[ 2 ].point.z = min.z;
+// // [2]
+// AABB[ 2 ].point.x = min.x;
+// AABB[ 2 ].point.y = max.y;
+// AABB[ 2 ].point.z = min.z;
 
-    // [3]
-    AABB[ 3 ].point.x = max.x;
-    AABB[ 3 ].point.y = min.y;
-    AABB[ 3 ].point.z = min.z;
+// // [3]
+// AABB[ 3 ].point.x = max.x;
+// AABB[ 3 ].point.y = min.y;
+// AABB[ 3 ].point.z = min.z;
 
-    // [4]
-    AABB[ 4 ].point.x = min.x;
-    AABB[ 4 ].point.y = max.y;
-    AABB[ 4 ].point.z = max.z;
+// // [4]
+// AABB[ 4 ].point.x = min.x;
+// AABB[ 4 ].point.y = max.y;
+// AABB[ 4 ].point.z = max.z;
 
-    // [5]
-    AABB[ 5 ].point.x = max.x;
-    AABB[ 5 ].point.y = min.y;
-    AABB[ 5 ].point.z = max.z;
+// // [5]
+// AABB[ 5 ].point.x = max.x;
+// AABB[ 5 ].point.y = min.y;
+// AABB[ 5 ].point.z = max.z;
 
-    // [6]
-    AABB[ 6 ].point.x = max.x;
-    AABB[ 6 ].point.y = max.y;
-    AABB[ 6 ].point.z = min.z;
+// // [6]
+// AABB[ 6 ].point.x = max.x;
+// AABB[ 6 ].point.y = max.y;
+// AABB[ 6 ].point.z = min.z;
 
-    // [7]
-    AABB[ 7 ].point = max;
-}
-
-inline bool is_valid( const geometry_msgs::msg::Point& p )
-{
-    return !(
-        ( std::isnan( p.x ) || std::isnan( p.y ) || std::isnan( p.z ) )
-        || ( ( std::isinf( p.x ) || std::isinf( p.y ) || std::isinf( p.z ) ) ) );
-}
-
-inline bool is_valid( const double& x, const double& y, const double& z )
-{
-    return !(
-        ( std::isnan( x ) || std::isnan( y ) || std::isnan( z ) )
-        || ( ( std::isinf( x ) || std::isinf( y ) || std::isinf( z ) ) ) );
-}
+// // [7]
+// AABB[ 7 ].point = max;
+// }
 
 bool check_occlusions( void );
 

@@ -54,6 +54,8 @@ class topo_marker
 
     std_msgs::msg::ColorRGBA histogram_color_picker( double min, double max, double value );
 
+    bool com_set = false;
+
   public:
 
     topo_marker( void );
@@ -61,12 +63,14 @@ class topo_marker
     inline void set_com(
         rclcpp::Publisher< visualization_msgs::msg::MarkerArray >::SharedPtr pub, rclcpp::Clock::SharedPtr clock )
     {
-        this->pub   = pub;
-        this->clock = clock;
+        this->pub     = pub;
+        this->clock   = clock;
+        this->com_set = true;
     }
 
     inline void publish_markers( void )
     {
+        if( !this->com_set ) return;
         const std::lock_guard< std::mutex > lock( this->mutex );
         this->pub->publish( this->array );
     }

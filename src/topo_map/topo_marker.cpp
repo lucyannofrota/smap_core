@@ -101,6 +101,8 @@ topo_marker::topo_marker( void )
             this->triangles_base.push_back( triangle );
         }
     }
+
+    this->array.markers.clear();
 }
 
 std_msgs::msg::ColorRGBA topo_marker::histogram_color_picker( double min, double max, double value )

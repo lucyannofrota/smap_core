@@ -90,9 +90,16 @@ class topo_map : public rclcpp::Node
         this->create_publisher< visualization_msgs::msg::MarkerArray >(
             std::string( this->get_namespace() ) + std::string( "/topo_map/markers" ), 10 );
 
+    rclcpp::Publisher< visualization_msgs::msg::MarkerArray >::SharedPtr selected_panels_pub =
+        this->create_publisher< visualization_msgs::msg::MarkerArray >(
+            std::string( this->get_namespace() ) + std::string( "/topo_map/selected_panels" ), 10 );
+
     // Threads
     // std::thread marker_thread;
     topo_marker markers;
+
+    visualization_msgs::msg::MarkerArray panels_maker_array;
+    visualization_msgs::msg::Marker panels_maker;
 
     // topo_marker markers;
 
@@ -107,19 +114,23 @@ class topo_map : public rclcpp::Node
 
     inline void timer_callback( void )
     {
+        if( this->reg_classes == nullptr || this->reg_detectors == nullptr ) return;
+        if( boost::num_vertices( this->graph ) == 0 ) return;
         RCLCPP_DEBUG( this->get_logger(), "timer_callback" );
         this->markers.async_publish_markers();
     }
 
     inline void monitor_callback( void )
     {
+        if( this->reg_classes == nullptr || this->reg_detectors == nullptr ) return;
+        if( boost::num_vertices( this->graph ) == 0 ) return;
         RCLCPP_DEBUG( this->get_logger(), "monitor_callback" );
         this->markers.async_update_markers( this->graph );
     }
 
     inline void pose_callback( const geometry_msgs::msg::PoseStamped::SharedPtr pose )
     {
-        if( this->reg_classes == nullptr ) return;
+        if( this->reg_classes == nullptr || this->reg_detectors == nullptr ) return;
         RCLCPP_DEBUG( this->get_logger(), "pose_callback" );
         this->add_vertex( pose->pose.position, true );
     }
@@ -180,13 +191,14 @@ class topo_map : public rclcpp::Node
         return sqrt( pow( p1.x - p2.x, 2 ) + pow( p1.y - p2.y, 2 ) + pow( p1.z - p2.z, 2 ) );
     }
 
-    inline void get_adjacent_vertices( std::vector< size_t >& idxs_checked, const geometry_msgs::msg::Point& pos )
+    inline void get_adjacent_vertices(
+        std::vector< size_t >& idxs_checked, const geometry_msgs::msg::Point& pos, const size_t n_layers )
     {
-        RCLCPP_DEBUG( this->get_logger(), "Get all adjacent vertexes 3 layers deep" );
+        RCLCPP_DEBUG( this->get_logger(), "Get all adjacent vertexes %i layers deep", (int) n_layers );
         std::vector< size_t > idxs_checking, idxs_to_check;  // Using iterator graph idxs (not v_indexes)
         double min_distance;
         idxs_checking.push_back( this->_get_vertex( this->get_closest_vertex( pos, min_distance ) ) );
-        for( size_t i = 0; i <= 3; i++ )
+        for( size_t i = 0; i <= n_layers; i++ )
         {
             idxs_to_check.clear();
             for( auto& checking: idxs_checking )
@@ -233,20 +245,20 @@ class topo_map : public rclcpp::Node
                 else RCLCPP_DEBUG( this->get_logger(), "2.2.1 Check label: PASS" );
 
                 // Check active cone
-                if( abs( rad2deg( this->compute_direction( obj_pos, robot_pose ) ) ) > ACTIVE_FOV_H )
+                if( abs( rad2deg( this->compute_object_direction( obj_pos, robot_pose ) ) ) > ACTIVE_FOV_H )
                 {
 
                     RCLCPP_DEBUG(
                         this->get_logger(), "2.2.2 Check active cone [val: %7.2f|rad2deg: %7.2f|abs: %7.2f]: FAIL",
-                        this->compute_direction( obj_pos, robot_pose ),
-                        rad2deg( this->compute_direction( obj_pos, robot_pose ) ),
-                        abs( rad2deg( this->compute_direction( obj_pos, robot_pose ) ) ) );
+                        this->compute_object_direction( obj_pos, robot_pose ),
+                        rad2deg( this->compute_object_direction( obj_pos, robot_pose ) ),
+                        abs( rad2deg( this->compute_object_direction( obj_pos, robot_pose ) ) ) );
                     // RCLCPP_DEBUG(
                     //     this->get_logger(), "2.2 Check active cone [val: %7.2f|rad2deg: %7.2f|abs: %7.2f]: FAIL",
-                    //     this->compute_direction( obj_pos, robot_pose
-                    //     ), rad2deg( this->compute_direction(
+                    //     this->compute_object_direction( obj_pos, robot_pose
+                    //     ), rad2deg( this->compute_object_direction(
                     //         obj_pos, robot_pose ) ),
-                    //     abs( rad2deg( this->compute_direction(
+                    //     abs( rad2deg( this->compute_object_direction(
                     //         obj_pos, robot_pose ) ) ) );
                     continue;
                 }
@@ -438,6 +450,20 @@ class topo_map : public rclcpp::Node
         }
 
         this->markers.set_com( this->publisher_marker_vertex, this->get_clock() );
+
+        this->panels_maker.header.frame_id    = "map";
+        this->panels_maker.header.stamp       = this->get_clock()->now();
+        this->panels_maker.type               = visualization_msgs::msg::Marker::CUBE;
+        this->panels_maker.action             = visualization_msgs::msg::Marker::ADD;
+        this->panels_maker.pose.orientation.x = 0;
+        this->panels_maker.pose.orientation.y = 0;
+        this->panels_maker.pose.orientation.z = 0;
+        this->panels_maker.pose.orientation.w = 1;
+        this->panels_maker.color.b            = 1;
+        this->panels_maker.color.g            = 0;
+        this->panels_maker.color.r            = 0;
+        this->panels_maker.color.a            = 1;
+        this->panels_maker.ns                 = "selected_panels";
     }
 
     ~topo_map( void ) { this->export_graph( "TopoGraph" ); }
@@ -454,9 +480,9 @@ class topo_map : public rclcpp::Node
         }
     };
 
-    std::shared_ptr< std::map< std::string, std::pair< int, int > > > reg_classes;
+    std::shared_ptr< std::map< std::string, std::pair< int, int > > > reg_classes = nullptr;
 
-    std::shared_ptr< std::vector< detector_t > > reg_detectors;
+    std::shared_ptr< std::vector< detector_t > > reg_detectors                    = nullptr;
 
     inline void define_reg_classes( std::shared_ptr< std::map< std::string, std::pair< int, int > > >& classes )
     {
@@ -503,7 +529,7 @@ class topo_map : public rclcpp::Node
         }
     }
 
-    inline double compute_direction( const geometry_msgs::msg::Point& p1, const geometry_msgs::msg::Pose& p2 )
+    inline double compute_object_direction( const geometry_msgs::msg::Point& p1, const geometry_msgs::msg::Pose& p2 )
     {
         // Result defined in [-pi,pi]
         tf2::Quaternion q( p2.orientation.x, p2.orientation.y, p2.orientation.z, p2.orientation.w );
@@ -511,6 +537,17 @@ class topo_map : public rclcpp::Node
         double row, pitch, yaw;
         m.getEulerYPR( yaw, pitch, row );
         double ret = atan2( p1.y - p2.position.y, p1.x - p2.position.x ) - yaw;
+        return atan2( sin( ret ), cos( ret ) );
+    }
+
+    inline double compute_corner_direction( const geometry_msgs::msg::Pose& p1, const geometry_msgs::msg::Point& p2 )
+    {
+        // Result defined in [-pi,pi]
+        tf2::Quaternion q( p1.orientation.x, p1.orientation.y, p1.orientation.z, p1.orientation.w );
+        tf2::Matrix3x3 m( q );
+        double row, pitch, yaw;
+        m.getEulerYPR( yaw, pitch, row );
+        double ret = atan2( p1.position.y - p2.y, p1.position.x - p2.x ) - yaw;
         return atan2( sin( ret ), cos( ret ) );
     }
 };

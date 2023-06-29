@@ -3,6 +3,12 @@
 #include "../../include/smap_core/count_time.hpp"
 #include "../object_estimator/include/occlusion_map.hpp"
 
+// STL
+#include <array>
+
+// BOOST
+#include <boost/range/adaptor/indexed.hpp>
+
 // #include "../pcl_processing/include/pcl_processing.hpp"
 
 namespace smap
@@ -20,18 +26,15 @@ namespace smap
 void topo_map::observation_callback( const smap_interfaces::msg::SmapObservation::SharedPtr observation )
 {
     // TODO: observation subtractive behaviors
+    if( this->reg_classes == nullptr || this->reg_detectors == nullptr ) return;
     count_time timer;
     RCLCPP_DEBUG( this->get_logger(), "observation_callback" );
     RCLCPP_DEBUG( this->get_logger(), "0. Check graph integrity" );
-    if( boost::num_vertices( this->graph ) == 0 || this->reg_classes == nullptr || this->reg_detectors == nullptr )
-    {
-        RCLCPP_WARN( this->get_logger(), "No detectors registered." );
-        return;
-    }
+    if( boost::num_vertices( this->graph ) == 0 ) return;
 
-    // 1. Get all adjacent vertexes 3 layers deep
+    // 1. Get all adjacent vertexes 3 layers deep (In relation to the object position)
     std::vector< size_t > valid_idxs;
-    this->get_adjacent_vertices( valid_idxs, observation->object.pose.pose.position );
+    this->get_adjacent_vertices( valid_idxs, observation->object.pose.pose.position, 3 );
 
     // 2. Filter possible vertexes
     std::vector< std::pair< size_t, std::vector< thing* > > > candidates;
@@ -65,19 +68,164 @@ void topo_map::observation_callback( const smap_interfaces::msg::SmapObservation
 
 void topo_map::occlusion_map_callback( const smap_interfaces::msg::OcclusionMap::SharedPtr msg )
 {
+    if( this->reg_classes == nullptr || this->reg_detectors == nullptr ) return;
+    printf( "Occlusion_callback\n" );
+    RCLCPP_INFO( this->get_logger(), "Occlusion_callback" );
     static occlusion_map_t occlusion_map;
     from_msg( *msg, occlusion_map );
     //
     //
-    printf( "\n\nTOPO_MAP\n\n\n" );
-    for( auto& row: occlusion_map )
+    // printf( "\n\nTOPO_MAP\n\n\n" );
+    // for( auto& row: occlusion_map )
+    // {
+    //     for( auto& col: row )
+    //     {
+    //         for( auto& lim: col ) printf( "[%6.2f,%6.2f,%6.2f]|", lim.x, lim.y, lim.z );
+    //         printf( "\t" );
+    //     }
+    //     printf( "\n" );
+    // }
+
+    // 1. Get all adjacent vertexes 5 layers deep
+    RCLCPP_INFO( this->get_logger(), "1. Get all adjacent vertexes 5 layers deep" );
+    std::vector< size_t > valid_idxs;
+    this->get_adjacent_vertices( valid_idxs, msg->robot_pose.position, 5 );
+    if( valid_idxs.empty() ) return;
+
+    // 2. Filter possible vertexes
+    RCLCPP_INFO( this->get_logger(), "2. Filter possible vertexes" );
+    // std::vector< thing* > candidates;
+    for( auto& element: valid_idxs )
     {
-        for( auto& col: row )
+        for( auto& object: this->graph[ element ].related_things )
         {
-            for( auto& lim: col ) printf( "[%6.2f,%6.2f,%6.2f]|", lim.x, lim.y, lim.z );
-            printf( "\t" );
+            // 2.1. Check active cone
+            RCLCPP_INFO( this->get_logger(), "2.1. Check active cone" );
+            if( abs( rad2deg( this->compute_object_direction( object.pos, msg->robot_pose ) ) ) > ACTIVE_FOV_H )
+                continue;
+
+            // 2.2. Check occlusion
+            RCLCPP_INFO( this->get_logger(), "2.2. Check occlusion" );
+            // 2.2.1. Search nearest intersecting boxes
+            RCLCPP_INFO( this->get_logger(), "2.2.1. Search nearest intersecting boxes" );
+            std::array< std::pair< std::array< long, 2 >, double >, 8 > object_corner_indexes = {
+                {{ { { std::numeric_limits< long >::max(), std::numeric_limits< long >::min() } },
+std::numeric_limits< double >::infinity() },
+                 { { { std::numeric_limits< long >::max(), std::numeric_limits< long >::min() } },
+                 std::numeric_limits< double >::infinity() },
+                 { { { std::numeric_limits< long >::max(), std::numeric_limits< long >::min() } },
+                 std::numeric_limits< double >::infinity() },
+                 { { { std::numeric_limits< long >::max(), std::numeric_limits< long >::min() } },
+                 std::numeric_limits< double >::infinity() },
+                 { { { std::numeric_limits< long >::max(), std::numeric_limits< long >::min() } },
+                 std::numeric_limits< double >::infinity() },
+                 { { { std::numeric_limits< long >::max(), std::numeric_limits< long >::min() } },
+                 std::numeric_limits< double >::infinity() },
+                 { { { std::numeric_limits< long >::max(), std::numeric_limits< long >::min() } },
+                 std::numeric_limits< double >::infinity() },
+                 { { { std::numeric_limits< long >::max(), std::numeric_limits< long >::min() } },
+                 std::numeric_limits< double >::infinity() }}
+            };
+            std::array< std::pair< std::array< long, 2 >, double >, 2 > candidate_range_hitboxes = {
+                {{ { { std::numeric_limits< long >::max(), std::numeric_limits< long >::min() } },
+std::numeric_limits< double >::infinity() },
+                 { { { std::numeric_limits< long >::max(), std::numeric_limits< long >::min() } },
+                 std::numeric_limits< double >::infinity() }}
+            };
+            std::array< geometry_msgs::msg::Point, 8 > AABB;
+            set_AABB( AABB, object.aabb.first, object.aabb.second );
+            // corner: AABB
+            // 2.2.1.1 Nearest boxes (in relation to the corners)
+            for( const auto& corner: AABB | boost::adaptors::indexed( 0 ) )
+            {
+
+                // double camera_to_corner_angle = this->compute_corner_direction( msg->robot_pose, corner.value() );
+                double camera_to_corner_angle =
+                    this->compute_corner_direction( msg->robot_pose, object.pos );  // Correct one!
+                // printf( "corner angles: %f\n", rad2deg( camera_to_corner_angle ) );
+                // // camera_to_corner_angle = this->compute_object_direction( corner.value(), msg->robot_pose );
+                // camera_to_corner_angle = this->compute_object_direction( object.pos, msg->robot_pose );
+                // printf( "obj angles: %f\n", rad2deg( camera_to_corner_angle ) );
+                for( const auto& o_map_row: occlusion_map | boost::adaptors::indexed( 0 ) )
+                {
+                    for( const auto& o_map_col: o_map_row.value() | boost::adaptors::indexed( 0 ) )
+                    {
+                        if( !is_valid( o_map_col.value()[ 2 ] ) ) continue;
+                        double camera_to_panel_angle =
+                            this->compute_corner_direction( msg->robot_pose, o_map_col.value()[ 2 ] );
+                        // camera_to_corner_angle
+                        double angle_difference = camera_to_corner_angle - camera_to_panel_angle;
+                        if( abs( atan2( sin( angle_difference ), cos( angle_difference ) ) )
+                            < object_corner_indexes[ corner.index() ].second )
+                        {
+                            object_corner_indexes[ corner.index() ].first = { o_map_row.index(), o_map_col.index() };
+                            object_corner_indexes[ corner.index() ].second =
+                                abs( atan2( sin( angle_difference ), cos( angle_difference ) ) );
+                        }
+                    }
+                }
+            }
+            // for( int corner_idx = 0; corner_idx < 8; corner_idx++ )
+            // {
+            //     // TODO: Consider loop only in certain quadrants to improve performance
+            //     double camera_to_corner_angle = this->compute_object_direction( AABB[ corner_idx ], msg->robot_pose
+            //     ); for( const auto& o_map_row: occlusion_map | boost::adaptors::indexed( 0 ) )
+            //     {
+            //         for( const auto& o_map_col: o_map_row.value() | boost::adaptors::indexed( 0 ) )
+            //         {
+            //             if( !is_valid( o_map_col.value()[ 2 ] ) ) continue;
+            //             double camera_to_panel_angle =
+            //                 this->compute_object_direction( o_map_col.value()[ 2 ], msg->robot_pose );
+            //             // camera_to_corner_angle
+            //             double angle_difference = camera_to_corner_angle - camera_to_panel_angle;
+            //             if( abs( atan2( sin( angle_difference ), cos( angle_difference ) ) )
+            //                 < object_corner_indexes[ corner_idx ].second )
+            //             {
+            //                 object_corner_indexes[ corner_idx ].first = { o_map_row.index(), o_map_col.index() };
+            //                 object_corner_indexes[ corner_idx ].second =
+            //                     abs( atan2( sin( angle_difference ), cos( angle_difference ) ) );
+            //             }
+            //         }
+            //     }
+            //     // OCCLUSION_ANGULAR_TOL
+            // }
+            // this->panels_maker.id = 0;
+            // this->panels_maker_array.markers.clear();
+            // for( const auto& c: AABB )
+            // {
+
+            // this->panels_maker.pose.position = c;
+            // this->panels_maker.scale.x       = 0.02;
+            // this->panels_maker.scale.y       = 0.02;
+            // this->panels_maker.scale.z       = 0.02;
+            // this->panels_maker_array.markers.push_back( this->panels_maker );
+            // this->panels_maker.id++;
+            // }
+            this->panels_maker.id = 0;
+            this->panels_maker_array.markers.clear();
+            for( const auto& panel: object_corner_indexes )
+            {
+                if( std::isinf( panel.second ) ) continue;
+
+                this->panels_maker.pose.position = occlusion_map[ panel.first[ 0 ] ][ panel.first[ 1 ] ][ 2 ];
+                this->panels_maker.scale.x       = occlusion_map[ panel.first[ 0 ] ][ panel.first[ 1 ] ][ 1 ].x
+                                           - occlusion_map[ panel.first[ 0 ] ][ panel.first[ 1 ] ][ 0 ].x;
+                this->panels_maker.scale.y = occlusion_map[ panel.first[ 0 ] ][ panel.first[ 1 ] ][ 1 ].y
+                                           - occlusion_map[ panel.first[ 0 ] ][ panel.first[ 1 ] ][ 0 ].y;
+                this->panels_maker.scale.z = occlusion_map[ panel.first[ 0 ] ][ panel.first[ 1 ] ][ 1 ].z
+                                           - occlusion_map[ panel.first[ 0 ] ][ panel.first[ 1 ] ][ 0 ].z;
+                this->panels_maker_array.markers.push_back( this->panels_maker );
+                this->panels_maker.id++;
+            }
+            this->selected_panels_pub->publish( this->panels_maker_array );
+
+            // 2.2.1.2 Fill the occlusion_map candidates vector
+            // 2.2.1.2.1 Get the minimum and maximum corners in the occlusion_map plane
+            for( const auto& corner: object_corner_indexes ) {}
+            // if()
+
+            // 2.2.2 Check the distances between the candidate_hitboxes and the AABB of the objects
         }
-        printf( "\n" );
     }
 
     // TODO: Use the occlusion map

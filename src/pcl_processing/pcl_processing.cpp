@@ -246,11 +246,15 @@ std::pair< int, int > compute_occlusion_map(
                 element[ 1 ].x = -std::numeric_limits< double >::infinity();
                 element[ 1 ].y = -std::numeric_limits< double >::infinity();
                 element[ 1 ].z = -std::numeric_limits< double >::infinity();
+                element[ 2 ].x = std::numeric_limits< double >::quiet_NaN();
+                element[ 2 ].y = std::numeric_limits< double >::quiet_NaN();
+                element[ 2 ].z = std::numeric_limits< double >::quiet_NaN();
                 continue;
             }
 
             element[ 0 ] = min;
             element[ 1 ] = max;
+            element[ 2 ] = ( min + max ) / 2;
         }
     }
     return ret;

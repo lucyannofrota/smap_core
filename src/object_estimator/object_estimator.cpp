@@ -180,7 +180,7 @@ void object_estimator::detections_callback( const smap_interfaces::msg::SmapDete
 
     pcl::shared_ptr< cloud_t > pcl_point_cloud( new cloud_t );
     std::shared_ptr< geometry_msgs::msg::TransformStamped > transform =
-        std::make_shared< geometry_msgs::msg::TransformStamped >( input_msg->robot_to_map );
+        std::make_shared< geometry_msgs::msg::TransformStamped >( input_msg->camera_to_map );
     std::shared_ptr< geometry_msgs::msg::PoseStamped > pose =
         std::make_shared< geometry_msgs::msg::PoseStamped >( input_msg->stamped_pose );
 
@@ -202,7 +202,8 @@ void object_estimator::detections_callback( const smap_interfaces::msg::SmapDete
 
     std::async(
         std::launch::async, &object_estimator::occlusion_map_thread, this,
-        std::make_shared< sensor_msgs::msg::PointCloud2 >( input_msg->pointcloud ), transform );
+        std::make_shared< sensor_msgs::msg::PointCloud2 >( input_msg->pointcloud ), transform,
+        input_msg->stamped_pose );
 
     for( auto& obj: input_msg->objects )
     {
@@ -244,7 +245,8 @@ void object_estimator::detections_callback( const smap_interfaces::msg::SmapDete
 
 void object_estimator::occlusion_map_thread(
     const std::shared_ptr< sensor_msgs::msg::PointCloud2 >& ros_pcl,
-    const std::shared_ptr< geometry_msgs::msg::TransformStamped >& transform )
+    const std::shared_ptr< geometry_msgs::msg::TransformStamped >& transform,
+    const geometry_msgs::msg::PoseStamped& robot_pose )
 {
     // Defining msg
     // int b = 1;
@@ -305,6 +307,10 @@ void object_estimator::occlusion_map_thread(
             e[ 1 ].x = -std::numeric_limits< double >::infinity();
             e[ 1 ].y = -std::numeric_limits< double >::infinity();
             e[ 1 ].z = -std::numeric_limits< double >::infinity();
+
+            e[ 2 ].x = std::numeric_limits< double >::quiet_NaN();
+            e[ 2 ].y = std::numeric_limits< double >::quiet_NaN();
+            e[ 2 ].z = std::numeric_limits< double >::quiet_NaN();
         }
     }
 
@@ -318,15 +324,14 @@ void object_estimator::occlusion_map_thread(
     {
         for( auto& element: row_array )
         {
-            if( ( !is_valid( element[ 0 ] ) ) || ( !is_valid( element[ 1 ] ) ) ) continue;
+            if( ( !is_valid( element[ 0 ] ) ) || ( !is_valid( element[ 1 ] ) ) || ( !is_valid( element[ 2 ] ) ) )
+                continue;
             this->box_marker.header.stamp = this->get_clock()->now();
             this->box_marker.id++;
-            this->box_marker.scale.x         = abs( element[ 1 ].x - element[ 0 ].x );
-            this->box_marker.scale.y         = abs( element[ 1 ].y - element[ 0 ].y );
-            this->box_marker.scale.z         = abs( element[ 1 ].z - element[ 0 ].z );
-            this->box_marker.pose.position.x = ( element[ 0 ].x + element[ 1 ].x ) / 2;
-            this->box_marker.pose.position.y = ( element[ 0 ].y + element[ 1 ].y ) / 2;
-            this->box_marker.pose.position.z = ( element[ 0 ].z + element[ 1 ].z ) / 2;
+            this->box_marker.scale.x       = abs( element[ 1 ].x - element[ 0 ].x );
+            this->box_marker.scale.y       = abs( element[ 1 ].y - element[ 0 ].y );
+            this->box_marker.scale.z       = abs( element[ 1 ].z - element[ 0 ].z );
+            this->box_marker.pose.position = element[ 2 ];
             this->marker_array.markers.push_back( this->box_marker );
         }
     }
@@ -337,20 +342,22 @@ void object_estimator::occlusion_map_thread(
     // msg.map.resize();
 
     // for(auto )
-    to_msg( occlusion_map, this->occ_map, cell_dims );
+    // TODO: Check the memory access of the occlusion_map
+    to_msg( occlusion_map, this->occ_map, cell_dims );  // REVERT
+    this->occ_map.robot_pose = robot_pose.pose;         // REVERT
 
-    printf( "\n\nOBJECT_ESTIMATOR\n\n\n" );
-    for( auto& row: occlusion_map )
-    {
-        for( auto& col: row )
-        {
-            for( auto& lim: col ) printf( "[%6.2f,%6.2f,%6.2f]|", lim.x, lim.y, lim.z );
-            printf( "\t" );
-        }
-        printf( "\n" );
-    }
+    // printf( "\n\nOBJECT_ESTIMATOR\n\n\n" );
+    // for( auto& row: occlusion_map )
+    // {
+    //     for( auto& col: row )
+    //     {
+    //         for( auto& lim: col ) printf( "[%6.2f,%6.2f,%6.2f]|", lim.x, lim.y, lim.z );
+    //         printf( "\t" );
+    //     }
+    //     printf( "\n" );
+    // }
 
-    this->occlusion_map_pub->publish( this->occ_map );
+    this->occlusion_map_pub->publish( this->occ_map );  // REVERT
 }
 
 }  // namespace smap
