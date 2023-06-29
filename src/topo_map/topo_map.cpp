@@ -121,33 +121,33 @@ void topo_map::occlusion_map_callback( const smap_interfaces::msg::OcclusionMap:
             // 2.2.1.1. Get closest panel (relative to the robot)
             // 2.2.1.1.1. Get closest points (relative to the robot)
             // 2.2.1.1.1.1. Compute corner distances (relative to the robot)
-            std::array< std::pair< long, double >, 8 > idx_points;
-            for( int idx = 0; idx < 8; idx++ )
-            {
-                idx_points[ idx ].first  = idx;
-                idx_points[ idx ].second = sqrt(
-                    pow( AABB[ idx ].x - msg->camera_pose.position.x, 2 )
-                    + pow( AABB[ idx ].y - msg->camera_pose.position.y, 2 )
-                    + pow( AABB[ idx ].z - msg->camera_pose.position.z, 2 ) );
-            }
+            // std::array< std::pair< long, double >, 8 > idx_points;
+            // for( int idx = 0; idx < 8; idx++ )
+            // {
+            //     idx_points[ idx ].first  = idx;
+            //     idx_points[ idx ].second = sqrt(
+            //         pow( AABB[ idx ].x - msg->camera_pose.position.x, 2 )
+            //         + pow( AABB[ idx ].y - msg->camera_pose.position.y, 2 )
+            //         + pow( AABB[ idx ].z - msg->camera_pose.position.z, 2 ) );
+            // }
             // 2.2.1.1.1.2. Sort the distances
-            std::sort(
-                idx_points.begin(), idx_points.end(),
-                []( const std::pair< long, double >& e1, const std::pair< long, double >& e2 ) {
-                    return e1.second < e2.second;
-                } );
+            // std::sort(
+            //     idx_points.begin(), idx_points.end(),
+            //     []( const std::pair< long, double >& e1, const std::pair< long, double >& e2 ) {
+            //         return e1.second < e2.second;
+            //     } );
             // 2.2.1.1.2. Get the 4 points that defines the closest face of the object (relative to the robot)
-            std::array< long, 4 > closest_face_AABB_idxs = this->find_coplanar_cube_point_idxs( AABB, idx_points );
+            // std::array< long, 4 > closest_face_AABB_idxs = this->find_coplanar_cube_point_idxs( AABB, idx_points );
             // std::array< long, 4 > closest_face_AABB_idxs = {
             // idx_points[ 0 ].first, idx_points[ 1 ].first, idx_points[ 2 ].first,
             // this->find_coplanar_cube_point_idxs( AABB, idx_points ) };
             // assert( !std::isinf( closest_face_AABB_idxs[ 3 ] ) );
 
-            this->face_marker.id = 0;
-            this->face_marker.points.clear();
-            for( const auto& idx: closest_face_AABB_idxs )
-                this->face_marker.points.push_back( AABB[ idx_points[ idx ].first ] );
-            this->selected_face_pub->publish( this->face_marker );
+            // this->face_marker.id = 0;
+            // this->face_marker.points.clear();
+            // for( const auto& idx: closest_face_AABB_idxs )
+            //     this->face_marker.points.push_back( AABB[ idx_points[ idx ].first ] );
+            // this->selected_face_pub->publish( this->face_marker );
             // TODO: Verificar indices AABB[ idx_points[ idx ].first ]
 
             // corner: AABB
