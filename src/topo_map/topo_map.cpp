@@ -71,87 +71,38 @@ void topo_map::occlusion_map_callback( const smap_interfaces::msg::OcclusionMap:
 {
     if( this->reg_classes == nullptr || this->reg_detectors == nullptr || boost::num_vertices( this->graph ) == 0 )
         return;
-    printf( "Occlusion_callback\n" );
-    RCLCPP_INFO( this->get_logger(), "Occlusion_callback" );
+    RCLCPP_DEBUG( this->get_logger(), "Occlusion_callback" );
     static occlusion_map_t occlusion_map;
     from_msg( *msg, occlusion_map );
-    //
-    //
-    // printf( "\n\nTOPO_MAP\n\n\n" );
-    // for( auto& row: occlusion_map )
-    // {
-    //     for( auto& col: row )
-    //     {
-    //         for( auto& lim: col ) printf( "[%6.2f,%6.2f,%6.2f]|", lim.x, lim.y, lim.z );
-    //         printf( "\t" );
-    //     }
-    //     printf( "\n" );
-    // }
 
     // 1. Get all adjacent vertexes 5 layers deep
-    RCLCPP_INFO( this->get_logger(), "1. Get all adjacent vertexes 5 layers deep" );
+    RCLCPP_DEBUG( this->get_logger(), "1. Get all adjacent vertexes 5 layers deep" );
     std::vector< size_t > valid_idxs;
     this->get_adjacent_vertices( valid_idxs, msg->camera_pose.position, 5 );
     if( valid_idxs.empty() ) return;
 
     // 2. Filter possible vertexes
-    RCLCPP_INFO( this->get_logger(), "2. Filter possible vertexes" );
+    RCLCPP_DEBUG( this->get_logger(), "2. Filter possible vertexes" );
     // std::vector< thing* > candidates;
-    for( auto& element: valid_idxs )
+    for( const auto& element: valid_idxs )
     {
         for( auto& object: this->graph[ element ].related_things )
         {
             // 2.1. Check active cone
-            RCLCPP_INFO( this->get_logger(), "2.1. Check active cone" );
+            RCLCPP_DEBUG( this->get_logger(), "2.1. Check active cone" );
+            // printf(
+            //     "1 : %f|2 : %f\n", rad2deg( this->compute_object_direction( object.pos, msg->camera_pose ) ),
+            //     rad2deg( this->compute_corner_direction( msg->camera_pose, object.pos ) ) );
             if( abs( rad2deg( this->compute_object_direction( object.pos, msg->camera_pose ) ) ) > ACTIVE_FOV_H )
                 continue;
 
-            // 2.2. Check occlusion
-            RCLCPP_INFO( this->get_logger(), "2.2. Check occlusion" );
-            // 2.2.1. Search nearest intersecting boxes
-            RCLCPP_INFO( this->get_logger(), "2.2.1. Search nearest intersecting boxes" );
-            // std::array< std::pair< std::array< long, 2 >, double >, 2 > candidate_range_hitboxes = {
-            //     {{ { { std::numeric_limits< long >::max(), std::numeric_limits< long >::min() } },
-            // std::numeric_limits< double >::infinity() },
-            //      { { { std::numeric_limits< long >::max(), std::numeric_limits< long >::min() } },
-            //      std::numeric_limits< double >::infinity() }}
-            // };
+            // 2.2. Check cell occlusion
+            RCLCPP_DEBUG( this->get_logger(), "2.2. Check occlusion" );
+            // 2.2.1. Get AABB corners
             std::array< geometry_msgs::msg::Point, 8 > AABB;
             set_AABB( AABB, object.aabb.first, object.aabb.second );
-            // 2.2.1.1. Get closest panel (relative to the robot)
-            // 2.2.1.1.1. Get closest points (relative to the robot)
-            // 2.2.1.1.1.1. Compute corner distances (relative to the robot)
-            // std::array< std::pair< long, double >, 8 > idx_points;
-            // for( int idx = 0; idx < 8; idx++ )
-            // {
-            //     idx_points[ idx ].first  = idx;
-            //     idx_points[ idx ].second = sqrt(
-            //         pow( AABB[ idx ].x - msg->camera_pose.position.x, 2 )
-            //         + pow( AABB[ idx ].y - msg->camera_pose.position.y, 2 )
-            //         + pow( AABB[ idx ].z - msg->camera_pose.position.z, 2 ) );
-            // }
-            // 2.2.1.1.1.2. Sort the distances
-            // std::sort(
-            //     idx_points.begin(), idx_points.end(),
-            //     []( const std::pair< long, double >& e1, const std::pair< long, double >& e2 ) {
-            //         return e1.second < e2.second;
-            //     } );
-            // 2.2.1.1.2. Get the 4 points that defines the closest face of the object (relative to the robot)
-            // std::array< long, 4 > closest_face_AABB_idxs = this->find_coplanar_cube_point_idxs( AABB, idx_points );
-            // std::array< long, 4 > closest_face_AABB_idxs = {
-            // idx_points[ 0 ].first, idx_points[ 1 ].first, idx_points[ 2 ].first,
-            // this->find_coplanar_cube_point_idxs( AABB, idx_points ) };
-            // assert( !std::isinf( closest_face_AABB_idxs[ 3 ] ) );
 
-            // this->face_marker.id = 0;
-            // this->face_marker.points.clear();
-            // for( const auto& idx: closest_face_AABB_idxs )
-            //     this->face_marker.points.push_back( AABB[ idx_points[ idx ].first ] );
-            // this->selected_face_pub->publish( this->face_marker );
-            // TODO: Verificar indices AABB[ idx_points[ idx ].first ]
-
-            // corner: AABB
-            // 2.2.1.2. Get nearest panels (in relation to the corners)
+            // 2.2.2. Get correspondent AABB corners in occlusion_map indexes
             std::array< std::pair< std::array< long, 2 >, double >, 8 > object_corner_indexes = {
                 {{ { { std::numeric_limits< long >::max(), std::numeric_limits< long >::min() } },
 std::numeric_limits< double >::infinity() },
@@ -172,18 +123,18 @@ std::numeric_limits< double >::infinity() },
             };
             for( const auto& corner: AABB | boost::adaptors::indexed( 0 ) )
             {
-                // 2.2.1.2.1 Compute the angle from the camera to the corner
+                // 2.2.2.1 Compute the angle from the camera to the corner
                 double camera_to_corner_angle = this->compute_corner_direction( msg->camera_pose, corner.value() );
-                // 2.2.1.2.2 Loop through all cells of the occlusion_map
+                // 2.2.2.2 Loop through all cells of the occlusion_map
                 for( const auto& o_map_row: occlusion_map | boost::adaptors::indexed( 0 ) )
                 {
                     for( const auto& o_map_col: o_map_row.value() | boost::adaptors::indexed( 0 ) )
                     {
                         if( !is_valid( o_map_col.value()[ 2 ] ) ) continue;
-                        // 2.2.1.2.3 Compute the angle from the camera to the occlusion_map cell
+                        // 2.2.2.2.1 Compute the angle from the camera to the occlusion_map cell
                         double camera_to_panel_angle =
                             this->compute_corner_direction( msg->camera_pose, o_map_col.value()[ 2 ] );
-                        // 2.2.1.2.4 Compute the difference between camera_to_corner_angle and camera_to_panel_angle
+                        // 2.2.2.2.2 Compute the difference between camera_to_corner_angle and camera_to_panel_angle
                         double angle_difference = atan2(
                             sin( camera_to_corner_angle - camera_to_panel_angle ),
                             cos( camera_to_corner_angle - camera_to_panel_angle ) );
@@ -197,61 +148,8 @@ std::numeric_limits< double >::infinity() },
                     }
                 }
             }
-            // for( const auto& corner_idx: closest_face_AABB_idxs | boost::adaptors::indexed( 0 ) )
-            // {
-            //     // 2.2.1.2.1 Compute the angle from the camera to the corner
-            //     double camera_to_corner_angle =
-            //         this->compute_corner_direction( msg->camera_pose, AABB[ idx_points[ corner_idx.value() ].first ]
-            //         );
-            //     // 2.2.1.2.2 Loop through all cells of the occlusion_map
-            //     for( const auto& o_map_row: occlusion_map | boost::adaptors::indexed( 0 ) )
-            //     {
-            //         for( const auto& o_map_col: o_map_row.value() | boost::adaptors::indexed( 0 ) )
-            //         {
-            //             if( !is_valid( o_map_col.value()[ 2 ] ) ) continue;
-            //             // 2.2.1.2.3 Compute the angle from the camera to the occlusion_map cell
-            //             double camera_to_panel_angle =
-            //                 this->compute_corner_direction( msg->camera_pose, o_map_col.value()[ 2 ] );
-            //             // 2.2.1.2.4 Compute the difference between camera_to_corner_angle and camera_to_panel_angle
-            //             double angle_difference = atan2(
-            //                 sin( camera_to_corner_angle - camera_to_panel_angle ),
-            //                 cos( camera_to_corner_angle - camera_to_panel_angle ) );
-            //             if( ( abs( angle_difference ) < object_corner_indexes[ corner_idx.index() ].second )
-            //                 && ( ( object.aabb.first.z < o_map_col.value()[ 2 ].z )
-            //                      && ( object.aabb.second.z > o_map_col.value()[ 2 ].z ) ) )
-            //             {
-            //                 object_corner_indexes[ corner_idx.index() ].first = {
-            //                     o_map_row.index(), o_map_col.index() };
-            //                 object_corner_indexes[ corner_idx.index() ].second = abs( angle_difference );
-            //             }
-            //         }
-            //     }
-            // }
 
-            // this->panels_maker.id = 0;
-            // this->panels_maker_array.markers.clear();
-            // for( const auto& panel: object_corner_indexes )
-            // {
-            //     if( std::isinf( panel.second ) ) continue;
-
-            // this->panels_maker.pose.position = occlusion_map[ panel.first[ 0 ] ][ panel.first[ 1 ] ][ 2 ];
-            // this->panels_maker.scale.x =
-            //     abs( occlusion_map[ panel.first[ 0 ] ][ panel.first[ 1 ] ][ 1 ].x
-            //          - occlusion_map[ panel.first[ 0 ] ][ panel.first[ 1 ] ][ 0 ].x );
-            // this->panels_maker.scale.y =
-            //     abs( occlusion_map[ panel.first[ 0 ] ][ panel.first[ 1 ] ][ 1 ].y
-            //          - occlusion_map[ panel.first[ 0 ] ][ panel.first[ 1 ] ][ 0 ].y );
-            // this->panels_maker.scale.z =
-            //     abs( occlusion_map[ panel.first[ 0 ] ][ panel.first[ 1 ] ][ 1 ].z
-            //          - occlusion_map[ panel.first[ 0 ] ][ panel.first[ 1 ] ][ 0 ].z );
-            // this->panels_maker_array.markers.push_back( this->panels_maker );
-            // this->panels_maker.id++;
-            // }
-            // this->selected_panels_pub->publish( this->panels_maker_array );
-
-            // 2.2.1.2 Fill the occlusion_map candidates vector
-            // 2.2.1.2.1 Get the minimum and maximum corners in the occlusion_map plane
-
+            // 2.2.3.1 Get the minimum and maximum corners in the occlusion_map plane
             std::array< long, 2 > mins = { OCCLUSION_MAP_ROWS, OCCLUSION_MAP_COLS }, maxs = { 0, 0 };
             for( const auto& cell: object_corner_indexes )
             {
@@ -272,8 +170,6 @@ std::numeric_limits< double >::infinity() },
                 {
                     for( long occ_col = mins[ 1 ]; occ_col < maxs[ 1 ]; occ_col++ )
                     {
-                        //
-                        //
                         if( !is_valid( occlusion_map[ occ_row ][ occ_col ][ 0 ] )
                             || !is_valid( occlusion_map[ occ_row ][ occ_col ][ 1 ] )
                             || !is_valid( occlusion_map[ occ_row ][ occ_col ][ 2 ] ) )
@@ -292,10 +188,66 @@ std::numeric_limits< double >::infinity() },
                 this->selected_panels_pub->publish( this->panels_maker_array );
             }
 
-            return;  // TODO: REMOVE
-            // if()
+            // 2.2.3.2 Compute the number of cells in occlusion
+            size_t cells_before = 0, cells_in = 0, cells_after = 0;
+            double distance_camera_to_object = gPoint_distance( msg->camera_pose.position, object.pos );
+            for( long occ_row = mins[ 0 ]; occ_row < maxs[ 0 ]; occ_row++ )
+            {
+                for( long occ_col = mins[ 1 ]; occ_col < maxs[ 1 ]; occ_col++ )
+                {
+                    if( !is_valid( occlusion_map[ occ_row ][ occ_col ][ 0 ] )
+                        || !is_valid( occlusion_map[ occ_row ][ occ_col ][ 1 ] )
+                        || !is_valid( occlusion_map[ occ_row ][ occ_col ][ 2 ] ) )
+                        continue;
+                    // 2.2.3.2.1 Compute the the distance between cell centroids and the object centroid with tolerance
+                    // distance_cell_to_object =
+                    // gPoint_distance( occlusion_map[ occ_row ][ occ_col ][ 2 ], object.pos )
+                    double distance_camera_to_cell =
+                               gPoint_distance( msg->camera_pose.position, occlusion_map[ occ_row ][ occ_col ][ 2 ] ),
+                           object_tolerance_radius = ( gPoint_distance( object.aabb.second, object.aabb.first ) / 2 )
+                                                   * OCCLUSION_OBJECT_DISTANCE_TOLERANCE_FACTOR;
+                    if( object_tolerance_radius > OCCLUSION_OBJECT_DISTANCE_TOLERANCE_MAX )
+                        object_tolerance_radius = OCCLUSION_OBJECT_DISTANCE_TOLERANCE_MAX;
+                    // 2.2.3.2.2-1 cell before obj
+                    if( distance_camera_to_cell < distance_camera_to_object - object_tolerance_radius )
+                    {
+                        cells_before++;
+                        continue;
+                    }
+                    // 2.2.3.2.2-2 cell close to obj
+                    if( ( distance_camera_to_cell >= distance_camera_to_object - object_tolerance_radius )
+                        && ( distance_camera_to_cell <= distance_camera_to_object + object_tolerance_radius ) )
+                    {
+                        cells_in++;
+                        continue;
+                    }
+                    // 2.2.3.2.2-3 cell after obj
+                    if( distance_camera_to_cell > distance_camera_to_object + object_tolerance_radius )
+                    {
+                        cells_after++;
+                        continue;
+                    }
+                }
+            }
 
-            // 2.2.2 Check the distances between the candidate_hitboxes and the AABB of the objects
+            // 2.3. Classify the object as occluded or non-occluded and update
+            size_t cells_total = cells_before + cells_in + cells_after;
+            // 2.3.1 Check for occluded objects
+            if( ( cells_before / ( cells_total * 1.0 ) ) > OCCLUSION_MAX_PERCENTAGE )
+            {
+                // 2.3.1-1 Object occluded
+                // Decay the histogram probabilities
+                // TODO: Consider a small decay
+
+                object.observations.register_obs(
+                    distance_camera_to_object, this->compute_corner_direction( msg->camera_pose, object.pos ), false );
+                continue;
+            }
+            // 2.3.1-2 Object not occluded
+            // 2.3.2 Reduce the object confidence in proportion to (cells_before + cells_in + cells_after)
+            object.decay_confidence(
+                distance_camera_to_object, ( cells_before + cells_after ) / ( cells_total * 1.0 ) );
+            // this->observations.register_obs( distance, angle, false );
         }
     }
 
@@ -379,6 +331,9 @@ void topo_map::add_vertex( const geometry_msgs::msg::Point& pos, size_t& current
 
         previous = current;
         current  = closest;
+
+        // Consider strong_vertex where the robot has already passed
+        this->graph[ _get_vertex( closest ) ].strong_vertex = true;
 
         return;
     }

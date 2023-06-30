@@ -15,6 +15,7 @@
 #include <sensor_msgs/msg/point_cloud2.hpp>
 
 // SMAP
+#include "../include/smap_core/aux_functions.hpp"
 #include "../include/smap_core/interface_templates.hpp"
 #include "../include/smap_core/macros.hpp"
 #include "../perception_server/detector_descriptor.hpp"
@@ -69,7 +70,25 @@ class thing
 
     std::string get_label( void ) const;
 
-    double get_confidence( void ) const;
+    inline double get_class_confidence( void ) const
+    {
+        if( this->get_label() == UNDEFINED_LABEL ) return 0.0;
+        return log_odds_inv( this->class_probabilities.at( this->get_label() ) );
+    }
+
+    inline double get_position_confidence( void ) const
+    {
+        if( this->get_label() == UNDEFINED_LABEL ) return 0.0;
+        return log_odds_inv( this->pos_confidence );
+    }
+
+    inline double get_combined_confidence( void ) const
+    {
+        if( this->get_label() == UNDEFINED_LABEL ) return 0.0;
+
+        return ( log_odds_inv( this->class_probabilities.at( this->get_label() ) ) / 3 )
+             + ( log_odds_inv( this->pos_confidence ) / 3 ) + ( this->observations.get_histogram_ratio() / 3 );
+    }
 
     bool label_is_equal( const uint8_t& module_id, const uint8_t& obs_label );
 
@@ -86,6 +105,17 @@ class thing
         const std::vector< float >& probability_distribution, geometry_msgs::msg::Point& point,
         std::pair< geometry_msgs::msg::Point, geometry_msgs::msg::Point > aabb, const float& pos_confidence,
         double distance, double angle, const detector_t& detector );
+
+    inline void decay_confidence( const double& distance, const double& factor )
+    {
+        // current_likelihood - is a map containing a vector of probabilities that represents the probability of beeing
+        // each class
+
+        for( auto& class_likelihood: this->class_probabilities )
+            class_likelihood.second -= log_odds( ( OBJECT_PROB_DECAY * ( 1 + factor ) ) / ( 1 + distance ) );
+    }
+
+    bool is_valid( void ) const;
 
   private:
 

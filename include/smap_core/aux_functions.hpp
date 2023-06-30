@@ -13,13 +13,14 @@
 
 namespace smap
 {
-inline double rad2deg( double rad ) { return rad * ( 180 / M_PI ); }
+// TODO: convert all to inline
+double rad2deg( double rad ) { return rad * ( 180 / M_PI ); }
 
-inline double deg2rad( double deg ) { return deg * ( M_PI / 180 ); }
+double deg2rad( double deg ) { return deg * ( M_PI / 180 ); }
 
-inline double log_odds( double prob ) { return log( prob / ( 1 - prob ) ); }
+double log_odds( double prob ) { return log( prob / ( 1 - prob ) ); }
 
-inline double log_odds_inv( double lodds ) { return 1 - 1 / ( 1 + exp( lodds ) ); }
+double log_odds_inv( double lodds ) { return 1 - 1 / ( 1 + exp( lodds ) ); }
 
 // inline float& occlusion_matrix_indexer(
 //     std_msgs::msg::Float32MultiArray& occ_mat, const size_t& r, const size_t& c, const size_t& lims,

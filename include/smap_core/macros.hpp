@@ -4,6 +4,7 @@
 // STL
 #include "visibility_control.h"
 
+#include <cmath>
 #include <math.h>
 #include <string>
 
@@ -40,14 +41,33 @@ namespace smap
 
 #define MAX_POS_PROB 0.85
 
-#define OBJECT_SIZE_LIM_CONF 0.8  // Objects with size under this value will suffer no confidence penalty
+#define OBJECT_SIZE_LIM_CONF 0.2  // Objects with size under this value will suffer no confidence penalty
 
 #define MAX_OCCLUSION_CELL_VOLUME 0.25
+#define MAX_OCCLUSION_CELL_VOLUME_FACTOR std::cbrt( MAX_OCCLUSION_CELL_VOLUME )
 
 #define OCCLUSION_MAP_ROWS 32  // 16
 #define OCCLUSION_MAP_COLS 64  // 32
 
-#define OCCLUSION_ANGULAR_TOL 20
+// #define OCCLUSION_ANGULAR_TOL 20
+
+#define OCCLUSION_OBJECT_DISTANCE_TOLERANCE_FACTOR 0.4
+
+#define OCCLUSION_OBJECT_DISTANCE_TOLERANCE_MAX 0.20
+
+#define OCCLUSION_MAX_PERCENTAGE                                                                                       \
+    0.4  // The max percentage of cells to be considerate as an occlusion [OCCLUSION_MAX_PERCENTAGE*100 = %]
+
+#define OBJECT_PROB_DECAY 0.08  // The decay will vary between OBJECT_PROB_DECAY and 2xOBJECT_PROB_DECAY
+
+#define CONFIDENCE_OBJECT_VALID 0.85
+
+#define OBSERVATION_HISTOGRAM_MAX_RATIO 3.0
+
+#define HISTOGRAM_BIN_CHANGE_VALUE 2.5
+
+// #define OCCLUSION_MAX_PERCENTAGE 0.2 //  The max percentage of cells to be considerate as an occlusion
+// [OCCLUSION_MAX_PERCENTAGE*100 = %]
 
 }  // namespace smap
 

@@ -106,11 +106,7 @@ inline geometry_msgs::msg::Vector3 vec3_abs( const geometry_msgs::msg::Point a )
 // sqrt
 inline double gPoint_distance( geometry_msgs::msg::Point a, geometry_msgs::msg::Point b )
 {
-    a   = a - b;
-    a.x = pow( a.x, 2 );
-    a.y = pow( a.y, 2 );
-    a.z = pow( a.z, 2 );
-    return sqrt( a.x + a.y + a.z );
+    return sqrt( pow( a.x - b.x, 2 ) + pow( a.y - b.y, 2 ) + pow( a.z - b.z, 2 ) );
 }
 
 // norm

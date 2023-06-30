@@ -7,30 +7,34 @@ topo_marker::topo_marker( void )
 {
     // Marker msg initialization
     // Vertex
-    this->vertex.header.frame_id = "/map";
-    this->vertex.ns              = "vertices";
-    this->vertex.type            = visualization_msgs::msg::Marker::POINTS;
-    this->vertex.action          = visualization_msgs::msg::Marker::MODIFY;
-    this->vertex.scale.x         = 0.075 * 4;
-    this->vertex.scale.y         = 0.075 * 4;
-    this->vertex.scale.z         = 0.075 * 4;
-    this->vertex.color.r         = 102.0 / ( 102.0 + 51.0 );
-    this->vertex.color.g         = 51.0 / ( 102.0 + 51.0 );
-    this->vertex.color.b         = 0.0;
-    this->vertex.color.a         = 1.0;
+    this->vertex.header.frame_id  = "/map";
+    this->vertex.ns               = "vertices";
+    this->vertex.type             = visualization_msgs::msg::Marker::POINTS;
+    this->vertex.action           = visualization_msgs::msg::Marker::MODIFY;
+    this->vertex.scale.x          = 0.075 * 4;
+    this->vertex.scale.y          = 0.075 * 4;
+    this->vertex.scale.z          = 0.075 * 4;
+    this->vertex.color.r          = 102.0 / ( 102.0 + 51.0 );
+    this->vertex.color.g          = 51.0 / ( 102.0 + 51.0 );
+    this->vertex.color.b          = 0.0;
+    this->vertex.color.a          = 1.0;
+    this->vertex.lifetime.sec     = 1;
+    this->vertex.lifetime.nanosec = 500 * 1000 * 1000;
 
     // Histogram
-    this->histogram.header.frame_id = "/map";
-    this->histogram.ns              = "histogram";
-    this->histogram.type            = visualization_msgs::msg::Marker::TRIANGLE_LIST;
-    this->histogram.action          = visualization_msgs::msg::Marker::MODIFY;
-    this->histogram.scale.x         = 1;
-    this->histogram.scale.y         = 1;
-    this->histogram.scale.z         = 1;
-    this->histogram.color.r         = 255;
-    this->histogram.color.g         = 0;
-    this->histogram.color.b         = 0;
-    this->histogram.color.a         = 1;
+    this->histogram.header.frame_id  = "/map";
+    this->histogram.ns               = "histogram";
+    this->histogram.type             = visualization_msgs::msg::Marker::TRIANGLE_LIST;
+    this->histogram.action           = visualization_msgs::msg::Marker::MODIFY;
+    this->histogram.scale.x          = 1;
+    this->histogram.scale.y          = 1;
+    this->histogram.scale.z          = 1;
+    this->histogram.color.r          = 255;
+    this->histogram.color.g          = 0;
+    this->histogram.color.b          = 0;
+    this->histogram.color.a          = 1;
+    this->histogram.lifetime.sec     = 1;
+    this->histogram.lifetime.nanosec = 500 * 1000 * 1000;
 
     // aabb
     this->aabb.header.frame_id    = "/map";
@@ -45,6 +49,8 @@ topo_marker::topo_marker( void )
     this->aabb.color.g            = 0.0;
     this->aabb.color.b            = 1.0;
     this->aabb.color.a            = 0.5;
+    this->aabb.lifetime.sec       = 1;
+    this->aabb.lifetime.nanosec   = 500 * 1000 * 1000;
 
     // Edge
     this->edge.header.frame_id    = "/map";
@@ -62,6 +68,8 @@ topo_marker::topo_marker( void )
     this->edge.pose.orientation.z = 0;
     this->edge.pose.orientation.w = 1.0;
     this->edge.color.a            = 1.0;
+    this->edge.lifetime.sec       = 1;
+    this->edge.lifetime.nanosec   = 500 * 1000 * 1000;
 
     // Label
     this->label.header.frame_id    = "/map";
@@ -77,15 +85,19 @@ topo_marker::topo_marker( void )
     this->label.pose.orientation.z = 0;
     this->label.pose.orientation.w = 1.0;
     this->label.color.a            = 1.0;
+    this->label.lifetime.sec       = 1;
+    this->label.lifetime.nanosec   = 500 * 1000 * 1000;
 
     // aabb label
-    this->aabb_label         = this->label;
-    this->aabb_label.ns      = "object_label";
-    this->aabb_label.color.r = 1.0;
-    this->aabb_label.color.g = 0.0;
-    this->aabb_label.color.b = 1.0;
-    this->aabb_label.color.a = 1.0;
-    this->aabb_label.scale.z = 0.075;
+    this->aabb_label                  = this->label;
+    this->aabb_label.ns               = "object_label";
+    this->aabb_label.color.r          = 1.0;
+    this->aabb_label.color.g          = 0.0;
+    this->aabb_label.color.b          = 1.0;
+    this->aabb_label.color.a          = 1.0;
+    this->aabb_label.scale.z          = 0.075;
+    this->aabb_label.lifetime.sec     = 1;
+    this->aabb_label.lifetime.nanosec = 500 * 1000 * 1000;
 
     // Generating triangles
     float t;
@@ -137,13 +149,16 @@ void topo_marker::update_markers( const graph_t& graph )
     aux_point.z = 0.1;
 
     int obj_id  = 0;
-    for( auto e: boost::make_iterator_range( boost::vertices( graph ) ) )
+    int i_obj   = 0;
+    for( const auto& e: boost::make_iterator_range( boost::vertices( graph ) ) )
     {
+        if( !graph[ e ].strong_vertex ) continue;
         // printf( "update_markers()| n_objects: %i\n", (int) graph[ e ].related_things.size() );
 
         // edge
         for( auto edg: boost::make_iterator_range( boost::out_edges( e, graph ) ) )
         {
+            if( !graph[ edg.m_target ].strong_vertex ) continue;
             this->edge.points.push_back( graph[ e ].pos );
             this->edge.points.push_back( graph[ edg.m_target ].pos );
         }
@@ -168,8 +183,12 @@ void topo_marker::update_markers( const graph_t& graph )
         // r_thing.aabb.second.x = 1.0;
         // r_thing.aabb.second.y = 1.0;
         // r_thing.aabb.second.z = 0.9;
-        for( auto& r_thing: graph[ e ].related_things )
+        for( const auto& r_thing: graph[ e ].related_things )
         {
+            i_obj++;
+            if( !r_thing.is_valid() ) continue;
+            // r_thing.is_valid();
+            // if( !( r_thing.is_valid() ) ) continue;
             // Histogram
             int j = 0;
             std_msgs::msg::ColorRGBA color;
@@ -210,7 +229,8 @@ void topo_marker::update_markers( const graph_t& graph )
             this->aabb_label.pose.position.z += this->aabb.scale.z / 2;
             this->aabb_label.text             = std::string( "l:" ) + r_thing.get_label() + std::string( "|id:" )
                                   + std::to_string( r_thing.id ) + std::string( "|v:" )
-                                  + std::to_string( graph[ e ].index );
+                                  + std::to_string( graph[ e ].index ) + std::string( "|c:" )
+                                  + std::to_string( r_thing.get_combined_confidence() );
             this->aabb_label.id           = obj_id;
             this->aabb_label.header.stamp = clock->now();
             this->array.markers.push_back( this->aabb_label );
@@ -218,6 +238,8 @@ void topo_marker::update_markers( const graph_t& graph )
             obj_id++;
         }
     }
+
+    printf( "Objects found: %i\n", i_obj );
 
     this->vertex.header.stamp = clock->now();
     this->edge.header.stamp   = clock->now();

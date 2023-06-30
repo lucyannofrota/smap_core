@@ -223,7 +223,8 @@ class topo_map : public rclcpp::Node
         RCLCPP_DEBUG( this->get_logger(), "1.1 idxs_checked size: %i", (int) idxs_checked.size() );
     }
 
-    inline void filter_vertices(
+    // Transform inline
+    void filter_vertices(
         std::vector< size_t >& idxs_checked, std::vector< std::pair< size_t, std::vector< thing* > > >& candidates,
         const uint8_t& module_id, const uint8_t& label, const geometry_msgs::msg::Point& obj_pos,
         const geometry_msgs::msg::Pose& robot_pose )
@@ -470,6 +471,8 @@ class topo_map : public rclcpp::Node
         this->panels_maker.color.r            = 0;
         this->panels_maker.color.a            = 1;
         this->panels_maker.ns                 = "selected_panels";
+        this->panels_maker.lifetime.sec       = 1;
+        this->panels_maker.lifetime.nanosec   = 500 * 1000 * 1000;
 
         this->face_marker.header.frame_id     = "map";
         this->face_marker.header.stamp        = this->get_clock()->now();
@@ -487,6 +490,8 @@ class topo_map : public rclcpp::Node
         this->face_marker.scale.x             = 0.01;
         this->face_marker.scale.y             = 0.01;
         this->face_marker.scale.z             = 0.01;
+        this->face_marker.lifetime.sec        = 1;
+        this->face_marker.lifetime.nanosec    = 500 * 1000 * 1000;
     }
 
     ~topo_map( void ) { this->export_graph( "TopoGraph" ); }

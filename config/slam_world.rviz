@@ -9,10 +9,11 @@ Panels:
         - /SMAP1
         - /SMAP1/Sampler1
         - /SMAP1/object_estimator1
-        - /SMAP1/object_estimator1/Occlusion Boxes1
-        - /MarkerArray2
+        - /SMAP1/object_estimator1/OcclusionMap1
+        - /SMAP1/topo_map1
+        - /Marker1
       Splitter Ratio: 0.5833333134651184
-    Tree Height: 625
+    Tree Height: 604
   - Class: rviz_common/Selection
     Name: Selection
   - Class: rviz_common/Tool Properties
@@ -594,7 +595,7 @@ Visualization Manager:
               Color: 255; 255; 255
               Color Transformer: RGB8
               Decay Time: 0
-              Enabled: true
+              Enabled: false
               Invert Rainbow: false
               Max Color: 255; 255; 255
               Max Intensity: 4096
@@ -614,7 +615,7 @@ Visualization Manager:
                 Value: /smap/sampler/pcl
               Use Fixed Frame: true
               Use rainbow: true
-              Value: true
+              Value: false
           Enabled: true
           Name: Sampler
         - Class: rviz_default_plugins/Image
@@ -700,8 +701,8 @@ Visualization Manager:
               Use rainbow: true
               Value: true
             - Class: rviz_default_plugins/MarkerArray
-              Enabled: false
-              Name: Occlusion Boxes
+              Enabled: true
+              Name: OcclusionMap
               Namespaces:
                 {}
               Topic:
@@ -710,12 +711,12 @@ Visualization Manager:
                 History Policy: Keep Last
                 Reliability Policy: Reliable
                 Value: /smap/object_estimator/occlusionBoxes
-              Value: false
+              Value: true
             - Class: rviz_default_plugins/Marker
               Enabled: true
               Name: Object Geometry
               Namespaces:
-                "": true
+                {}
               Topic:
                 Depth: 5
                 Durability Policy: Volatile
@@ -725,23 +726,39 @@ Visualization Manager:
               Value: true
           Enabled: true
           Name: object_estimator
-        - Class: rviz_default_plugins/MarkerArray
-          Enabled: false
+        - Class: rviz_common/Group
+          Displays:
+            - Class: rviz_default_plugins/MarkerArray
+              Enabled: true
+              Name: semantic_map
+              Namespaces:
+                {}
+              Topic:
+                Depth: 5
+                Durability Policy: Volatile
+                History Policy: Keep Last
+                Reliability Policy: Reliable
+                Value: /smap/topo_map/markers
+              Value: true
+            - Class: rviz_default_plugins/MarkerArray
+              Enabled: true
+              Name: OcclusionMapSelected
+              Namespaces:
+                {}
+              Topic:
+                Depth: 5
+                Durability Policy: Volatile
+                History Policy: Keep Last
+                Reliability Policy: Reliable
+                Value: /smap/topo_map/selected_panels
+              Value: true
+          Enabled: true
           Name: topo_map
-          Namespaces:
-            {}
-          Topic:
-            Depth: 5
-            Durability Policy: Volatile
-            History Policy: Keep Last
-            Reliability Policy: Reliable
-            Value: /smap/topo_map/markers
-          Value: false
       Enabled: true
       Name: SMAP
-    - Class: rviz_default_plugins/MarkerArray
+    - Class: rviz_default_plugins/Marker
       Enabled: false
-      Name: MarkerArray
+      Name: Marker
       Namespaces:
         {}
       Topic:
@@ -749,20 +766,8 @@ Visualization Manager:
         Durability Policy: Volatile
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: /smap/topo_map/selected_panels
-      Value: false
-    - Class: rviz_default_plugins/Marker
-      Enabled: true
-      Name: Marker
-      Namespaces:
-        selected_face: true
-      Topic:
-        Depth: 5
-        Durability Policy: Volatile
-        History Policy: Keep Last
-        Reliability Policy: Reliable
         Value: /smap/topo_map/selected_face
-      Value: true
+      Value: false
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -795,30 +800,30 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 2.2758665084838867
+      Distance: 3.462938070297241
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: -1.6729843616485596
-        Y: -0.3021301329135895
-        Z: 0.731109082698822
+        X: -1.6025869846343994
+        Y: -0.703261137008667
+        Z: 0.7507743239402771
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.4903995394706726
+      Pitch: 0.5347968935966492
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz_default_plugins)
-      Yaw: 3.328582286834717
+      Yaw: 3.8335788249969482
     Saved: ~
 Window Geometry:
   Displays:
     collapsed: false
-  Height: 1016
+  Height: 987
   Hide Left Dock: false
   Hide Right Dock: true
   Image:
@@ -827,13 +832,13 @@ Window Geometry:
     collapsed: false
   Predictions:
     collapsed: false
-  QMainWindow State: 000000ff00000000fd000000040000000000000156000003a2fc020000000cfb0000001200530065006c0065006300740069006f006e000000003b000000830000005c00fffffffb0000001e0054006f006f006c002000500072006f00700065007200740069006500730200000341000001b900000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c006100790073010000003b000002ac000000c700fffffffb0000001600500072006500640069006300740069006f006e007301000002ed000000f00000002800fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261fb00000018004e0061007600690067006100740069006f006e00200032000000003b00000385000000ad00fffffffb0000001e005200650061006c00730065006e0073006500430061006d00650072006100000002c6000000c10000000000000000fb0000000a0049006d00610067006502000005ee000000b30000019200000385000000010000010f000003a2fc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a00560069006500770073000000003b000003a2000000a000fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000500000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e10000019700000003000004420000003efc0100000002fb0000000800540069006d00650100000000000004420000000000000000fb0000000800540069006d00650100000000000004500000000000000000000005dc000003a200000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  QMainWindow State: 000000ff00000000fd00000004000000000000018600000385fc020000000cfb0000001200530065006c0065006300740069006f006e000000003b000000830000005c00fffffffb0000001e0054006f006f006c002000500072006f00700065007200740069006500730200000341000001b900000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c006100790073010000003b00000297000000c700fffffffb0000001600500072006500640069006300740069006f006e007301000002d8000000e80000002800fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261fb00000018004e0061007600690067006100740069006f006e00200032000000003b00000385000000ad00fffffffb0000001e005200650061006c00730065006e0073006500430061006d00650072006100000002c6000000c10000000000000000fb0000000a0049006d00610067006502000005ee000000b30000019200000385000000010000010f000003a2fc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a00560069006500770073000000003b000003a2000000a000fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000500000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e10000019700000003000004420000003efc0100000002fb0000000800540069006d00650100000000000004420000000000000000fb0000000800540069006d00650100000000000004500000000000000000000003740000038500000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
   Selection:
     collapsed: false
   Tool Properties:
     collapsed: false
   Views:
     collapsed: true
-  Width: 1848
-  X: 72
-  Y: 27
+  Width: 1280
+  X: 1920
+  Y: 0

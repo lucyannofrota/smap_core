@@ -150,8 +150,10 @@ bool estimate_confidence(
 
     if( std::isinf( lims[ 0 ] ) || std::isinf( lims[ 1 ] ) ) return false;
 
-    conf = ( ( lims[ 1 ] - lims[ 0 ] ) - object_size_lim_conf )
-         / ( ( pcl_lims->second - pcl_lims->first ) - object_size_lim_conf );
+    double den = pcl_lims->second - pcl_lims->first, num = ( lims[ 1 ] - lims[ 0 ] );
+    if( num > object_size_lim_conf ) num -= object_size_lim_conf;
+    if( den > object_size_lim_conf ) den -= object_size_lim_conf;
+    conf = ( den - num ) / den;
     return true;
 }
 
@@ -238,7 +240,9 @@ std::pair< int, int > compute_occlusion_map(
             double sx = abs( max.x - min.x );
             double sy = abs( max.y - min.y );
             double sz = abs( max.z - min.z );
-            if( ( ( sx == 0 ) || ( sy == 0 ) || ( sz == 0 ) ) || ( sx * sy * sz > MAX_OCCLUSION_CELL_VOLUME ) )
+            if( ( ( sx == 0 ) || ( sy == 0 ) || ( sz == 0 ) ) || ( sx * sy * sz > MAX_OCCLUSION_CELL_VOLUME )
+                || ( sx > MAX_OCCLUSION_CELL_VOLUME_FACTOR ) || ( sy > MAX_OCCLUSION_CELL_VOLUME_FACTOR )
+                || ( sz > MAX_OCCLUSION_CELL_VOLUME_FACTOR ) )
             {
                 element[ 0 ].x = std::numeric_limits< double >::infinity();
                 element[ 0 ].y = std::numeric_limits< double >::infinity();

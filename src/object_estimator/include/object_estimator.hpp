@@ -201,19 +201,21 @@ class object_estimator : public rclcpp::Node
                 ( pcl_lims->second - pcl_lims->first ), OBJECT_SIZE_LIM_CONF );
             this->~object_estimator();
         }
-        this->box_marker.header.frame_id          = "map";
-        this->box_marker.header.stamp             = this->get_clock()->now();
-        this->box_marker.type                     = visualization_msgs::msg::Marker::CUBE;
-        this->box_marker.action                   = visualization_msgs::msg::Marker::ADD;
-        this->box_marker.pose.orientation.x       = 0;
-        this->box_marker.pose.orientation.y       = 0;
-        this->box_marker.pose.orientation.z       = 0;
-        this->box_marker.pose.orientation.w       = 1;
-        this->box_marker.color.b                  = 0;
-        this->box_marker.color.g                  = 1;
-        this->box_marker.color.r                  = 0;
-        this->box_marker.color.a                  = 0.2;
-        this->box_marker.ns                       = "occlusion box";
+        this->box_marker.header.frame_id    = "map";
+        this->box_marker.header.stamp       = this->get_clock()->now();
+        this->box_marker.type               = visualization_msgs::msg::Marker::CUBE;
+        this->box_marker.action             = visualization_msgs::msg::Marker::ADD;
+        this->box_marker.pose.orientation.x = 0;
+        this->box_marker.pose.orientation.y = 0;
+        this->box_marker.pose.orientation.z = 0;
+        this->box_marker.pose.orientation.w = 1;
+        this->box_marker.color.b            = 0;
+        this->box_marker.color.g            = 1;
+        this->box_marker.color.r            = 0;
+        this->box_marker.color.a            = 0.2;
+        this->box_marker.ns                 = "occlusion box";
+				this->box_marker.lifetime.sec = 1;
+        this->box_marker.lifetime.nanosec   = 500 * 1000 * 1000;
 
         // this->transform_marker.header.frame_id    = "map";
         // this->transform_marker.header.stamp       = this->get_clock()->now();
@@ -266,6 +268,8 @@ class object_estimator : public rclcpp::Node
         bbx_marker.color.g            = 0;
         bbx_marker.color.r            = 255;
         bbx_marker.color.a            = 0.5;
+        bbx_marker.lifetime.sec       = 1;
+        bbx_marker.lifetime.nanosec   = 500 * 1000 * 1000;
         this->object_bb_pub->publish( bbx_marker );
     }
 

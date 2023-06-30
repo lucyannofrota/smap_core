@@ -7,7 +7,11 @@ namespace smap
 
 std::string thing::get_label( void ) const
 {
-    if( this->reg_classes == nullptr ) return UNDEFINED_LABEL;
+    if( this->reg_classes == nullptr )
+    {
+        return UNDEFINED_LABEL;
+        //
+    }
     std::string ret = UNDEFINED_LABEL;
     float value     = 0;
     for( auto e: this->class_probabilities )
@@ -20,11 +24,6 @@ std::string thing::get_label( void ) const
     }
 
     return ret;
-}
-
-double thing::get_confidence( void ) const
-{
-    return log_odds_inv( this->class_probabilities.at( this->get_label() ) + this->pos_confidence );
 }
 
 bool thing::label_is_equal( const uint8_t& module_id, const uint8_t& obs_label )
@@ -80,7 +79,7 @@ void thing::set(
     // 2. Position initialization
     this->pos            = point;
     this->aabb           = aabb;
-    this->pos_confidence = log_odds( 0 ) + log_odds( pos_confidence );
+    this->pos_confidence = log_odds( pos_confidence );
 
     // 3. Probabilities vector initialization
     // probability_distribution
@@ -172,12 +171,9 @@ geometry_msgs::msg::Point thing::update(
     double distance, double angle, const detector_t& detector )
 {
     // 1. Histogram update
-    // printf( "1. Histogram update\n" );
-    // printf( "\tDistance: %f, angle: %f\n", distance, angle );
     this->observations.register_obs( distance, angle, true );
 
     // 2. Probabilities vector update
-    // printf( "2. Probabilities vector update\n" );
     if( this->class_probabilities.size() != this->reg_classes->size() )
     {
         // find
@@ -190,11 +186,9 @@ geometry_msgs::msg::Point thing::update(
     }
 
     // 3. Stack vectors
-    // printf( "3. stack_vectors\n" );
     stack_vectors( this->class_probabilities, probability_distribution, detector );
 
     // 4. Position update
-    // printf( "4. Position update\n" );
     this->pos_confidence += log_odds( pos_confidence );
     // Saturation of p. Max value is MAX_POS_PROB
     double p = ( log_odds_inv( this->pos_confidence ) > MAX_POS_PROB )
@@ -206,6 +200,28 @@ geometry_msgs::msg::Point thing::update(
     this->aabb.first  = this->aabb.first * p + aabb.first * ( 1 - p );
     this->aabb.second = this->aabb.second * p + aabb.second * ( 1 - p );
     return this->pos;
+}
+
+bool thing::is_valid( void ) const
+{
+    switch( this->type )
+    {
+    case semantic_type_t::OBJECT:
+        return (
+            this->observations.object_is_valid() && ( this->get_combined_confidence() > CONFIDENCE_OBJECT_VALID )
+            && ( ( log_odds_inv( this->class_probabilities.at( this->get_label() ) ) > 0.5 )
+                 && ( log_odds_inv( this->pos_confidence ) > 0.5 )
+                 && ( this->observations.get_histogram_ratio() > 0.5 ) )
+            && ( this->get_label() != UNDEFINED_LABEL ) );
+        break;
+    case semantic_type_t::LOCATION:
+        return true;
+        break;
+
+    default:
+        return false;
+        break;
+    }
 }
 
 // int thing::_get_label( void )

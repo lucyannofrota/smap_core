@@ -203,8 +203,6 @@ void object_estimator::detections_callback( const smap_interfaces::msg::SmapDete
     // launch occlusion_map_thread
     // input_msg->
 
-    printf( "Launching occlusion_map_thread\n" );
-
     // std::async(
     //     std::launch::async, &object_estimator::validation_thread, this,
     //     std::make_shared< sensor_msgs::msg::PointCloud2 >( input_msg->pointcloud ), transform );
@@ -259,7 +257,6 @@ void object_estimator::occlusion_map_thread(
 {
 
     // TODO: make mutually exclusive
-    printf( "occlusion_map_thread\n" );
     if( ros_pcl->data.empty() ) return;
     if( !is_valid(
             transform->transform.translation.x, transform->transform.translation.y, transform->transform.translation.z )

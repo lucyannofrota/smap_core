@@ -32,7 +32,11 @@ struct observation_histogram
 
     void register_obs( double distance, double angle, bool positive );
 
-    bool object_is_valid( double current_angle );
+    double get_histogram_ratio( void ) const;
+
+    bool object_is_valid( void ) const;
+
+    // bool object_is_valid( double current_angle ) const;
 
     void print( void );
 };
