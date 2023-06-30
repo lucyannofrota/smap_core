@@ -264,30 +264,34 @@ std::numeric_limits< double >::infinity() },
                 if( cell.first[ 1 ] > maxs[ 1 ] ) maxs[ 1 ] = cell.first[ 1 ];
             }
 
-            this->panels_maker.id = 0;
-            this->panels_maker_array.markers.clear();
-            for( long occ_row = mins[ 0 ]; occ_row < maxs[ 0 ]; occ_row++ )
+            if( this->selected_panels_pub->get_subscription_count() > 0 )
             {
-                for( long occ_col = mins[ 1 ]; occ_col < maxs[ 1 ]; occ_col++ )
+                this->panels_maker.id = 0;
+                this->panels_maker_array.markers.clear();
+                for( long occ_row = mins[ 0 ]; occ_row < maxs[ 0 ]; occ_row++ )
                 {
-                    //
-                    //
-                    if( !is_valid( occlusion_map[ occ_row ][ occ_col ][ 0 ] )
-                        || !is_valid( occlusion_map[ occ_row ][ occ_col ][ 1 ] )
-                        || !is_valid( occlusion_map[ occ_row ][ occ_col ][ 2 ] ) )
-                        continue;
-                    this->panels_maker.pose.position = occlusion_map[ occ_row ][ occ_col ][ 2 ];
-                    this->panels_maker.scale.x =
-                        abs( occlusion_map[ occ_row ][ occ_col ][ 1 ].x - occlusion_map[ occ_row ][ occ_col ][ 0 ].x );
-                    this->panels_maker.scale.y =
-                        abs( occlusion_map[ occ_row ][ occ_col ][ 1 ].y - occlusion_map[ occ_row ][ occ_col ][ 0 ].y );
-                    this->panels_maker.scale.z =
-                        abs( occlusion_map[ occ_row ][ occ_col ][ 1 ].z - occlusion_map[ occ_row ][ occ_col ][ 0 ].z );
-                    this->panels_maker_array.markers.push_back( this->panels_maker );
-                    this->panels_maker.id++;
+                    for( long occ_col = mins[ 1 ]; occ_col < maxs[ 1 ]; occ_col++ )
+                    {
+                        //
+                        //
+                        if( !is_valid( occlusion_map[ occ_row ][ occ_col ][ 0 ] )
+                            || !is_valid( occlusion_map[ occ_row ][ occ_col ][ 1 ] )
+                            || !is_valid( occlusion_map[ occ_row ][ occ_col ][ 2 ] ) )
+                            continue;
+                        this->panels_maker.pose.position = occlusion_map[ occ_row ][ occ_col ][ 2 ];
+                        this->panels_maker.scale.x       = abs(
+                            occlusion_map[ occ_row ][ occ_col ][ 1 ].x - occlusion_map[ occ_row ][ occ_col ][ 0 ].x );
+                        this->panels_maker.scale.y = abs(
+                            occlusion_map[ occ_row ][ occ_col ][ 1 ].y - occlusion_map[ occ_row ][ occ_col ][ 0 ].y );
+                        this->panels_maker.scale.z = abs(
+                            occlusion_map[ occ_row ][ occ_col ][ 1 ].z - occlusion_map[ occ_row ][ occ_col ][ 0 ].z );
+                        this->panels_maker_array.markers.push_back( this->panels_maker );
+                        this->panels_maker.id++;
+                    }
                 }
+                this->selected_panels_pub->publish( this->panels_maker_array );
             }
-            this->selected_panels_pub->publish( this->panels_maker_array );
+
             return;  // TODO: REMOVE
             // if()
 

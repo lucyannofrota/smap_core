@@ -158,14 +158,23 @@ void object_estimator::object_estimation_thread(
             obs.robot_pose.pose.position.y - obs.object.pose.pose.position.y,
             obs.robot_pose.pose.position.x - obs.object.pose.pose.position.x );
 
-        const std::lock_guard< std::mutex > object_pub_lock( this->object_pub_mutex );
-        this->object_pub->publish( obs );
+        if( this->object_pub->get_subscription_count() > 0 )
+        {
+            const std::lock_guard< std::mutex > object_pub_lock( this->object_pub_mutex );
+            this->object_pub->publish( obs );
+        }
 
-        const std::lock_guard< std::mutex > object_bb_pub_lock( this->object_bb_pub_mutex );
-        this->publish_bb( 0, obs.object );
+        if( this->object_bb_pub->get_subscription_count() > 0 )
+        {
+            const std::lock_guard< std::mutex > object_bb_pub_lock( this->object_bb_pub_mutex );
+            this->publish_bb( 0, obs.object );
+        }
 
-        const std::lock_guard< std::mutex > object_pcl_pub_lock( this->object_pcl_pub_mutex );
-        this->object_pcl_pub->publish( obs.object.pointcloud );
+        if( this->object_pcl_pub->get_subscription_count() > 0 )
+        {
+            const std::lock_guard< std::mutex > object_pcl_pub_lock( this->object_pcl_pub_mutex );
+            this->object_pcl_pub->publish( obs.object.pointcloud );
+        }
     }
     catch( std::exception& e )
     {
@@ -248,27 +257,6 @@ void object_estimator::occlusion_map_thread(
     const std::shared_ptr< geometry_msgs::msg::TransformStamped >& transform,
     const geometry_msgs::msg::PoseStamped& robot_pose )
 {
-    // Defining msg
-    // int b = 1;
-    // // this->occlusion_map.data.clear();
-    // for( int i = 0; i < 3; i++ )
-    // {
-    //     for( int j = 0; j < 3; j++ )
-    //     {
-    //         for( int k = 0; k < 2; k++ )
-    //         {
-    //             for( int comp = 0; comp < 3; comp++ )
-    //             {
-    //                 //
-    //                 occlusion_map_indexer( this->occlusion_map, i, j, k, comp ) =
-    //                     ( k == 0 ? -1 : 1 ) * b * ( comp == 1 ? -1 : 1 );
-    //             }
-    //         }
-    //         b++;
-    //     }
-    // }
-    // this->occlusion_map_pub->publish( this->occlusion_map );
-    // vec.resize()
 
     // TODO: make mutually exclusive
     printf( "occlusion_map_thread\n" );
@@ -280,21 +268,6 @@ void object_estimator::occlusion_map_thread(
         || std::isnan( transform->transform.rotation.w ) || std::isinf( transform->transform.rotation.w ) )
         printf( "\t\tInvalid transform\n" );
 
-    // Initialize values in occlusion_map
-    // for( size_t i = 0; i < 3; i++ )
-    // {
-    //     for( size_t j = 0; j < 3; j++ )
-    //     {
-    //         for( size_t k = 0; k < 2; k++ )
-    //         {
-    //             for( size_t comp = 0; comp < 3; comp++ )
-    //             {
-    //                 occlusion_map_indexer( this->occlusion_map, i, j, k, comp ) =
-    //                     ( k == 0 ? -1 : 1 ) * std::numeric_limits< double >::infinity();
-    //             }
-    //         }
-    //     }
-    // }
     occlusion_map_t occlusion_map;
     for( auto& v: occlusion_map )
     {
@@ -316,48 +289,37 @@ void object_estimator::occlusion_map_thread(
 
     auto cell_dims = compute_occlusion_map( occlusion_map, ros_pcl, transform, this->pcl_lims );
 
-    marker_array.markers.clear();
-    std::array< geometry_msgs::msg::PointStamped, 8 > AABB;
-    geometry_msgs::msg::Point min, max;
-    this->box_marker.id = 0;
-    for( auto& row_array: occlusion_map )
+    // std::array< geometry_msgs::msg::PointStamped, 8 > AABB;
+    // geometry_msgs::msg::Point min, max;
+    if( this->occlusion_boxes_pub->get_subscription_count() > 0 )
     {
-        for( auto& element: row_array )
+        marker_array.markers.clear();
+        this->box_marker.id = 0;
+        for( auto& row_array: occlusion_map )
         {
-            if( ( !is_valid( element[ 0 ] ) ) || ( !is_valid( element[ 1 ] ) ) || ( !is_valid( element[ 2 ] ) ) )
-                continue;
-            this->box_marker.header.stamp = this->get_clock()->now();
-            this->box_marker.id++;
-            this->box_marker.scale.x       = abs( element[ 1 ].x - element[ 0 ].x );
-            this->box_marker.scale.y       = abs( element[ 1 ].y - element[ 0 ].y );
-            this->box_marker.scale.z       = abs( element[ 1 ].z - element[ 0 ].z );
-            this->box_marker.pose.position = element[ 2 ];
-            this->marker_array.markers.push_back( this->box_marker );
+            for( auto& element: row_array )
+            {
+                if( ( !is_valid( element[ 0 ] ) ) || ( !is_valid( element[ 1 ] ) ) || ( !is_valid( element[ 2 ] ) ) )
+                    continue;
+                this->box_marker.header.stamp = this->get_clock()->now();
+                this->box_marker.id++;
+                this->box_marker.scale.x       = abs( element[ 1 ].x - element[ 0 ].x );
+                this->box_marker.scale.y       = abs( element[ 1 ].y - element[ 0 ].y );
+                this->box_marker.scale.z       = abs( element[ 1 ].z - element[ 0 ].z );
+                this->box_marker.pose.position = element[ 2 ];
+                this->marker_array.markers.push_back( this->box_marker );
+            }
         }
+        this->occlusion_boxes_pub->publish( marker_array );
     }
 
-    this->occlusion_boxes_pub->publish( marker_array );
+    if( this->occlusion_map_pub->get_subscription_count() > 0 )
+    {
+        to_msg( occlusion_map, this->occ_map, cell_dims );  // REVERT
+        this->occ_map.camera_pose = robot_pose.pose;        // REVERT
 
-    // Publish the occlusion map
-    // msg.map.resize();
-
-    // for(auto )
-    // TODO: Check the memory access of the occlusion_map
-    to_msg( occlusion_map, this->occ_map, cell_dims );  // REVERT
-    this->occ_map.camera_pose = robot_pose.pose;        // REVERT
-
-    // printf( "\n\nOBJECT_ESTIMATOR\n\n\n" );
-    // for( auto& row: occlusion_map )
-    // {
-    //     for( auto& col: row )
-    //     {
-    //         for( auto& lim: col ) printf( "[%6.2f,%6.2f,%6.2f]|", lim.x, lim.y, lim.z );
-    //         printf( "\t" );
-    //     }
-    //     printf( "\n" );
-    // }
-
-    this->occlusion_map_pub->publish( this->occ_map );  // REVERT
+        this->occlusion_map_pub->publish( this->occ_map );  // REVERT
+    }
 }
 
 }  // namespace smap

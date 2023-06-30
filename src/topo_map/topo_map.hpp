@@ -122,7 +122,7 @@ class topo_map : public rclcpp::Node
         if( this->reg_classes == nullptr || this->reg_detectors == nullptr ) return;
         if( boost::num_vertices( this->graph ) == 0 ) return;
         RCLCPP_DEBUG( this->get_logger(), "timer_callback" );
-        this->markers.async_publish_markers();
+        if( this->publisher_marker_vertex->get_subscription_count() > 0 ) this->markers.async_publish_markers();
     }
 
     inline void monitor_callback( void )
@@ -130,7 +130,8 @@ class topo_map : public rclcpp::Node
         if( this->reg_classes == nullptr || this->reg_detectors == nullptr ) return;
         if( boost::num_vertices( this->graph ) == 0 ) return;
         RCLCPP_DEBUG( this->get_logger(), "monitor_callback" );
-        this->markers.async_update_markers( this->graph );
+        if( this->publisher_marker_vertex->get_subscription_count() > 0 )
+            this->markers.async_update_markers( this->graph );
     }
 
     inline void pose_callback( const geometry_msgs::msg::PoseStamped::SharedPtr pose )
