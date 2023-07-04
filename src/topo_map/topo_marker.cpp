@@ -186,6 +186,11 @@ void topo_marker::update_markers( const graph_t& graph )
         for( const auto& r_thing: graph[ e ].related_things )
         {
             i_obj++;
+            printf(
+                "\t%s\n", ( std::string( "l:" ) + r_thing.get_label() + std::string( "|id:" )
+                            + std::to_string( r_thing.id ) + std::string( "|v:" ) + std::to_string( graph[ e ].index )
+                            + std::string( "|c:" ) + std::to_string( r_thing.get_combined_confidence() ) )
+                              .c_str() );
             if( !r_thing.is_valid() ) continue;
             // r_thing.is_valid();
             // if( !( r_thing.is_valid() ) ) continue;

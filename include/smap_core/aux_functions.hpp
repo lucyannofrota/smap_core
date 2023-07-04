@@ -23,14 +23,19 @@ double deg2rad( double deg ) { return deg * ( M_PI / 180 ); }
 
 double log_odds( double prob )
 {
-    assert( ( prob <= 1 ) && ( prob >= 0 ) );
-    return log( prob / ( 1 - prob ) );
+    // assert( ( prob <= 1 ) && ( prob >= 0 ) );
+    double ret = log( prob / ( 1 - prob ) );
+    if( ret < -LOG_ODDS_CLAMPING ) ret = -LOG_ODDS_CLAMPING;
+    if( ret > LOG_ODDS_CLAMPING ) ret = LOG_ODDS_CLAMPING;
+    return ret;
 }
 
 double log_odds_inv( double lodds )
 {
-    assert( ( lodds <= LOG_ODDS_CLAMPING ) && ( lodds >= -LOG_ODDS_CLAMPING ) );
-    return ( 1 - 1 / ( 1 + exp( lodds ) ) );
+    double ret = ( 1 - 1 / ( 1 + exp( lodds ) ) );
+    if( ret < 0 ) ret = 0;
+    if( ret > 1 ) ret = 1;
+    return ret;
 }
 
 // inline float& occlusion_matrix_indexer(

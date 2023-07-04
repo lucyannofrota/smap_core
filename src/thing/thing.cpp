@@ -171,6 +171,7 @@ geometry_msgs::msg::Point thing::update(
     double distance, double angle, const detector_t& detector )
 {
     // 1. Histogram update
+    printf( "%s-id: %i\n", this->get_label().c_str(), this->id );
     this->observations->register_obs( distance, angle, true );
 
     // 2. Probabilities vector update

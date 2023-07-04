@@ -26,6 +26,7 @@ void observation_histogram::register_obs( double distance, double angle, bool po
     double add_value = HISTOGRAM_BIN_CHANGE_VALUE / ( 1 + distance );
 
     int idx;
+    printf( "----------------\n" );
     for( int i = -int( floor( this->l / 2 ) ), j = 0; i <= int( floor( this->l / 2 ) ); i++, j++ )
     {
         idx = this->histogram.axis().index( angle + this->bin_width * i );
@@ -40,6 +41,8 @@ void observation_histogram::register_obs( double distance, double angle, bool po
         // Clamping
         if( this->histogram[ idx ] < -LOG_ODDS_CLAMPING ) this->histogram[ idx ] = -LOG_ODDS_CLAMPING;
         if( this->histogram[ idx ] > LOG_ODDS_CLAMPING ) this->histogram[ idx ] = LOG_ODDS_CLAMPING;
+        printf( "reg: [%i]: %6.2f\n", i, (double) this->histogram[ idx ] );
+        assert( this->histogram[ idx ] >= -LOG_ODDS_CLAMPING && this->histogram[ idx ] <= LOG_ODDS_CLAMPING );
     }
 }
 
@@ -47,12 +50,14 @@ double observation_histogram::get_histogram_ratio( void ) const
 {
     const double upper_threshold = 0.7, lower_threshold = 0.4;
     size_t pos_bins = 0, neg_bins = 0, relevant_values = 0;
-    double sum = 0, prob, ratio = 0;
+    double prob, ratio = 0;
     for( size_t i = 0; i < this->histogram.size(); i++ )
     {
-        if( std::isnan( this->histogram[ i ] ) || std::isinf( this->histogram[ i ] ) ) continue;
-        prob  = log_odds_inv( this->histogram[ i ] );
-        sum  += prob - 0.5;
+        if( std::isnan( this->histogram[ i ] ) || std::isinf( this->histogram[ i ] )
+            /*|| !( ( this->histogram[ i ] > -LOG_ODDS_CLAMPING ) && ( this->histogram[ i ] < LOG_ODDS_CLAMPING ) )*/ )
+            continue;
+        prob = log_odds_inv( this->histogram[ i ] );
+        // sum  += prob - 0.5;
         if( prob > upper_threshold )
         {
             relevant_values++;
@@ -64,7 +69,8 @@ double observation_histogram::get_histogram_ratio( void ) const
             neg_bins++;
         }
     }
-    ratio = ( (pos_bins) *1.0 ) / relevant_values;
+    // TODO: Check values
+    ratio = ( relevant_values > 0 ? ( ( (pos_bins) *1.0 ) / relevant_values ) : 0 );
     return ratio;
 }
 
@@ -145,7 +151,7 @@ bool observation_histogram::object_is_valid( void ) const
 // return false;
 // }
 
-void observation_histogram::print( void )
+void observation_histogram::print( void ) const
 {
     printf( "Bins       |" );
     for( size_t i = 0; i < this->histogram.size(); i++ ) printf( "%4i|", (int) i );

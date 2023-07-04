@@ -75,7 +75,7 @@ class thing
 
     std::string get_label( void ) const;
 
-		// TODO: Transform inline
+    // TODO: Transform inline
 
     double get_class_confidence( void ) const
     {
@@ -88,13 +88,19 @@ class thing
         if( this->get_label() == UNDEFINED_LABEL ) return 0.0;
         return log_odds_inv( this->pos_confidence );
     }
-		
+
     double get_combined_confidence( void ) const
     {
         if( this->get_label() == UNDEFINED_LABEL ) return 0.0;
 
-        return ( log_odds_inv( this->class_probabilities.at( this->get_label() ) ) / 3 )
-             + ( log_odds_inv( this->pos_confidence ) / 3 ) + ( this->observations->get_histogram_ratio() / 3 );
+        double t1 = ( log_odds_inv( this->class_probabilities.at( this->get_label() ) ) / 3 );
+        printf( "\t\tt1: %f\n", t1 );
+        double t2 = ( log_odds_inv( this->pos_confidence ) / 3 );
+        printf( "\t\tt2: %f\n", t2 );
+        double t3 = ( this->observations->get_histogram_ratio() / 3 );
+        printf( "\t\tt3: %f\n", t3 );
+
+        return t1 + t2 + t3;
     }
 
     bool label_is_equal( const uint8_t& module_id, const uint8_t& obs_label );

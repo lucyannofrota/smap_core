@@ -38,7 +38,7 @@ struct observation_histogram
 
     // bool object_is_valid( double current_angle ) const;
 
-    void print( void );
+    void print( void ) const;
 };
 
 }  // namespace smap
