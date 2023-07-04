@@ -23,13 +23,13 @@ double deg2rad( double deg ) { return deg * ( M_PI / 180 ); }
 
 double log_odds( double prob )
 {
-    assert( ( prob < 1 ) && ( prob > 0 ) );
+    assert( ( prob <= 1 ) && ( prob >= 0 ) );
     return log( prob / ( 1 - prob ) );
 }
 
 double log_odds_inv( double lodds )
 {
-    assert( ( lodds < LOG_ODDS_CLAMPING ) && ( lodds > -LOG_ODDS_CLAMPING ) );
+    assert( ( lodds <= LOG_ODDS_CLAMPING ) && ( lodds >= -LOG_ODDS_CLAMPING ) );
     return ( 1 - 1 / ( 1 + exp( lodds ) ) );
 }
 

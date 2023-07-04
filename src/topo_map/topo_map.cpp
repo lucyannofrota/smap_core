@@ -64,7 +64,7 @@ void topo_map::observation_callback( const smap_interfaces::msg::SmapObservation
     this->object_vert_move( valid_idxs, closest );
 
     const char str[] = "observation_callback";
-    timer.print_time( str );
+    timer.print_time( this->get_logger(), str );
 }
 
 void topo_map::occlusion_map_callback( const smap_interfaces::msg::OcclusionMap::SharedPtr msg )
@@ -232,6 +232,7 @@ std::numeric_limits< double >::infinity() },
 
             // 2.3. Classify the object as occluded or non-occluded and update
             size_t cells_total = cells_before + cells_in + cells_after;
+            if( cells_total == 0 ) return;
             // 2.3.1 Check for occluded objects
             if( ( cells_before / ( cells_total * 1.0 ) ) > OCCLUSION_MAX_PERCENTAGE )
             {

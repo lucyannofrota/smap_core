@@ -75,19 +75,21 @@ class thing
 
     std::string get_label( void ) const;
 
-    inline double get_class_confidence( void ) const
+		// TODO: Transform inline
+
+    double get_class_confidence( void ) const
     {
         if( this->get_label() == UNDEFINED_LABEL ) return 0.0;
         return log_odds_inv( this->class_probabilities.at( this->get_label() ) );
     }
 
-    inline double get_position_confidence( void ) const
+    double get_position_confidence( void ) const
     {
         if( this->get_label() == UNDEFINED_LABEL ) return 0.0;
         return log_odds_inv( this->pos_confidence );
     }
-
-    inline double get_combined_confidence( void ) const
+		
+    double get_combined_confidence( void ) const
     {
         if( this->get_label() == UNDEFINED_LABEL ) return 0.0;
 
