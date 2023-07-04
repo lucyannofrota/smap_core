@@ -73,7 +73,7 @@ void thing::set(
     // printf( "Histogram:\n" );
     // printf( "\tn_bins: %i\n", (int) this->observations.n_bins );
     // printf( "\tbin_width: %6.1f\n", rad2deg( this->observations.bin_width ) );
-    this->observations.register_obs( distance, angle, true );
+    this->observations->register_obs( distance, angle, true );
     // this->observations.print();
 
     // 2. Position initialization
@@ -171,7 +171,7 @@ geometry_msgs::msg::Point thing::update(
     double distance, double angle, const detector_t& detector )
 {
     // 1. Histogram update
-    this->observations.register_obs( distance, angle, true );
+    this->observations->register_obs( distance, angle, true );
 
     // 2. Probabilities vector update
     if( this->class_probabilities.size() != this->reg_classes->size() )
@@ -208,10 +208,10 @@ bool thing::is_valid( void ) const
     {
     case semantic_type_t::OBJECT:
         return (
-            this->observations.object_is_valid() && ( this->get_combined_confidence() > CONFIDENCE_OBJECT_VALID )
+            this->observations->object_is_valid() && ( this->get_combined_confidence() > CONFIDENCE_OBJECT_VALID )
             && ( ( log_odds_inv( this->class_probabilities.at( this->get_label() ) ) > 0.5 )
                  && ( log_odds_inv( this->pos_confidence ) > 0.5 )
-                 && ( this->observations.get_histogram_ratio() > 0.5 ) )
+                 && ( this->observations->get_histogram_ratio() > 0.5 ) )
             && ( this->get_label() != UNDEFINED_LABEL ) );
         break;
     case semantic_type_t::LOCATION:

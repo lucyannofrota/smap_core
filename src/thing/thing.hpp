@@ -38,8 +38,9 @@ class thing
 
     // Attributes
     semantic_type_t type = semantic_type_t::LOCATION;
-    observation_histogram observations =
-        observation_histogram( HISTOGRAM_BINS );                             // Polar histogram of the observations
+		std::shared_ptr<observation_histogram> observations; // Polar histogram of the observations
+		// observation_histogram observations =
+    //     observation_histogram( HISTOGRAM_BINS );                             
     geometry_msgs::msg::Point pos;
 
     std::pair< geometry_msgs::msg::Point, geometry_msgs::msg::Point > aabb;  // min, max
@@ -54,8 +55,12 @@ class thing
     thing( void ) {}
 
     thing( std::shared_ptr< std::map< std::string, std::pair< int, int > > >& class_map, int id ) :
-        reg_classes( class_map ), id( id )
+        observations(std::make_unique<observation_histogram>(HISTOGRAM_BINS)), reg_classes( class_map ), id( id )
+				// observations(std::make_unique<observation_histogram>(HISTOGRAM_BINS))
+				// o(std::make_unique<observation_histogram>(HISTOGRAM_BINS))
     {
+			// observation_histogram observations =
+      //   observation_histogram( HISTOGRAM_BINS );                             
         // this->observations = observation_histogram::observation_histogram( 36 );
         // this->reg_classes = class_map;
     }
@@ -87,7 +92,7 @@ class thing
         if( this->get_label() == UNDEFINED_LABEL ) return 0.0;
 
         return ( log_odds_inv( this->class_probabilities.at( this->get_label() ) ) / 3 )
-             + ( log_odds_inv( this->pos_confidence ) / 3 ) + ( this->observations.get_histogram_ratio() / 3 );
+             + ( log_odds_inv( this->pos_confidence ) / 3 ) + ( this->observations->get_histogram_ratio() / 3 );
     }
 
     bool label_is_equal( const uint8_t& module_id, const uint8_t& obs_label );

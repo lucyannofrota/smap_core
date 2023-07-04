@@ -209,7 +209,7 @@ void topo_marker::update_markers( const graph_t& graph )
 
                     this->histogram.points.push_back( r_thing.pos + it->point + aux_point );
                     this->histogram.colors.push_back(
-                        this->histogram_color_picker( 0, 1, log_odds_inv( r_thing.observations.histogram[ i ] ) ) );
+                        this->histogram_color_picker( 0, 1, log_odds_inv( r_thing.observations->histogram[ i ] ) ) );
                 }
             }
 

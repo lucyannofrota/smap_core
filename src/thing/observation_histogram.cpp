@@ -13,17 +13,24 @@ observation_histogram::observation_histogram( size_t n_bins )
             n_bins, 0, 2 * M_PI ) );
     this->bin_width = ( 2 * M_PI ) / n_bins;
     this->n_bins    = n_bins;
+    for( size_t i = 0; i < this->histogram.size(); i++ ) this->histogram[ i ] = log_odds( 0.5 );
 }
 
 void observation_histogram::register_obs( double distance, double angle, bool positive )
 {
     // printf( "reg_obs\n" );
+
+    // int c            = this->histogram.axis().size();
+    // int b            = this->histogram.size();
+
     double add_value = HISTOGRAM_BIN_CHANGE_VALUE / ( 1 + distance );
 
     int idx;
     for( int i = -int( floor( this->l / 2 ) ), j = 0; i <= int( floor( this->l / 2 ) ); i++, j++ )
     {
         idx = this->histogram.axis().index( angle + this->bin_width * i );
+        if( std::isnan( this->histogram[ idx ] ) || std::isinf( this->histogram[ idx ] ) )
+            this->histogram[ idx ] = log_odds( 0.5 );
         if( positive ) this->histogram[ idx ] += log_odds( 0.5 + this->factor * this->weights[ j ] * add_value );
         else this->histogram[ idx ] -= log_odds( 0.5 + this->factor * this->weights[ j ] * add_value );
     }
@@ -36,6 +43,7 @@ double observation_histogram::get_histogram_ratio( void ) const
     double sum = 0, prob, ratio = 0;
     for( size_t i = 0; i < this->histogram.size(); i++ )
     {
+        if( std::isnan( this->histogram[ i ] ) || std::isinf( this->histogram[ i ] ) ) continue;
         prob  = log_odds_inv( this->histogram[ i ] );
         sum  += prob - 0.5;
         if( prob > upper_threshold )
@@ -61,10 +69,9 @@ bool observation_histogram::object_is_valid( void ) const
     // bool ret   = false;
     for( size_t i = 0; i < this->histogram.size(); i++ )
     {
-        // TODO: Debug hist values
-        double v  = this->histogram[ i ];
-        prob      = log_odds_inv( this->histogram[ i ] );
-        sum      += prob - 0.5;
+        if( std::isnan( this->histogram[ i ] ) || std::isinf( this->histogram[ i ] ) ) continue;
+        prob  = log_odds_inv( this->histogram[ i ] );
+        sum  += prob - 0.5;
         if( prob > upper_threshold )
         {
             relevant_values++;

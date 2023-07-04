@@ -239,7 +239,7 @@ std::numeric_limits< double >::infinity() },
                 // Decay the histogram probabilities
                 // TODO: Consider a small decay
 
-                object.observations.register_obs(
+                object.observations->register_obs(
                     distance_camera_to_object, this->compute_corner_direction( msg->camera_pose, object.pos ), false );
                 continue;
             }
