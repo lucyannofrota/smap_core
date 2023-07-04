@@ -33,6 +33,9 @@ void observation_histogram::register_obs( double distance, double angle, bool po
             this->histogram[ idx ] = log_odds( 0.5 );
         if( positive ) this->histogram[ idx ] += log_odds( 0.5 + this->factor * this->weights[ j ] * add_value );
         else this->histogram[ idx ] -= log_odds( 0.5 + this->factor * this->weights[ j ] * add_value );
+        // Clamping
+        if( this->histogram[ idx ] < -LOG_ODDS_CLAMPING ) this->histogram[ idx ] = -LOG_ODDS_CLAMPING;
+        if( this->histogram[ idx ] > LOG_ODDS_CLAMPING ) this->histogram[ idx ] = LOG_ODDS_CLAMPING;
     }
 }
 

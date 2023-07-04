@@ -38,9 +38,9 @@ class thing
 
     // Attributes
     semantic_type_t type = semantic_type_t::LOCATION;
-		std::shared_ptr<observation_histogram> observations; // Polar histogram of the observations
-		// observation_histogram observations =
-    //     observation_histogram( HISTOGRAM_BINS );                             
+    std::shared_ptr< observation_histogram > observations;  // Polar histogram of the observations
+                                                            // observation_histogram observations =
+    // observation_histogram( HISTOGRAM_BINS );
     geometry_msgs::msg::Point pos;
 
     std::pair< geometry_msgs::msg::Point, geometry_msgs::msg::Point > aabb;  // min, max
@@ -55,12 +55,12 @@ class thing
     thing( void ) {}
 
     thing( std::shared_ptr< std::map< std::string, std::pair< int, int > > >& class_map, int id ) :
-        observations(std::make_unique<observation_histogram>(HISTOGRAM_BINS)), reg_classes( class_map ), id( id )
-				// observations(std::make_unique<observation_histogram>(HISTOGRAM_BINS))
-				// o(std::make_unique<observation_histogram>(HISTOGRAM_BINS))
+        observations( std::make_unique< observation_histogram >( HISTOGRAM_BINS ) ), reg_classes( class_map ), id( id )
+    // observations(std::make_unique<observation_histogram>(HISTOGRAM_BINS))
+    // o(std::make_unique<observation_histogram>(HISTOGRAM_BINS))
     {
-			// observation_histogram observations =
-      //   observation_histogram( HISTOGRAM_BINS );                             
+        // observation_histogram observations =
+        // observation_histogram( HISTOGRAM_BINS );
         // this->observations = observation_histogram::observation_histogram( 36 );
         // this->reg_classes = class_map;
     }
@@ -117,7 +117,12 @@ class thing
         // each class
 
         for( auto& class_likelihood: this->class_probabilities )
+        {
             class_likelihood.second -= log_odds( ( OBJECT_PROB_DECAY * ( 1 + factor ) ) / ( 1 + distance ) );
+            // Clamping
+            if( class_likelihood.second < -LOG_ODDS_CLAMPING ) class_likelihood.second = -LOG_ODDS_CLAMPING;
+            if( class_likelihood.second > LOG_ODDS_CLAMPING ) class_likelihood.second = LOG_ODDS_CLAMPING;
+        }
     }
 
     bool is_valid( void ) const;

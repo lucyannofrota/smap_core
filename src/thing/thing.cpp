@@ -190,6 +190,9 @@ geometry_msgs::msg::Point thing::update(
 
     // 4. Position update
     this->pos_confidence += log_odds( pos_confidence );
+    // Clamping
+    if( this->pos_confidence < -LOG_ODDS_CLAMPING ) this->pos_confidence = -LOG_ODDS_CLAMPING;
+    if( this->pos_confidence > LOG_ODDS_CLAMPING ) this->pos_confidence = LOG_ODDS_CLAMPING;
     // Saturation of p. Max value is MAX_POS_PROB
     double p = ( log_odds_inv( this->pos_confidence ) > MAX_POS_PROB )
                  ? MAX_POS_PROB

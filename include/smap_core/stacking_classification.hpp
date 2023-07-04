@@ -42,7 +42,15 @@ inline void stack_vectors(
     // 1. Probability combination
     int i   = 0;
     auto it = new_vector.begin();
-    for( i = 0; it != new_vector.end(); ++it, i++ ) current_likelihood[ det.classes.at( i ) ] += log_odds( *it );
+    for( i = 0; it != new_vector.end(); ++it, i++ )
+    {
+        current_likelihood[ det.classes.at( i ) ] += log_odds( *it );
+        // Clamping
+        if( current_likelihood[ det.classes.at( i ) ] > LOG_ODDS_CLAMPING )
+            current_likelihood[ det.classes.at( i ) ] = LOG_ODDS_CLAMPING;
+        if( current_likelihood[ det.classes.at( i ) ] < -LOG_ODDS_CLAMPING )
+            current_likelihood[ det.classes.at( i ) ] = -LOG_ODDS_CLAMPING;
+    }
     // stack_normalization( current_likelihood );  // TODO: Test the influence of the normalization
 }
 }  // namespace smap
