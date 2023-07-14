@@ -46,6 +46,7 @@ void roi_filter(
     const pcl::shared_ptr< cloud_t >& point_cloud, const std::shared_ptr< std::pair< float, float > >& pcl_lims )
 {
     if( !point_cloud ) return;
+#if ROI_FILTER_METHOD == 0
     point_cloud->erase(
         std::remove_if(
             point_cloud->begin(), point_cloud->end(),
@@ -55,6 +56,15 @@ void roi_filter(
                     || ( ( point.getVector3fMap() ).norm() > pcl_lims->second ) );
             } ),
         point_cloud->end() );
+#else
+    point_cloud->erase(
+        std::remove_if(
+            point_cloud->begin(), point_cloud->end(),
+            [ &pcl_lims ]( const cloud_point_t& point ) {
+                return ( ( point.x < pcl_lims->first ) || ( point.x > pcl_lims->second ) );
+            } ),
+        point_cloud->end() );
+#endif
 }
 
 void pcl_voxelization( const pcl::shared_ptr< cloud_t >& point_cloud, const float& leaf_size )

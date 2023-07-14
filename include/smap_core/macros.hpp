@@ -27,6 +27,8 @@ namespace smap
 
 #define OBJECT_ERROR_DISTANCE 0.2  // Max position error of an object and max distance between objects
 
+#define ROI_FILTER_METHOD 1        // 0 - Precise, 1 - Fast
+
 #define OBJECT_TRACKING_FACTOR 1 / 2
 
 #define OBJECT_TRACKING_TOLERANCE OBJECT_ERROR_DISTANCE* OBJECT_TRACKING_FACTOR

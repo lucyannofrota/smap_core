@@ -16,3 +16,5 @@ src/debug.txt
 src/thing/cls.txt
 
 pcl_test/
+
+samples/image_saver/

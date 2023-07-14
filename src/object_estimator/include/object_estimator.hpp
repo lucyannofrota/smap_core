@@ -136,6 +136,9 @@ class object_estimator : public rclcpp::Node
             std::string( this->get_namespace() ) + std::string( "/perception/predictions" ), 10,
             std::bind( &smap::object_estimator::detections_callback, this, std::placeholders::_1 ) );
 
+    rclcpp::Publisher< sensor_msgs::msg::PointCloud2 >::SharedPtr pcl_pub =
+        this->create_publisher< sensor_msgs::msg::PointCloud2 >(
+            std::string( this->get_namespace() ) + std::string( "/object_estimator/pcl" ), 10 );
     rclcpp::Publisher< sensor_msgs::msg::PointCloud2 >::SharedPtr object_pcl_pub =
         this->create_publisher< sensor_msgs::msg::PointCloud2 >(
             std::string( this->get_namespace() ) + std::string( "/object_estimator/object_pcl" ), 10 );
@@ -169,7 +172,7 @@ class object_estimator : public rclcpp::Node
     // rclcpp::Publisher< smap_interfaces::msg::SmapObservation >::SharedPtr object_pub =
     //     this->create_publisher< smap_interfaces::msg::SmapObservation >(
     //         std::string( this->get_namespace() ) + std::string( "/object_estimator/occlusion_map" ), 10 );
-    std::mutex object_bb_pub_mutex, object_pub_mutex, object_pcl_pub_mutex;
+    std::mutex pcl_pub_mutex, object_bb_pub_mutex, object_pub_mutex, object_pcl_pub_mutex;
 
     std::shared_ptr< thread_queue > thread_ctl = std::make_shared< thread_queue >( thread_queue( this->max_threads ) );
 
@@ -214,7 +217,7 @@ class object_estimator : public rclcpp::Node
         this->box_marker.color.r            = 0;
         this->box_marker.color.a            = 0.2;
         this->box_marker.ns                 = "occlusion box";
-				this->box_marker.lifetime.sec = 1;
+        this->box_marker.lifetime.sec       = 2;
         this->box_marker.lifetime.nanosec   = 500 * 1000 * 1000;
 
         // this->transform_marker.header.frame_id    = "map";
@@ -268,7 +271,7 @@ class object_estimator : public rclcpp::Node
         bbx_marker.color.g            = 0;
         bbx_marker.color.r            = 255;
         bbx_marker.color.a            = 0.5;
-        bbx_marker.lifetime.sec       = 1;
+        bbx_marker.lifetime.sec       = 2;
         bbx_marker.lifetime.nanosec   = 500 * 1000 * 1000;
         this->object_bb_pub->publish( bbx_marker );
     }
