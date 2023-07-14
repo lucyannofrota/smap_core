@@ -151,9 +151,9 @@ bool estimate_confidence(
     if( std::isinf( lims[ 0 ] ) || std::isinf( lims[ 1 ] ) ) return false;
 
     double den = pcl_lims->second - pcl_lims->first, num = ( lims[ 1 ] - lims[ 0 ] );
-    if( num > object_size_lim_conf ) num -= object_size_lim_conf;
-    if( den > object_size_lim_conf ) den -= object_size_lim_conf;
-    conf = ( den - num ) / den;
+    if( num <= object_size_lim_conf ) conf = 1;
+    else conf = ( den - ( num - object_size_lim_conf ) ) / den;
+
     return true;
 }
 
