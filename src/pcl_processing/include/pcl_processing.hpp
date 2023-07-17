@@ -2,6 +2,7 @@
 #define SMAP_CORE__PCL_PROCESSING_HPP_
 
 // STL
+#include <algorithm>
 #include <array>
 #include <memory>
 #include <tuple>
@@ -33,6 +34,44 @@ namespace smap
 {
 using cloud_point_t = pcl::PointXYZRGB;
 using cloud_t       = pcl::PointCloud< cloud_point_t >;
+
+template< typename IteratorT, typename Functor_comp, typename Functor_value >
+std::array< double, 2 > variable_percentiles(
+    IteratorT begin, IteratorT end, double percentile, Functor_comp f_comp, Functor_value f_val )
+{
+
+    const size_t size             = std::distance( begin, end );
+    const size_t lower_percentile = int( ceil( size * percentile ) ),
+                 upper_percentile = int( floor( size * ( 1.0 - percentile ) ) );
+    std::array< double, 2 > ret {
+        -std::numeric_limits< double >::infinity(), std::numeric_limits< double >::infinity() };
+    if( lower_percentile < size && upper_percentile > 0 )
+    {
+        std::nth_element( begin, begin + lower_percentile, end, f_comp );
+        ret[ 0 ] = f_val( begin[ lower_percentile ] );
+        std::nth_element( begin, begin + upper_percentile, end, f_comp );
+        ret[ 1 ] = f_val( begin[ upper_percentile ] );
+    }
+    return ret;
+}
+
+template< typename IteratorT >
+std::array< std::array< double, 2 >, 3 > struct_variable_percentiles(
+    IteratorT begin, IteratorT end, double percentile )
+{
+    std::array< std::array< double, 2 >, 3 > ret;
+    using Point = typename std::iterator_traits< IteratorT >::value_type;
+    ret[ 0 ]    = variable_percentiles(
+        begin, end, percentile, []( const Point& t1, const Point& t2 ) { return t1.x < t2.x; },
+        []( const Point& p ) { return p.x; } );
+    ret[ 1 ] = variable_percentiles(
+        begin, end, percentile, []( const Point& t1, const Point& t2 ) { return t1.y < t2.y; },
+        []( const Point& p ) { return p.y; } );
+    ret[ 2 ] = variable_percentiles(
+        begin, end, percentile, []( const Point& t1, const Point& t2 ) { return t1.z < t2.z; },
+        []( const Point& p ) { return p.z; } );
+    return ret;
+}
 
 void box_filter(
     const pcl::shared_ptr< cloud_t >& input_cloud, const pcl::shared_ptr< cloud_t >& cloud_segment,
