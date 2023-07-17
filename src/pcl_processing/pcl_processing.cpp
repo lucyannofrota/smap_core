@@ -167,15 +167,14 @@ bool estimate_confidence(
     return true;
 }
 
-std::pair< int, int > compute_occlusion_map(
-    occlusion_map_t& occlusion_map, const std::shared_ptr< sensor_msgs::msg::PointCloud2 >& pcl_ros,
+std::pair< int, int > compute_depth_map(
+    depth_map_t& depth_map, const std::shared_ptr< sensor_msgs::msg::PointCloud2 >& pcl_ros,
     const std::shared_ptr< geometry_msgs::msg::TransformStamped >& transform,
     const std::shared_ptr< std::pair< float, float > >& pcl_lims )
 {
 
     std::pair< int, int > ret(
-        ceil( pcl_ros->height / ( (double) OCCLUSION_MAP_ROWS ) ),
-        ceil( pcl_ros->width / ( (double) OCCLUSION_MAP_COLS ) ) );
+        ceil( pcl_ros->height / ( (double) DEPTH_MAP_ROWS ) ), ceil( pcl_ros->width / ( (double) DEPTH_MAP_COLS ) ) );
 
     geometry_msgs::msg::Point pt;
     uint16_t occlusion_r, occlusion_c;
@@ -188,7 +187,7 @@ std::pair< int, int > compute_occlusion_map(
     for( uint32_t pcl_r = 0; pcl_r < pcl_ros->height; pcl_r++ )
     {
         occlusion_r           = floor( pcl_r / ret.first );
-        auto& occlusion_array = occlusion_map[ occlusion_r ];
+        auto& occlusion_array = depth_map[ occlusion_r ];
         for( uint32_t pcl_c = 0; pcl_c < pcl_ros->width; pcl_c++, ++iter_x, ++iter_y, ++iter_z )
         {
             occlusion_c = floor( pcl_c / ret.second );
@@ -213,7 +212,7 @@ std::pair< int, int > compute_occlusion_map(
     // Transpose map to the world frame
     std::array< geometry_msgs::msg::PointStamped, 8 > AABB;
     geometry_msgs::msg::Point min, max;
-    for( auto& row_array: occlusion_map )
+    for( auto& row_array: depth_map )
     {
         for( auto& element: row_array )
         {

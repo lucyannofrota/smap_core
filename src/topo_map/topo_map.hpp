@@ -32,7 +32,7 @@
 #include "../thing/thing.hpp"
 #include "graph.hpp"
 #include "label_writers.hpp"
-#include "smap_interfaces/msg/occlusion_map.hpp"
+#include "smap_interfaces/msg/depth_map.hpp"
 #include "smap_interfaces/msg/smap_object.hpp"
 #include "smap_interfaces/msg/smap_observation.hpp"
 #include "topo_marker.hpp"
@@ -80,10 +80,10 @@ class topo_map : public rclcpp::Node
 
     rclcpp::Subscription< geometry_msgs::msg::PoseStamped >::SharedPtr pose_sub;
     rclcpp::Subscription< smap_interfaces::msg::SmapObservation >::SharedPtr object_sub;
-    rclcpp::Subscription< smap_interfaces::msg::OcclusionMap >::SharedPtr occlusion_map_sub;
-    // rclcpp::Publisher< std_msgs::msg::Float32MultiArray >::SharedPtr occlusion_map_pub =
+    rclcpp::Subscription< smap_interfaces::msg::DepthMap >::SharedPtr depth_map_sub;
+    // rclcpp::Publisher< std_msgs::msg::Float32MultiArray >::SharedPtr depth_map_pub =
     // this->create_publisher< std_msgs::msg::Float32MultiArray >(
-    //     std::string( this->get_namespace() ) + std::string( "/object_estimator/occlusion_map" ), 10 );
+    //     std::string( this->get_namespace() ) + std::string( "/object_estimator/depth_map" ), 10 );
 
     // Publishers
     rclcpp::Publisher< visualization_msgs::msg::MarkerArray >::SharedPtr publisher_marker_vertex =
@@ -143,7 +143,7 @@ class topo_map : public rclcpp::Node
 
     void observation_callback( const smap_interfaces::msg::SmapObservation::SharedPtr observation );
 
-    void occlusion_map_callback( const smap_interfaces::msg::OcclusionMap::SharedPtr msg );
+    void depth_map_callback( const smap_interfaces::msg::DepthMap::SharedPtr msg );
 
     inline void add_vertex( const geometry_msgs::msg::Point& pos, bool strong_vertex )
     {
@@ -445,9 +445,9 @@ class topo_map : public rclcpp::Node
         this->object_sub = this->create_subscription< smap_interfaces::msg::SmapObservation >(
             std::string( this->get_namespace() ) + std::string( "/object_estimator/observations" ), 10,
             std::bind( &topo_map::observation_callback, this, std::placeholders::_1 ), this->sub_options );
-        this->occlusion_map_sub = this->create_subscription< smap_interfaces::msg::OcclusionMap >(
-            std::string( this->get_namespace() ) + std::string( "/object_estimator/occlusion_map" ), 10,
-            std::bind( &topo_map::occlusion_map_callback, this, std::placeholders::_1 ), this->sub_options );
+        this->depth_map_sub = this->create_subscription< smap_interfaces::msg::DepthMap >(
+            std::string( this->get_namespace() ) + std::string( "/object_estimator/depth_map" ), 10,
+            std::bind( &topo_map::depth_map_callback, this, std::placeholders::_1 ), this->sub_options );
 
         if( NEW_EDGE_FACTOR > 1 )
         {

@@ -25,7 +25,7 @@
 
 // SMAP
 #include "../../../include/smap_core/macros.hpp"
-#include "../../object_estimator/include/occlusion_map.hpp"
+#include "../../object_estimator/include/depth_map.hpp"
 
 // TODO: Transpose all PCL related function to this file
 // TODO: Solve compile error
@@ -97,7 +97,7 @@ bool estimate_confidence(
     const std::shared_ptr< std::pair< float, float > >& pcl_lims, const float& object_size_lim_conf );
 
 inline void set_marker(
-    int32_t i, occlusion_cell_t cell, rclcpp::Clock::SharedPtr clock, visualization_msgs::msg::Marker& marker )
+    int32_t i, depth_cell_t cell, rclcpp::Clock::SharedPtr clock, visualization_msgs::msg::Marker& marker )
 {
     marker.header.stamp    = clock->now();
     marker.id              = i;
@@ -109,8 +109,8 @@ inline void set_marker(
     marker.pose.position.z = ( std::get< 1 >( cell ).z + std::get< 0 >( cell ).z ) / 2;
 }
 
-std::pair< int, int > compute_occlusion_map(
-    occlusion_map_t& occlusion_map, const std::shared_ptr< sensor_msgs::msg::PointCloud2 >& pcl_ros,
+std::pair< int, int > compute_depth_map(
+    depth_map_t& depth_map, const std::shared_ptr< sensor_msgs::msg::PointCloud2 >& pcl_ros,
     const std::shared_ptr< geometry_msgs::msg::TransformStamped >& transform,
     const std::shared_ptr< std::pair< float, float > >& pcl_lims );
 
@@ -157,7 +157,7 @@ std::pair< int, int > compute_occlusion_map(
 
 bool check_occlusions( void );
 
-inline double& occlusion_map_indexer(
+inline double& depth_map_indexer(
     std_msgs::msg::Float64MultiArray& occ_mat, const size_t& r, const size_t& c, const size_t& lims,
     const size_t& comp )
 {

@@ -9,7 +9,7 @@ Panels:
         - /SMAP1
         - /SMAP1/Sampler1
         - /SMAP1/object_estimator1
-        - /SMAP1/object_estimator1/OcclusionMap1
+        - /SMAP1/object_estimator1/DepthMap1
         - /SMAP1/topo_map1
         - /Marker1
       Splitter Ratio: 0.5833333134651184
@@ -702,7 +702,7 @@ Visualization Manager:
               Value: true
             - Class: rviz_default_plugins/MarkerArray
               Enabled: true
-              Name: OcclusionMap
+              Name: DepthMap
               Namespaces:
                 {}
               Topic:
@@ -742,7 +742,7 @@ Visualization Manager:
               Value: true
             - Class: rviz_default_plugins/MarkerArray
               Enabled: true
-              Name: OcclusionMapSelected
+              Name: DepthMapSelected
               Namespaces:
                 {}
               Topic:

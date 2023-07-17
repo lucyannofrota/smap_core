@@ -32,7 +32,7 @@
 #include "smap_core/count_time.hpp"
 #include "smap_core/macros.hpp"
 #include "smap_interfaces/msg/bounding_box2_d.hpp"
-#include "smap_interfaces/msg/occlusion_map.hpp"
+#include "smap_interfaces/msg/depth_map.hpp"
 #include "smap_interfaces/msg/smap_detections.hpp"
 #include "smap_interfaces/msg/smap_object.hpp"
 #include "smap_interfaces/msg/smap_observation.hpp"
@@ -153,9 +153,9 @@ class object_estimator : public rclcpp::Node
         this->create_publisher< visualization_msgs::msg::MarkerArray >(
             std::string( this->get_namespace() ) + std::string( "/object_estimator/occlusionBoxes" ), 10 );
 
-    rclcpp::Publisher< smap_interfaces::msg::OcclusionMap >::SharedPtr occlusion_map_pub =
-        this->create_publisher< smap_interfaces::msg::OcclusionMap >(
-            std::string( this->get_namespace() ) + std::string( "/object_estimator/occlusion_map" ), 10 );
+    rclcpp::Publisher< smap_interfaces::msg::DepthMap >::SharedPtr depth_map_pub =
+        this->create_publisher< smap_interfaces::msg::DepthMap >(
+            std::string( this->get_namespace() ) + std::string( "/object_estimator/depth_map" ), 10 );
 
     // rclcpp::Publisher< visualization_msgs::msg::Marker >::SharedPtr transform_pub =
     //     this->create_publisher< visualization_msgs::msg::Marker >(
@@ -165,13 +165,13 @@ class object_estimator : public rclcpp::Node
     visualization_msgs::msg::Marker box_marker;
     // visualization_msgs::msg::Marker transform_marker;
 
-    smap_interfaces::msg::OcclusionMap occ_map;
+    smap_interfaces::msg::DepthMap occ_map;
 
-    // std_msgs::msg::Float64MultiArray occlusion_map;
+    // std_msgs::msg::Float64MultiArray depth_map;
 
     // rclcpp::Publisher< smap_interfaces::msg::SmapObservation >::SharedPtr object_pub =
     //     this->create_publisher< smap_interfaces::msg::SmapObservation >(
-    //         std::string( this->get_namespace() ) + std::string( "/object_estimator/occlusion_map" ), 10 );
+    //         std::string( this->get_namespace() ) + std::string( "/object_estimator/depth_map" ), 10 );
     std::mutex pcl_pub_mutex, object_bb_pub_mutex, object_pub_mutex, object_pcl_pub_mutex;
 
     std::shared_ptr< thread_queue > thread_ctl = std::make_shared< thread_queue >( thread_queue( this->max_threads ) );
@@ -237,7 +237,7 @@ class object_estimator : public rclcpp::Node
         // this->transform_marker.scale.y            = 1;
         // this->transform_marker.scale.z            = 1;
 
-        this->occ_map.map.resize( OCCLUSION_MAP_ROWS * OCCLUSION_MAP_COLS * OCCLUSION_MAP_FIELDS );
+        this->occ_map.map.resize( DEPTH_MAP_ROWS * DEPTH_MAP_COLS * DEPTH_MAP_FIELDS );
     }
 
     inline ~object_estimator() {}
@@ -333,7 +333,7 @@ class object_estimator : public rclcpp::Node
     {  // Pooling
     }
 
-    void occlusion_map_thread(
+    void depth_map_thread(
         const std::shared_ptr< sensor_msgs::msg::PointCloud2 >& ros_pcl,
         const std::shared_ptr< geometry_msgs::msg::TransformStamped >& transform,
         const geometry_msgs::msg::PoseStamped& robot_pose );
@@ -345,10 +345,10 @@ class object_estimator : public rclcpp::Node
     //     printf( "Validation thread\n" );
 
     // // Launch occlusion map thread
-    // count_time timer_occlusion_map;
-    // occlusion_map_t occlusion_map;
-    // // std::future< void > occlusion_map_thread_future = std::async(
-    // //     std::launch::async, &object_estimator::occlusion_map_thread, this, std::ref( occlusion_map ),
+    // count_time timer_depth_map;
+    // depth_map_t depth_map;
+    // // std::future< void > depth_map_thread_future = std::async(
+    // //     std::launch::async, &object_estimator::depth_map_thread, this, std::ref( depth_map ),
     // //     ros_pcl, transform );
 
     // // Processing
@@ -356,8 +356,8 @@ class object_estimator : public rclcpp::Node
     // // Processing
 
     // // Wait for occlusion map thread completion
-    // // occlusion_map_thread_future.wait();
-    // timer_occlusion_map.print_time( "occlusion_map_thread" );
+    // // depth_map_thread_future.wait();
+    // timer_depth_map.print_time( "depth_map_thread" );
     // printf( "Validation end\n" );
     // //
     // //

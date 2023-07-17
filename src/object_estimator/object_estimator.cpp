@@ -16,7 +16,7 @@
 // #include "../pcl_processing/include/pcl_processing.hpp"
 // #include "pcl_processing/pcl_processing.hpp"
 #include "../../include/smap_core/aux_functions.hpp"
-#include "include/occlusion_map.hpp"
+#include "include/depth_map.hpp"
 
 // PCL
 #include <iostream>
@@ -211,7 +211,7 @@ void object_estimator::detections_callback( const smap_interfaces::msg::SmapDete
         pcl::io::savePCDFileASCII( "src/smap/smap_core/samples/example_pcd.pcd", *lock_cloud );
     }
 
-    // launch occlusion_map_thread
+    // launch depth_map_thread
     // input_msg->
 
     // std::async(
@@ -223,13 +223,13 @@ void object_estimator::detections_callback( const smap_interfaces::msg::SmapDete
         sensor_msgs::msg::PointCloud2 segment_cloud;
         pcl::toROSMsg( *lock_cloud, segment_cloud );
         std::async(
-            std::launch::async, &object_estimator::occlusion_map_thread, this,
+            std::launch::async, &object_estimator::depth_map_thread, this,
             std::make_shared< sensor_msgs::msg::PointCloud2 >( segment_cloud ), transform, input_msg->stamped_pose );
     }
     else
     {
         std::async(
-            std::launch::async, &object_estimator::occlusion_map_thread, this,
+            std::launch::async, &object_estimator::depth_map_thread, this,
             std::make_shared< sensor_msgs::msg::PointCloud2 >( input_msg->pointcloud ), transform,
             input_msg->stamped_pose );
     }
@@ -269,7 +269,7 @@ void object_estimator::detections_callback( const smap_interfaces::msg::SmapDete
     RCLCPP_DEBUG( this->get_logger(), "---Callback complete---" );
 }
 
-void object_estimator::occlusion_map_thread(
+void object_estimator::depth_map_thread(
     const std::shared_ptr< sensor_msgs::msg::PointCloud2 >& ros_pcl,
     const std::shared_ptr< geometry_msgs::msg::TransformStamped >& transform,
     const geometry_msgs::msg::PoseStamped& robot_pose )
@@ -285,8 +285,8 @@ void object_estimator::occlusion_map_thread(
         printf( "\t\tInvalid transform\n" );
 
     // Occlusion Map Initialization
-    occlusion_map_t occlusion_map;
-    for( auto& v: occlusion_map )
+    depth_map_t depth_map;
+    for( auto& v: depth_map )
     {
         for( auto& e: v )
         {
@@ -305,14 +305,14 @@ void object_estimator::occlusion_map_thread(
     }
 
     // Compute Occlusion Map
-    auto cell_dims = compute_occlusion_map( occlusion_map, ros_pcl, transform, this->pcl_lims );
+    auto cell_dims = compute_depth_map( depth_map, ros_pcl, transform, this->pcl_lims );
 
     // Publish marker
     if( this->occlusion_boxes_pub->get_subscription_count() > 0 )
     {
         marker_array.markers.clear();
         this->box_marker.id = 0;
-        for( auto& row_array: occlusion_map )
+        for( auto& row_array: depth_map )
         {
             for( auto& element: row_array )
             {
@@ -331,12 +331,12 @@ void object_estimator::occlusion_map_thread(
     }
 
     // Publish occlusion map
-    if( this->occlusion_map_pub->get_subscription_count() > 0 )
+    if( this->depth_map_pub->get_subscription_count() > 0 )
     {
-        to_msg( occlusion_map, this->occ_map, cell_dims );  // REVERT
-        this->occ_map.camera_pose = robot_pose.pose;        // REVERT
+        to_msg( depth_map, this->occ_map, cell_dims );  // REVERT
+        this->occ_map.camera_pose = robot_pose.pose;    // REVERT
 
-        this->occlusion_map_pub->publish( this->occ_map );  // REVERT
+        this->depth_map_pub->publish( this->occ_map );  // REVERT
     }
 }
 

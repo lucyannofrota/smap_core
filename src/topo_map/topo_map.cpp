@@ -1,7 +1,7 @@
 #include "topo_map.hpp"
 
 #include "../../include/smap_core/count_time.hpp"
-#include "../object_estimator/include/occlusion_map.hpp"
+#include "../object_estimator/include/depth_map.hpp"
 
 // STL
 #include <algorithm>
@@ -15,7 +15,7 @@
 namespace smap
 {
 
-// inline double& occlusion_map_indexer(
+// inline double& depth_map_indexer(
 //     std_msgs::msg::Float64MultiArray& occ_mat, const size_t& r, const size_t& c, const size_t& lims,
 //     const size_t& comp )
 // {
@@ -67,13 +67,13 @@ void topo_map::observation_callback( const smap_interfaces::msg::SmapObservation
     timer.print_time( this->get_logger(), str );
 }
 
-void topo_map::occlusion_map_callback( const smap_interfaces::msg::OcclusionMap::SharedPtr msg )
+void topo_map::depth_map_callback( const smap_interfaces::msg::DepthMap::SharedPtr msg )
 {
     if( this->reg_classes == nullptr || this->reg_detectors == nullptr || boost::num_vertices( this->graph ) == 0 )
         return;
     RCLCPP_DEBUG( this->get_logger(), "Occlusion_callback" );
-    static occlusion_map_t occlusion_map;
-    from_msg( *msg, occlusion_map );
+    static depth_map_t depth_map;
+    from_msg( *msg, depth_map );
 
     // 1. Get all adjacent vertexes 5 layers deep
     RCLCPP_DEBUG( this->get_logger(), "1. Get all adjacent vertexes 5 layers deep" );
@@ -102,7 +102,7 @@ void topo_map::occlusion_map_callback( const smap_interfaces::msg::OcclusionMap:
             std::array< geometry_msgs::msg::Point, 8 > AABB;
             set_AABB( AABB, object.aabb.first, object.aabb.second );
 
-            // 2.2.2. Get correspondent AABB corners in occlusion_map indexes
+            // 2.2.2. Get correspondent AABB corners in depth_map indexes
             std::array< std::pair< std::array< long, 2 >, double >, 8 > object_corner_indexes = {
                 {{ { { std::numeric_limits< long >::max(), std::numeric_limits< long >::min() } },
 std::numeric_limits< double >::infinity() },
@@ -125,13 +125,13 @@ std::numeric_limits< double >::infinity() },
             {
                 // 2.2.2.1 Compute the angle from the camera to the corner
                 double camera_to_corner_angle = this->compute_corner_direction( msg->camera_pose, corner.value() );
-                // 2.2.2.2 Loop through all cells of the occlusion_map
-                for( const auto& o_map_row: occlusion_map | boost::adaptors::indexed( 0 ) )
+                // 2.2.2.2 Loop through all cells of the depth_map
+                for( const auto& o_map_row: depth_map | boost::adaptors::indexed( 0 ) )
                 {
                     for( const auto& o_map_col: o_map_row.value() | boost::adaptors::indexed( 0 ) )
                     {
                         if( !is_valid( o_map_col.value()[ 2 ] ) ) continue;
-                        // 2.2.2.2.1 Compute the angle from the camera to the occlusion_map cell
+                        // 2.2.2.2.1 Compute the angle from the camera to the depth_map cell
                         double camera_to_panel_angle =
                             this->compute_corner_direction( msg->camera_pose, o_map_col.value()[ 2 ] );
                         // 2.2.2.2.2 Compute the difference between camera_to_corner_angle and camera_to_panel_angle
@@ -149,8 +149,8 @@ std::numeric_limits< double >::infinity() },
                 }
             }
 
-            // 2.2.3.1 Get the minimum and maximum corners in the occlusion_map plane
-            std::array< long, 2 > mins = { OCCLUSION_MAP_ROWS, OCCLUSION_MAP_COLS }, maxs = { 0, 0 };
+            // 2.2.3.1 Get the minimum and maximum corners in the depth_map plane
+            std::array< long, 2 > mins = { DEPTH_MAP_ROWS, DEPTH_MAP_COLS }, maxs = { 0, 0 };
             for( const auto& cell: object_corner_indexes )
             {
                 // mins
@@ -170,17 +170,17 @@ std::numeric_limits< double >::infinity() },
                 {
                     for( long occ_col = mins[ 1 ]; occ_col < maxs[ 1 ]; occ_col++ )
                     {
-                        if( !is_valid( occlusion_map[ occ_row ][ occ_col ][ 0 ] )
-                            || !is_valid( occlusion_map[ occ_row ][ occ_col ][ 1 ] )
-                            || !is_valid( occlusion_map[ occ_row ][ occ_col ][ 2 ] ) )
+                        if( !is_valid( depth_map[ occ_row ][ occ_col ][ 0 ] )
+                            || !is_valid( depth_map[ occ_row ][ occ_col ][ 1 ] )
+                            || !is_valid( depth_map[ occ_row ][ occ_col ][ 2 ] ) )
                             continue;
-                        this->panels_maker.pose.position = occlusion_map[ occ_row ][ occ_col ][ 2 ];
-                        this->panels_maker.scale.x       = abs(
-                            occlusion_map[ occ_row ][ occ_col ][ 1 ].x - occlusion_map[ occ_row ][ occ_col ][ 0 ].x );
-                        this->panels_maker.scale.y = abs(
-                            occlusion_map[ occ_row ][ occ_col ][ 1 ].y - occlusion_map[ occ_row ][ occ_col ][ 0 ].y );
-                        this->panels_maker.scale.z = abs(
-                            occlusion_map[ occ_row ][ occ_col ][ 1 ].z - occlusion_map[ occ_row ][ occ_col ][ 0 ].z );
+                        this->panels_maker.pose.position = depth_map[ occ_row ][ occ_col ][ 2 ];
+                        this->panels_maker.scale.x =
+                            abs( depth_map[ occ_row ][ occ_col ][ 1 ].x - depth_map[ occ_row ][ occ_col ][ 0 ].x );
+                        this->panels_maker.scale.y =
+                            abs( depth_map[ occ_row ][ occ_col ][ 1 ].y - depth_map[ occ_row ][ occ_col ][ 0 ].y );
+                        this->panels_maker.scale.z =
+                            abs( depth_map[ occ_row ][ occ_col ][ 1 ].z - depth_map[ occ_row ][ occ_col ][ 0 ].z );
                         this->panels_maker_array.markers.push_back( this->panels_maker );
                         this->panels_maker.id++;
                     }
@@ -195,15 +195,15 @@ std::numeric_limits< double >::infinity() },
             {
                 for( long occ_col = mins[ 1 ]; occ_col < maxs[ 1 ]; occ_col++ )
                 {
-                    if( !is_valid( occlusion_map[ occ_row ][ occ_col ][ 0 ] )
-                        || !is_valid( occlusion_map[ occ_row ][ occ_col ][ 1 ] )
-                        || !is_valid( occlusion_map[ occ_row ][ occ_col ][ 2 ] ) )
+                    if( !is_valid( depth_map[ occ_row ][ occ_col ][ 0 ] )
+                        || !is_valid( depth_map[ occ_row ][ occ_col ][ 1 ] )
+                        || !is_valid( depth_map[ occ_row ][ occ_col ][ 2 ] ) )
                         continue;
                     // 2.2.3.2.1 Compute the the distance between cell centroids and the object centroid with tolerance
                     // distance_cell_to_object =
-                    // gPoint_distance( occlusion_map[ occ_row ][ occ_col ][ 2 ], object.pos )
+                    // gPoint_distance( depth_map[ occ_row ][ occ_col ][ 2 ], object.pos )
                     double distance_camera_to_cell =
-                               gPoint_distance( msg->camera_pose.position, occlusion_map[ occ_row ][ occ_col ][ 2 ] ),
+                               gPoint_distance( msg->camera_pose.position, depth_map[ occ_row ][ occ_col ][ 2 ] ),
                            object_tolerance_radius = ( gPoint_distance( object.aabb.second, object.aabb.first ) / 2 )
                                                    * OCCLUSION_OBJECT_DISTANCE_TOLERANCE_FACTOR;
                     if( object_tolerance_radius > OCCLUSION_OBJECT_DISTANCE_TOLERANCE_MAX )
@@ -262,7 +262,7 @@ std::numeric_limits< double >::infinity() },
     //         {
     //             printf( "[" );
     //             for( size_t comps = 0; comps < msg->layout.dim[ 3 ].size; comps++ )
-    //                 printf( "%6.2f,", occlusion_map_indexer( *msg, r, c, lims, comps ) );
+    //                 printf( "%6.2f,", depth_map_indexer( *msg, r, c, lims, comps ) );
     //             printf( "]|" );
     //         }
     //         printf( "]\t" );

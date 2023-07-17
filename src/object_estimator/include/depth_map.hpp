@@ -9,16 +9,16 @@
 
 // SMAP
 #include "../../../include/smap_core/macros.hpp"
-#include "smap_interfaces/msg/occlusion_map.hpp"
+#include "smap_interfaces/msg/depth_map.hpp"
 
-#define OCCLUSION_MAP_FIELDS 3
+#define DEPTH_MAP_FIELDS 3
 
 namespace smap
 {
 
-using occlusion_cell_t  = std::array< geometry_msgs::msg::Point, 3 >;
-using occlusion_array_t = std::array< occlusion_cell_t, OCCLUSION_MAP_COLS >;
-using occlusion_map_t   = std::array< occlusion_array_t, OCCLUSION_MAP_ROWS >;
+using depth_cell_t  = std::array< geometry_msgs::msg::Point, 3 >;
+using depth_array_t = std::array< depth_cell_t, DEPTH_MAP_COLS >;
+using depth_map_t   = std::array< depth_array_t, DEPTH_MAP_ROWS >;
 
 inline bool is_valid( const geometry_msgs::msg::Point& p )
 {
@@ -34,38 +34,37 @@ inline bool is_valid( const double& x, const double& y, const double& z )
         || ( ( std::isinf( x ) || std::isinf( y ) || std::isinf( z ) ) ) );
 }
 
-inline void from_msg( const smap_interfaces::msg::OcclusionMap& msg, occlusion_map_t& map )
+inline void from_msg( const smap_interfaces::msg::DepthMap& msg, depth_map_t& map )
 {
     for( int row = 0; row < msg.height; row++ )
     {
         for( int col = 0; col < msg.width; col++ )
         {
-            for( int lims = 0; lims < OCCLUSION_MAP_FIELDS; lims++ )
+            for( int lims = 0; lims < DEPTH_MAP_FIELDS; lims++ )
             {
                 map[ row ][ col ][ lims ] =
-                    msg.map[ row * msg.width * OCCLUSION_MAP_FIELDS + col * OCCLUSION_MAP_FIELDS + lims ];
+                    msg.map[ row * msg.width * DEPTH_MAP_FIELDS + col * DEPTH_MAP_FIELDS + lims ];
                 //
             }
         }
     }
 }
 
-inline void to_msg(
-    const occlusion_map_t& map, smap_interfaces::msg::OcclusionMap& msg, const std::pair< int, int >& dims )
+inline void to_msg( const depth_map_t& map, smap_interfaces::msg::DepthMap& msg, const std::pair< int, int >& dims )
 {
     //
     //
     msg.cell_height = dims.first;
     msg.cell_width  = dims.second;
-    msg.height      = OCCLUSION_MAP_ROWS;
-    msg.width       = OCCLUSION_MAP_COLS;
-    for( int row = 0; row < OCCLUSION_MAP_ROWS; row++ )
+    msg.height      = DEPTH_MAP_ROWS;
+    msg.width       = DEPTH_MAP_COLS;
+    for( int row = 0; row < DEPTH_MAP_ROWS; row++ )
     {
-        for( int col = 0; col < OCCLUSION_MAP_COLS; col++ )
+        for( int col = 0; col < DEPTH_MAP_COLS; col++ )
         {
-            for( int lims = 0; lims < OCCLUSION_MAP_FIELDS; lims++ )
+            for( int lims = 0; lims < DEPTH_MAP_FIELDS; lims++ )
             {
-                msg.map[ row * OCCLUSION_MAP_COLS * OCCLUSION_MAP_FIELDS + col * OCCLUSION_MAP_FIELDS + lims ] =
+                msg.map[ row * DEPTH_MAP_COLS * DEPTH_MAP_FIELDS + col * DEPTH_MAP_FIELDS + lims ] =
                     map[ row ][ col ][ lims ];
                 //
             }
