@@ -70,6 +70,8 @@ namespace smap
 
 #define LOG_ODDS_CLAMPING 15
 
+#define USE_MEDIANS 0
+
 // #define OCCLUSION_MAX_PERCENTAGE 0.2 //  The max percentage of cells to be considerate as an occlusion
 // [OCCLUSION_MAX_PERCENTAGE*100 = %]
 

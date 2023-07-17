@@ -120,6 +120,8 @@ bool estimate_object_3D_AABB(
     // TODO: Try to use medians
     if( !object_cloud || object_cloud->points.empty() ) return false;
 
+#if USE_MEDIANS == 0
+
     min.x = object_cloud->points[ 0 ].x;
     min.y = object_cloud->points[ 0 ].y;
     min.z = object_cloud->points[ 0 ].z;
@@ -138,6 +140,15 @@ bool estimate_object_3D_AABB(
         if( point.y > max.y ) max.y = point.y;
         if( point.z > max.z ) max.z = point.z;
     }
+#else
+    const auto values = struct_variable_percentiles( object_cloud->begin(), object_cloud->end(), 0.1 );
+    min.x             = values[ 0 ][ 0 ];
+    max.x             = values[ 0 ][ 1 ];
+    min.y             = values[ 1 ][ 0 ];
+    max.y             = values[ 1 ][ 1 ];
+    min.z             = values[ 2 ][ 0 ];
+    max.z             = values[ 2 ][ 1 ];
+#endif
 
     pos.x = ( min.x + max.x ) / 2;
     pos.y = ( min.y + max.y ) / 2;
