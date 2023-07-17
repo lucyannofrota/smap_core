@@ -177,8 +177,6 @@ std::pair< int, int > compute_occlusion_map(
         ceil( pcl_ros->height / ( (double) OCCLUSION_MAP_ROWS ) ),
         ceil( pcl_ros->width / ( (double) OCCLUSION_MAP_COLS ) ) );
 
-    // int r_l = ceil( pcl_ros->height / ( (double) OCCLUSION_MAP_ROWS ) ),
-    //     c_l = ceil( pcl_ros->width / ( (double) OCCLUSION_MAP_COLS ) );
     geometry_msgs::msg::Point pt;
     uint16_t occlusion_r, occlusion_c;
 

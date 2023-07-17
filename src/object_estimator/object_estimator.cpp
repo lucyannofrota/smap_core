@@ -284,6 +284,7 @@ void object_estimator::occlusion_map_thread(
         || std::isnan( transform->transform.rotation.w ) || std::isinf( transform->transform.rotation.w ) )
         printf( "\t\tInvalid transform\n" );
 
+    // Occlusion Map Initialization
     occlusion_map_t occlusion_map;
     for( auto& v: occlusion_map )
     {
@@ -303,10 +304,10 @@ void object_estimator::occlusion_map_thread(
         }
     }
 
+    // Compute Occlusion Map
     auto cell_dims = compute_occlusion_map( occlusion_map, ros_pcl, transform, this->pcl_lims );
 
-    // std::array< geometry_msgs::msg::PointStamped, 8 > AABB;
-    // geometry_msgs::msg::Point min, max;
+    // Publish marker
     if( this->occlusion_boxes_pub->get_subscription_count() > 0 )
     {
         marker_array.markers.clear();
@@ -329,6 +330,7 @@ void object_estimator::occlusion_map_thread(
         this->occlusion_boxes_pub->publish( marker_array );
     }
 
+    // Publish occlusion map
     if( this->occlusion_map_pub->get_subscription_count() > 0 )
     {
         to_msg( occlusion_map, this->occ_map, cell_dims );  // REVERT
