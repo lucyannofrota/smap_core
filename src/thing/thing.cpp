@@ -47,15 +47,6 @@ bool thing::label_is_equal( const uint8_t& module_id, const uint8_t& obs_label )
     return false;
 }
 
-// std::string thing::get_label( uint8_t module_id )
-// {
-//     (void) module_id;
-//     if( this->reg_classes == nullptr ) return UNDEFINED_LABEL;
-//     if( *( this->reg_classes ) == nullptr ) return UNDEFINED_LABEL;
-
-// return UNDEFINED_LABEL;
-// }
-
 std::pair< std::string, std::string > thing::get_vertex_representation()
 {
     return std::pair< std::string, std::string >( UNDEFINED_LABEL, std::string( "red" ) );
@@ -70,11 +61,7 @@ void thing::set(
     this->type = type;
 
     // 1. Histogram initialization
-    // printf( "Histogram:\n" );
-    // printf( "\tn_bins: %i\n", (int) this->observations.n_bins );
-    // printf( "\tbin_width: %6.1f\n", rad2deg( this->observations.bin_width ) );
     this->observations->register_obs( distance, angle, true );
-    // this->observations.print();
 
     // 2. Position initialization
     this->pos            = point;
@@ -86,83 +73,7 @@ void thing::set(
     int i   = 0;
     auto it = probability_distribution.begin();
     for( i = 0; it != probability_distribution.end(); ++it, i++ )
-    {
-        // printf( "i: %i| class: %s|value: %f\n", i, detector.classes.at( i ).c_str(), *it );
         this->class_probabilities[ detector.classes.at( i ) ] = log_odds( *it );
-    }
-    // for( auto c: **this->reg_classes ) this->class_probabilities[ c.first ] = log_odds( 0 );
-    // // Create a map to store this information
-    // // int u    = 0;
-    // // double s = 0;
-    // int i = 0, j = 0;
-    // bool sw = false;
-    // printf( "Probabilities [BEFORE]:\n" );
-    // printf( "\tClass |" );
-    // auto it = probability_distribution.begin();
-    // while( it != probability_distribution.end() )
-    // {
-    //     if( sw )
-    //     {
-    //         printf( "%6.3f|", *it );
-    //         it++;
-    //         i--;
-    //     }
-    //     else
-    //     {
-    //         printf( "%6i|", i + j * 20 );
-    //         i++;
-    //     }
-    //     if( sw && i == 0 )
-    //     {
-    //         sw = false;
-    //         printf( "\n\tClass |" );
-    //         j++;
-    //         continue;
-    //     }
-    //     if( i % 20 == 0 )
-    //     {
-    //         sw = true;
-    //         printf( "\n\tProbs |" );
-    //         continue;
-    //     }
-    // }
-    // // this->probabilities
-    // for( auto c: **this->reg_classes )
-    //     this->probabilities[ c.first ] = log_odds( probability_distribution[ c.second.second ] );
-
-    // i  = 0;
-    // j  = 0;
-    // sw = false;
-    // printf( "Probabilities [AFTER]:\n" );
-    // printf( "\tClass |" );
-    // auto itp = this->probabilities.begin();
-    // while( itp != this->probabilities.end() )
-    // {
-    //     if( sw )
-    //     {
-    //         printf( "%6.3f|", log_odds_inv( ( *itp ).second ) );
-    //         itp++;
-    //         i--;
-    //     }
-    //     else
-    //     {
-    //         printf( "%6i|", i + j * 20 );
-    //         i++;
-    //     }
-    //     if( sw && i == 0 )
-    //     {
-    //         sw = false;
-    //         printf( "\n\tClass |" );
-    //         j++;
-    //         continue;
-    //     }
-    //     if( i % 20 == 0 )
-    //     {
-    //         sw = true;
-    //         printf( "\n\tProbs |" );
-    //         continue;
-    //     }
-    // }
 }
 
 geometry_msgs::msg::Point thing::update(
@@ -174,22 +85,7 @@ geometry_msgs::msg::Point thing::update(
     printf( "%s-id: %i\n", this->get_label().c_str(), this->id );
     this->observations->register_obs( distance, angle, true );
 
-    // 2. Probabilities vector update
-    if( this->class_probabilities.size() != this->reg_classes->size() )
-    {
-        // find
-        for( auto c: ( *this->reg_classes ) )
-        {
-            // if class not found add it to the map
-            if( this->class_probabilities.find( c.first ) == this->class_probabilities.end() )
-                this->class_probabilities[ c.first ] = log_odds( 0 );
-        }
-    }
-
-    // 3. Stack vectors
-    stack_vectors( this->class_probabilities, probability_distribution, detector );
-
-    // 4. Position update
+    // 2. Position update
     this->pos_confidence += log_odds( pos_confidence );
     // Clamping
     if( this->pos_confidence < -LOG_ODDS_CLAMPING ) this->pos_confidence = -LOG_ODDS_CLAMPING;
@@ -204,6 +100,19 @@ geometry_msgs::msg::Point thing::update(
     this->aabb.first  = this->aabb.first * p + aabb.first * ( 1 - p );
     this->aabb.second = this->aabb.second * p + aabb.second * ( 1 - p );
     return this->pos;
+
+    // 3. Probabilities vector update
+    if( this->class_probabilities.size() != this->reg_classes->size() )
+    {
+        // find
+        for( auto c: ( *this->reg_classes ) )
+        {
+            // if class not found add it to the map
+            if( this->class_probabilities.find( c.first ) == this->class_probabilities.end() )
+                this->class_probabilities[ c.first ] = log_odds( 0 );
+        }
+    }
+    stack_vectors( this->class_probabilities, probability_distribution, detector );
 }
 
 bool thing::is_valid( void ) const
@@ -228,9 +137,4 @@ bool thing::is_valid( void ) const
     }
 }
 
-// int thing::_get_label( void )
-// {
-//     // Return the numeric value of the class with higher probability
-//     return 0;
-// }
 }  // namespace smap
