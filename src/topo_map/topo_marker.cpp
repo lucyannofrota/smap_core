@@ -156,7 +156,7 @@ void topo_marker::update_markers( const graph_t& graph )
         // printf( "update_markers()| n_objects: %i\n", (int) graph[ e ].related_things.size() );
 
         // edge
-        for( auto edg: boost::make_iterator_range( boost::out_edges( e, graph ) ) )
+        for( const auto edg: boost::make_iterator_range( boost::out_edges( e, graph ) ) )
         {
             if( !graph[ edg.m_target ].strong_vertex ) continue;
             this->edge.points.push_back( graph[ e ].pos );

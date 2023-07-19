@@ -78,24 +78,25 @@ class perception_server : public rclcpp::Node
 
     void ListClasses_callback(
         const std::shared_ptr< smap_interfaces::srv::SmapClasses::Request > request,
-        std::shared_ptr< smap_interfaces::srv::SmapClasses::Response > response );
+        std::shared_ptr< smap_interfaces::srv::SmapClasses::Response > response ) const;
 
     void observations_callback( const smap_interfaces::msg::SmapObservation::SharedPtr object ) const;
 
     // print data
 
     // void print_classes( std::string pref, std::map< std::string, int >& classes );
-    void print_classes( std::string pref, std::map< int, std::string >& classes );
+    void print_classes( std::string pref, const std::map< int, std::string >& classes ) const;
 
-    void print_classes( std::string pref, std::map< std::string, std::pair< int, int > >& classes );
+    void print_classes( std::string pref, const std::map< std::string, std::pair< int, int > >& classes ) const;
 
-    void print_classes( std::string pref, std::shared_ptr< std::map< std::string, std::pair< int, int > > >& classes );
+    void print_classes(
+        std::string pref, const std::shared_ptr< std::map< std::string, std::pair< int, int > > >& classes ) const;
 
-    void print_classes( std::string pref, std::vector< std::string >& classes );
+    void print_classes( std::string pref, const std::vector< std::string >& classes ) const;
 
-    void print_detector( std::string pref, detector_t& det );
+    void print_detector( std::string pref, const detector_t& det ) const;
 
-    void print_server_data( void );
+    void print_server_data( void ) const;
 };
 
 }  // namespace smap

@@ -18,3 +18,5 @@ src/thing/cls.txt
 pcl_test/
 
 samples/image_saver/
+
+samples/example_pcd.pcd

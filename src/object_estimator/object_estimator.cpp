@@ -312,9 +312,9 @@ void object_estimator::depth_map_thread(
     {
         marker_array.markers.clear();
         this->box_marker.id = 0;
-        for( auto& row_array: depth_map )
+        for( const auto& row_array: depth_map )
         {
-            for( auto& element: row_array )
+            for( const auto& element: row_array )
             {
                 if( ( !is_valid( element[ 0 ] ) ) || ( !is_valid( element[ 1 ] ) ) || ( !is_valid( element[ 2 ] ) ) )
                     continue;

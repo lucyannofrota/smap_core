@@ -58,6 +58,7 @@ void topo_map::observation_callback( const smap_interfaces::msg::SmapObservation
     this->vertex_transaction( observation, candidates, det, closest );
 
     // Object combination
+    // TODO: Check this method
     // this->object_combination( candidates, closest, closest_valid );
 
     // If necessary, move the object to another vertex
@@ -278,7 +279,7 @@ bool topo_map::add_edge( const size_t& previous, const size_t& current )
     this->get_vertex( current, cur );
     double distance =
         sqrt( pow( prev.pos.x - cur.pos.x, 2 ) + pow( prev.pos.y - cur.pos.y, 2 ) + pow( prev.pos.z - cur.pos.z, 2 ) );
-    for( auto e: boost::make_iterator_range( boost::out_edges( this->_get_vertex( current ), this->graph ) ) )
+    for( const auto e: boost::make_iterator_range( boost::out_edges( this->_get_vertex( current ), this->graph ) ) )
         if( boost::target( e, this->graph ) == this->_get_vertex( previous ) ) return false;
     boost::add_edge( this->_get_vertex( previous ), this->_get_vertex( current ), { distance, 1 }, this->graph );
     RCLCPP_INFO(

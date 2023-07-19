@@ -11,13 +11,13 @@ std::map< std::string, std::pair< int, int > > perception_server::add_detector( 
     // classes
     std::map< std::string, std::pair< int, int > > new_classes;
     int l_id = 0;
-    for( auto& e: *( this->classes ) )
+    for( const auto& e: *( this->classes ) )
         if( e.second.first > l_id ) l_id = e.second.first;
-    for( auto detector_cls: new_detector.classes )
+    for( const auto& detector_cls: new_detector.classes )
     {
         // Check if exists
         bool rep = false;
-        for( auto server_cls: *( this->classes ) )
+        for( const auto& server_cls: *( this->classes ) )
         {
             if( detector_cls.second == server_cls.first )
             {
@@ -85,7 +85,7 @@ void perception_server::AddPerceptionModule_callback(
         det.classes[ request->class_ids[ cls_i ] ] = request->classes[ cls_i ];
 
     // Check if the detector is already registered
-    for( auto detector: ( *this->detectors ) )
+    for( const auto& detector: ( *this->detectors ) )
     {
         if( detector.name == request->name )
         {
@@ -96,9 +96,9 @@ void perception_server::AddPerceptionModule_callback(
                   && ( detector.n_classes == det.n_classes ) );
 
             size_t eq_classes = 0;
-            for( auto cls: detector.classes )
+            for( const auto& cls: detector.classes )
             {
-                for( auto r_cls: det.classes )
+                for( const auto& r_cls: det.classes )
                 {
                     if( cls == r_cls )
                     {
@@ -142,7 +142,7 @@ void perception_server::AddPerceptionModule_callback(
 
 void perception_server::ListClasses_callback(
     const std::shared_ptr< smap_interfaces::srv::SmapClasses::Request > request,
-    std::shared_ptr< smap_interfaces::srv::SmapClasses::Response > response )
+    std::shared_ptr< smap_interfaces::srv::SmapClasses::Response > response ) const
 {
     RCLCPP_INFO( this->get_logger(), "list_classes request received." );
 
@@ -151,16 +151,16 @@ void perception_server::ListClasses_callback(
     {
         response->n_classes = this->classes->size();
         response->classes.clear();
-        for( auto cls: ( *this->classes ) ) response->classes.push_back( cls.first );
+        for( const auto& cls: ( *this->classes ) ) response->classes.push_back( cls.first );
     }
     else
     {
-        for( auto detector: ( *this->detectors ) )
+        for( const auto& detector: ( *this->detectors ) )
         {
             if( detector.id == request->module_id )
             {
                 response->n_classes = detector.n_classes;
-                for( auto cls: detector.classes ) response->classes.push_back( cls.second );
+                for( const auto& cls: detector.classes ) response->classes.push_back( cls.second );
                 return;
             }
         }
@@ -174,40 +174,41 @@ void perception_server::observations_callback( const smap_interfaces::msg::SmapO
     (void) object;
 }
 
-void perception_server::print_classes( std::string pref, std::map< int, std::string >& classes )
+void perception_server::print_classes( std::string pref, const std::map< int, std::string >& classes ) const
 {
-    for( auto cls: classes )
+    for( const auto& cls: classes )
         RCLCPP_INFO( this->get_logger(), "%s%4i| %s", pref.c_str(), cls.first, cls.second.c_str() );
 }
 
-void perception_server::print_classes( std::string pref, std::map< std::string, std::pair< int, int > >& classes )
+void perception_server::print_classes(
+    std::string pref, const std::map< std::string, std::pair< int, int > >& classes ) const
 {
     RCLCPP_INFO( this->get_logger(), "%so idx|Server|Detector|Label", pref.c_str() );
     int i = 0;
-    for( auto cls: classes )
+    for( const auto& cls: classes )
         RCLCPP_INFO(
             this->get_logger(), "%s %4i|  %4i|    %4i| %s", pref.c_str(), i++, cls.second.first, cls.second.second,
             cls.first.c_str() );
 }
 
 void perception_server::print_classes(
-    std::string pref, std::shared_ptr< std::map< std::string, std::pair< int, int > > >& classes )
+    std::string pref, const std::shared_ptr< std::map< std::string, std::pair< int, int > > >& classes ) const
 {
     RCLCPP_INFO( this->get_logger(), "%so idx|Server|Detector|Label", pref.c_str() );
     int i = 0;
-    for( auto cls: *classes )
+    for( const auto& cls: *classes )
         RCLCPP_INFO(
             this->get_logger(), "%s %4i|  %4i|    %4i| %s", pref.c_str(), i++, cls.second.first, cls.second.second,
             cls.first.c_str() );
 }
 
-void perception_server::print_classes( std::string pref, std::vector< std::string >& classes )
+void perception_server::print_classes( std::string pref, const std::vector< std::string >& classes ) const
 {
     int idx = 0;
-    for( auto cls: classes ) RCLCPP_INFO( this->get_logger(), "%s%4i| %s", pref.c_str(), idx++, cls.c_str() );
+    for( const auto& cls: classes ) RCLCPP_INFO( this->get_logger(), "%s%4i| %s", pref.c_str(), idx++, cls.c_str() );
 }
 
-void perception_server::print_detector( std::string pref, detector_t& det )
+void perception_server::print_detector( std::string pref, const detector_t& det ) const
 {
     RCLCPP_INFO(
         this->get_logger(),
@@ -217,10 +218,10 @@ void perception_server::print_detector( std::string pref, detector_t& det )
     perception_server::print_classes( pref, det.classes );
 }
 
-void perception_server::print_server_data( void )
+void perception_server::print_server_data( void ) const
 {
     RCLCPP_INFO( this->get_logger(), "Detectors:" );
-    for( auto detector: ( *this->detectors ) ) perception_server::print_detector( "\t", detector );
+    for( const auto& detector: ( *this->detectors ) ) perception_server::print_detector( "\t", detector );
     RCLCPP_INFO( this->get_logger(), "Classes:\n" );
     perception_server::print_classes( "", this->classes );
 }

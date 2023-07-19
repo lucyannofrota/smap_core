@@ -14,7 +14,7 @@ std::string thing::get_label( void ) const
     }
     std::string ret = UNDEFINED_LABEL;
     float value     = 0;
-    for( auto e: this->class_probabilities )
+    for( const auto& e: this->class_probabilities )
     {
         if( e.second > value )
         {
@@ -105,7 +105,7 @@ geometry_msgs::msg::Point thing::update(
     if( this->class_probabilities.size() != this->reg_classes->size() )
     {
         // find
-        for( auto c: ( *this->reg_classes ) )
+        for( const auto& c: ( *this->reg_classes ) )
         {
             // if class not found add it to the map
             if( this->class_probabilities.find( c.first ) == this->class_probabilities.end() )

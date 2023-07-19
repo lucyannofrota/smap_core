@@ -169,7 +169,7 @@ class topo_map : public rclcpp::Node
     {
         vertex_data_t prop;
         prop.index = v_index;
-        if( auto v = this->graph.vertex_by_property( prop ) ) return *v;
+        if( const auto& v = this->graph.vertex_by_property( prop ) ) return *v;
         // Case vertex don't exists
         RCLCPP_DEBUG( this->get_logger(), "Vertex not found!" );
         return -1;
@@ -181,7 +181,7 @@ class topo_map : public rclcpp::Node
     {
         vertex_data_t prop;
         prop.index = v_index;
-        if( auto v = this->graph.vertex_by_property( prop ) ) vertex = this->graph[ *v ];
+        if( const auto& v = this->graph.vertex_by_property( prop ) ) vertex = this->graph[ *v ];
         else
         {
             // Case vertex don't exists
@@ -207,10 +207,10 @@ class topo_map : public rclcpp::Node
         for( size_t i = 0; i <= n_layers; i++ )
         {
             idxs_to_check.clear();
-            for( auto& checking: idxs_checking )
+            for( const auto& checking: idxs_checking )
             {
                 idxs_checked.push_back( checking );
-                for( auto to_check: boost::make_iterator_range(
+                for( const auto to_check: boost::make_iterator_range(
                          boost::adjacent_vertices( boost::vertex( checking, this->graph ), this->graph ) ) )
                 {
                     if( std::find( idxs_checked.begin(), idxs_checked.end(), to_check ) != idxs_checked.end() )
@@ -232,7 +232,7 @@ class topo_map : public rclcpp::Node
         RCLCPP_DEBUG( this->get_logger(), "2. Filter possible vertexes" );
         RCLCPP_DEBUG( this->get_logger(), "2.1.1 idxs_checked.size(): %i", (int) idxs_checked.size() );
         std::vector< thing* > local_candidates;
-        for( auto& checking: idxs_checked )
+        for( const auto& checking: idxs_checked )
         {
             // Check list of objects inside each vertex
             local_candidates.clear();
@@ -297,7 +297,7 @@ class topo_map : public rclcpp::Node
         RCLCPP_DEBUG( this->get_logger(), "2.3 candidate list size: %i", (int) candidates.size() );
     }
 
-    inline bool is_detector_valid( const uint8_t& module_id, std::vector< detector_t >::iterator& det )
+    inline bool is_detector_valid( const uint8_t& module_id, std::vector< detector_t >::iterator& det ) const
     {
         det            = this->reg_detectors->begin();
         bool det_found = false;
@@ -314,8 +314,8 @@ class topo_map : public rclcpp::Node
 
     inline void vertex_transaction(
         const smap_interfaces::msg::SmapObservation::SharedPtr observation,
-        std::vector< std::pair< size_t, std::vector< thing* > > >& candidates, std::vector< detector_t >::iterator& det,
-        std::pair< size_t, thing* >& closest )
+        const std::vector< std::pair< size_t, std::vector< thing* > > >& candidates,
+        std::vector< detector_t >::iterator& det, std::pair< size_t, thing* >& closest )
     {
         double min_distance = 0;
         RCLCPP_DEBUG( this->get_logger(), "3. Update vertex" );
@@ -329,9 +329,9 @@ class topo_map : public rclcpp::Node
             // Select the closest object
             RCLCPP_DEBUG( this->get_logger(), "3.1.2.1 Select the closest object" );
 
-            for( auto& c: candidates )
+            for( const auto& c: candidates )
             {
-                for( auto& lc: c.second )
+                for( const auto& lc: c.second )
                 {
                     if( closest.second == nullptr )
                     {
@@ -359,14 +359,14 @@ class topo_map : public rclcpp::Node
     }
 
     inline void object_combination(
-        std::vector< std::pair< size_t, std::vector< thing* > > >& candidates, std::pair< size_t, thing* >& closest,
-        std::pair< size_t, thing* >& closest_valid )
+        const std::vector< std::pair< size_t, std::vector< thing* > > >& candidates,
+        std::pair< size_t, thing* >& closest, std::pair< size_t, thing* >& closest_valid )
     {
         // TODO: debug pos_confidence
         double min_distance_valid = std::numeric_limits< double >::infinity();
-        for( auto c: candidates )
+        for( const auto& c: candidates )
         {
-            for( auto lc: c.second )
+            for( const auto& lc: c.second )
             {
                 if( ( this->_calc_distance( closest.second->pos, lc->pos ) < min_distance_valid )
                     && ( lc->id != closest.second->id ) )
@@ -411,7 +411,7 @@ class topo_map : public rclcpp::Node
     {
         std::vector< std::pair< size_t, double > > distances;
         std::pair< size_t, double > min_vertex = std::pair< size_t, double >( 0, std::numeric_limits< double >::max() );
-        for( auto& idx: idxs_checked )
+        for( const auto& idx: idxs_checked )
         {
             if( ( this->_calc_distance( closest.second->pos, this->graph[ idx ].pos ) < min_vertex.second )
                 && ( idx != closest.first ) )
@@ -500,7 +500,7 @@ class topo_map : public rclcpp::Node
     {
         vertex_data_t prop;
         prop.index = idx;
-        if( auto v = this->graph.vertex_by_property( prop ) )
+        if( const auto v = this->graph.vertex_by_property( prop ) )
         {
             RCLCPP_DEBUG(
                 this->get_logger(), "%s (%i) [%4.1f,%4.1f,%4.1f]\n", prefix.c_str(), (int) this->graph[ *v ].index,
