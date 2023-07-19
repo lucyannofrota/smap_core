@@ -33,11 +33,11 @@ void topo_map::observation_callback( const smap_interfaces::msg::SmapObservation
     RCLCPP_DEBUG( this->get_logger(), "0. Check graph integrity" );
     if( boost::num_vertices( this->graph ) == 0 ) return;
 
-    // 1. Get all adjacent vertexes 3 layers deep (In relation to the object position)
+    // 1. Get all adjacent vertices 3 layers deep (In relation to the object position)
     std::vector< size_t > valid_idxs;
     this->get_adjacent_vertices( valid_idxs, observation->object.pose.pose.position, 3 );
 
-    // 2. Filter possible vertexes
+    // 2. Filter possible vertices
     std::vector< std::pair< size_t, std::vector< thing* > > > candidates;
     this->filter_vertices(
         valid_idxs, candidates, observation->object.module_id, observation->object.label,
@@ -76,14 +76,14 @@ void topo_map::depth_map_callback( const smap_interfaces::msg::DepthMap::SharedP
     static depth_map_t depth_map;
     from_msg( *msg, depth_map );
 
-    // 1. Get all adjacent vertexes 5 layers deep
-    RCLCPP_DEBUG( this->get_logger(), "1. Get all adjacent vertexes 5 layers deep" );
+    // 1. Get all adjacent vertices 5 layers deep
+    RCLCPP_DEBUG( this->get_logger(), "1. Get all adjacent vertices 5 layers deep" );
     std::vector< size_t > valid_idxs;
     this->get_adjacent_vertices( valid_idxs, msg->camera_pose.position, 5 );
     if( valid_idxs.empty() ) return;
 
-    // 2. Filter possible vertexes
-    RCLCPP_DEBUG( this->get_logger(), "2. Filter possible vertexes" );
+    // 2. Filter possible vertices
+    RCLCPP_DEBUG( this->get_logger(), "2. Filter possible vertices" );
     // std::vector< thing* > candidates;
     for( const auto& element: valid_idxs )
     {

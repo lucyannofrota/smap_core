@@ -200,7 +200,7 @@ class topo_map : public rclcpp::Node
     inline void get_adjacent_vertices(
         std::vector< size_t >& idxs_checked, const geometry_msgs::msg::Point& pos, const size_t n_layers )
     {
-        RCLCPP_DEBUG( this->get_logger(), "Get all adjacent vertexes %i layers deep", (int) n_layers );
+        RCLCPP_DEBUG( this->get_logger(), "Get all adjacent vertices %i layers deep", (int) n_layers );
         std::vector< size_t > idxs_checking, idxs_to_check;  // Using iterator graph idxs (not v_indexes)
         double min_distance;
         idxs_checking.push_back( this->_get_vertex( this->get_closest_vertex( pos, min_distance ) ) );
@@ -229,7 +229,7 @@ class topo_map : public rclcpp::Node
         const uint8_t& module_id, const uint8_t& label, const geometry_msgs::msg::Point& obj_pos,
         const geometry_msgs::msg::Pose& robot_pose )
     {
-        RCLCPP_DEBUG( this->get_logger(), "2. Filter possible vertexes" );
+        RCLCPP_DEBUG( this->get_logger(), "2. Filter possible vertices" );
         RCLCPP_DEBUG( this->get_logger(), "2.1.1 idxs_checked.size(): %i", (int) idxs_checked.size() );
         std::vector< thing* > local_candidates;
         for( const auto& checking: idxs_checked )
@@ -662,65 +662,8 @@ class topo_map : public rclcpp::Node
             }
             break;
         }
-        // if( AABB[ idx_points[ ret[ 0 ] ].first ].x == AABB[ idx_points[ ret[ 1 ] ].first ].x )
-        // {
-        //     for( long idx = 2; idx < 8; idx++ )
-        //     {
-        //         if( idx == ret[ 2 ] ) continue;
-        //         if( AABB[ idx_points[ idx ].first ].x == AABB[ idx_points[ 0 ].first ].x )
-        //         {
-        //             P4       = true;
-        //             ret[ 3 ] = idx;
-        //             break;
-        //         }
-        //     }
-        // }
-        // if( ( AABB[ idx_points[ ret[ 0 ] ].first ].y == AABB[ idx_points[ ret[ 1 ] ].first ].y ) && !P4 )
-        // {
-        //     for( long idx = 2; idx < 8; idx++ )
-        //     {
-        //         if( idx == ret[ 2 ] ) continue;
-        //         if( AABB[ idx_points[ idx ].first ].y == AABB[ idx_points[ 0 ].first ].y )
-        //         {
-        //             P4       = true;
-        //             ret[ 3 ] = idx;
-        //             break;
-        //         }
-        //     }
-        // }
-        // if( ( AABB[ idx_points[ ret[ 0 ] ].first ].z == AABB[ idx_points[ ret[ 1 ] ].first ].z ) && !P4 )
-        // {
-        //     for( long idx = 2; idx < 8; idx++ )
-        //     {
-        //         if( idx == ret[ 2 ] ) continue;
-        //         if( AABB[ idx_points[ idx ].first ].z == AABB[ idx_points[ 0 ].first ].z )
-        //         {
-        //             P4       = true;
-        //             ret[ 3 ] = idx;
-        //             break;
-        //         }
-        //     }
-        // }
+
         return ret;
-        // if( ( AABB[ idx_points[ 0 ].first ].x == AABB[ idx_points[ 1 ].first ].x )
-        //     && ( AABB[ idx_points[ 0 ].first ].x == AABB[ idx_points[ 2 ].first ].x ) )
-        // {
-        //     for( size_t idx = 3; idx < 8; idx++ )
-        //         if( AABB[ idx_points[ idx ].first ].x == AABB[ idx_points[ 0 ].first ].x ) return idx;
-        // }
-        // if( ( AABB[ idx_points[ 0 ].first ].y == AABB[ idx_points[ 1 ].first ].y )
-        //     && ( AABB[ idx_points[ 0 ].first ].y == AABB[ idx_points[ 2 ].first ].y ) )
-        // {
-        //     for( size_t idx = 3; idx < 8; idx++ )
-        //         if( AABB[ idx_points[ idx ].first ].y == AABB[ idx_points[ 0 ].first ].y ) return idx;
-        // }
-        // if( ( AABB[ idx_points[ 0 ].first ].z == AABB[ idx_points[ 1 ].first ].z )
-        //     && ( AABB[ idx_points[ 0 ].first ].z == AABB[ idx_points[ 2 ].first ].z ) )
-        // {
-        //     for( size_t idx = 3; idx < 8; idx++ )
-        //         if( AABB[ idx_points[ idx ].first ].z == AABB[ idx_points[ 0 ].first ].z ) return idx;
-        // }
-        // return std::numeric_limits< long >::infinity();
     }
 };
 }  // namespace smap

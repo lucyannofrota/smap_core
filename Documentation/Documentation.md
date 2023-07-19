@@ -10,7 +10,7 @@ Class responsible to create a interface to the TopoMap (Graph Map) and the thing
 Reference to the logger object of the node
 
 ### add_vertex()
-Given the current postion <span style="color:red">pos</span>, if the distance beteween the last node and the current position is grater than <span style="color:blue">VERTEX_DISTANCE</span>, a new vertice related to <span style="color:red">pos</span> will be added and a edge will be established beteween the last and current vertices.
+Given the current postion <span style="color:red">pos</span>, if the distance beteween the last node and the current position is grater than <span style="color:blue">VERTEX_DISTANCE</span>, a new vertex related to <span style="color:red">pos</span> will be added and a edge will be established beteween the last and current vertices.
 
 ### export_TopoGraph()
 Export a .png graph for visualization of the map
@@ -35,9 +35,9 @@ VertexData:\
 |  boost::container::list<thing> related_things;
 
 
-- index: Index of the vertice
-- pos: postion of the vertice
-- this_thing: Is the thing of the current Vertice. Should be a semantic_type_t::Location
+- index: Index of the vertex
+- pos: position of the vertex
+- this_thing: Is the thing of the current Vertex. Should be a semantic_type_t::Location
 - related_things: Linked list of things detected while in the current Vertex Location
 
 Boost Container: https://www.boost.org/doc/libs/1_80_0/doc/html/container.html
