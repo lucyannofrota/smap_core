@@ -68,7 +68,7 @@ namespace smap
 
 #define HISTOGRAM_BIN_CHANGE_VALUE 2.5
 
-#define LOG_ODDS_CLAMPING 15
+#define LOG_ODDS_CLAMPING 20  // log_odds(0.9999) == -log_odds(0.0001) == 9.2102
 
 #define USE_MEDIANS 0
 

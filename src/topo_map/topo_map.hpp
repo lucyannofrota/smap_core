@@ -4,6 +4,7 @@
 // STL
 #include <cmath>
 #include <limits>
+#include <mutex>
 
 // BOOST
 #include <boost/graph/graph_utility.hpp>
@@ -69,11 +70,14 @@ class topo_map : public rclcpp::Node
         this->create_callback_group( rclcpp::CallbackGroupType::MutuallyExclusive );
 
     // Timers
-    rclcpp::TimerBase::SharedPtr marker_timer =
-        this->create_wall_timer( std::chrono::milliseconds( 500 ), std::bind( &topo_map::timer_callback, this ) );
+    rclcpp::TimerBase::SharedPtr marker_timer;
+    // = this->create_wall_timer( std::chrono::milliseconds( 500 ), std::bind( &topo_map::timer_callback, this ) );
 
-    rclcpp::TimerBase::SharedPtr monitor_timer = this->create_wall_timer(
-        std::chrono::milliseconds( 2000 / 2 ), std::bind( &topo_map::monitor_callback, this ) );
+    rclcpp::TimerBase::SharedPtr monitor_timer;
+    // = this->create_wall_timer(std::chrono::milliseconds( 2000 / 2 ), std::bind( &topo_map::monitor_callback, this )
+
+    rclcpp::TimerBase::SharedPtr map_cleaning_timer;
+    // );
 
     // Subscriptions
     rclcpp::SubscriptionOptions sub_options;
@@ -106,6 +110,9 @@ class topo_map : public rclcpp::Node
 
     visualization_msgs::msg::Marker panels_maker, face_marker;
 
+    // Mutex
+    std::mutex map_mutex;
+
     // topo_marker markers;
 
     // Internal Functions
@@ -131,11 +138,12 @@ class topo_map : public rclcpp::Node
         if( boost::num_vertices( this->graph ) == 0 ) return;
         RCLCPP_DEBUG( this->get_logger(), "monitor_callback" );
         if( this->publisher_marker_vertex->get_subscription_count() > 0 )
-            this->markers.async_update_markers( this->graph );
+            this->markers.async_update_markers( this->graph, this->map_mutex );
     }
 
     inline void pose_callback( const geometry_msgs::msg::PoseStamped::SharedPtr pose )
     {
+        const std::lock_guard< std::mutex > lock( this->map_mutex );
         if( this->reg_classes == nullptr || this->reg_detectors == nullptr ) return;
         RCLCPP_DEBUG( this->get_logger(), "pose_callback" );
         this->add_vertex( pose->pose.position, true );
@@ -144,6 +152,8 @@ class topo_map : public rclcpp::Node
     void observation_callback( const smap_interfaces::msg::SmapObservation::SharedPtr observation );
 
     void depth_map_callback( const smap_interfaces::msg::DepthMap::SharedPtr msg );
+
+    void cleaning_map_callback( void );
 
     inline void add_vertex( const geometry_msgs::msg::Point& pos, bool strong_vertex )
     {
@@ -448,6 +458,15 @@ class topo_map : public rclcpp::Node
         this->depth_map_sub = this->create_subscription< smap_interfaces::msg::DepthMap >(
             std::string( this->get_namespace() ) + std::string( "/object_estimator/depth_map" ), 10,
             std::bind( &topo_map::depth_map_callback, this, std::placeholders::_1 ), this->sub_options );
+
+        this->marker_timer =
+            this->create_wall_timer( std::chrono::milliseconds( 500 ), std::bind( &topo_map::timer_callback, this ) );
+
+        this->monitor_timer = this->create_wall_timer(
+            std::chrono::milliseconds( 2000 / 2 ), std::bind( &topo_map::monitor_callback, this ) );
+
+        this->map_cleaning_timer = this->create_wall_timer(
+            std::chrono::seconds( 15 ), std::bind( &topo_map::cleaning_map_callback, this ), this->map_cb_group );
 
         if( NEW_EDGE_FACTOR > 1 )
         {

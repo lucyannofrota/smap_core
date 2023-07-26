@@ -1,5 +1,7 @@
 #include "topo_marker.hpp"
 
+#include "../../include/smap_core/aux_functions.hpp"
+
 namespace smap
 {
 
@@ -129,8 +131,9 @@ std_msgs::msg::ColorRGBA topo_marker::histogram_color_picker( double min, double
     return color;
 }
 
-void topo_marker::update_markers( const graph_t& graph )
+void topo_marker::update_markers( const graph_t& graph, std::mutex& map_mutex )
 {
+    const std::lock_guard< std::mutex > map_lock( map_mutex );
     const std::lock_guard< std::mutex > lock( this->mutex );
     this->array.markers.clear();
     this->vertex.points.clear();
@@ -152,46 +155,57 @@ void topo_marker::update_markers( const graph_t& graph )
     int i_obj   = 0;
     for( const auto& e: boost::make_iterator_range( boost::vertices( graph ) ) )
     {
-        if( !graph[ e ].strong_vertex ) continue;
-        // printf( "update_markers()| n_objects: %i\n", (int) graph[ e ].related_things.size() );
-
-        // edge
-        for( const auto edg: boost::make_iterator_range( boost::out_edges( e, graph ) ) )
+        if( graph[ e ].strong_vertex )
         {
-            if( !graph[ edg.m_target ].strong_vertex ) continue;
-            this->edge.points.push_back( graph[ e ].pos );
-            this->edge.points.push_back( graph[ edg.m_target ].pos );
-        }
 
-        // vertex
-        this->vertex.points.push_back( graph[ e ].pos );
-        // label
-        this->label.pose.position = graph[ e ].pos + up_point;
-        this->label.text = graph[ e ].this_thing.get_label() + std::string( "_" ) + std::to_string( graph[ e ].index );
-        this->label.id   = graph[ e ].index;
-        this->label.header.stamp = clock->now();
-        this->array.markers.push_back( this->label );
+            // printf( "update_markers()| n_objects: %i\n", (int) graph[ e ].related_things.size() );
+
+            // edge
+            for( const auto& edg: boost::make_iterator_range( boost::out_edges( e, graph ) ) )
+            {
+                if( !graph[ edg.m_target ].strong_vertex ) continue;
+                this->edge.points.push_back( graph[ e ].pos );
+                this->edge.points.push_back( graph[ edg.m_target ].pos );
+            }
+
+            // vertex
+            this->vertex.points.push_back( graph[ e ].pos );
+            // label
+            this->label.pose.position = graph[ e ].pos + up_point;
+            this->label.text =
+                graph[ e ].this_thing.get_label().first + std::string( "_" ) + std::to_string( graph[ e ].index );
+            this->label.id           = graph[ e ].index;
+            this->label.header.stamp = clock->now();
+            this->array.markers.push_back( this->label );
+            // thing r_thing;
+            // r_thing.pos = graph[ e ].pos;
+            // // r_thing.pos.y         = graph[ e ].pos.y;
+            // // r_thing.pos.z         = graph[ e ].pos.z;
+            // r_thing.aabb.first.x  = 1.51;
+            // r_thing.aabb.first.y  = 1.51;
+            // r_thing.aabb.first.z  = 1.1;
+            // r_thing.aabb.second.x = 1.0;
+            // r_thing.aabb.second.y = 1.0;
+            // r_thing.aabb.second.z = 0.9;
+        }
         // histogram
         double offset_theta, r;
-        // thing r_thing;
-        // r_thing.pos = graph[ e ].pos;
-        // // r_thing.pos.y         = graph[ e ].pos.y;
-        // // r_thing.pos.z         = graph[ e ].pos.z;
-        // r_thing.aabb.first.x  = 1.51;
-        // r_thing.aabb.first.y  = 1.51;
-        // r_thing.aabb.first.z  = 1.1;
-        // r_thing.aabb.second.x = 1.0;
-        // r_thing.aabb.second.y = 1.0;
-        // r_thing.aabb.second.z = 0.9;
         for( const auto& r_thing: graph[ e ].related_things )
         {
             i_obj++;
             printf(
-                "\t%s\n", ( std::string( "l:" ) + r_thing.get_label() + std::string( "|id:" )
-                            + std::to_string( r_thing.id ) + std::string( "|v:" ) + std::to_string( graph[ e ].index )
-                            + std::string( "|c:" ) + std::to_string( r_thing.get_combined_confidence() ) )
-                              .c_str() );
+                "\t%s - [%s]\n",
+                ( std::string( "l:" ) + r_thing.get_label().first + std::string( "|id:" ) + std::to_string( r_thing.id )
+                  + std::string( "|v:" ) + std::to_string( graph[ e ].index ) + std::string( "|c:" )
+                  + std::to_string( r_thing.get_combined_confidence() ) )
+                    .c_str(),
+                ( r_thing.is_valid() ? std::string( "Valid" ) : std::string( "Invalid" ) ).c_str() );
             if( !r_thing.is_valid() ) continue;
+            if( r_thing.get_label().second != 75 )
+                printf(
+                    "\n\n\n----------------------------------------\n----------------------------------------\nthing::"
+                    "update()\n\t label != tv\n"
+                    "----------------------------------------\n----------------------------------------\n\n\n\n" );
             // r_thing.is_valid();
             // if( !( r_thing.is_valid() ) ) continue;
             // Histogram
@@ -232,7 +246,7 @@ void topo_marker::update_markers( const graph_t& graph )
             // aabb label
             this->aabb_label.pose.position    = r_thing.pos + ( up_point * 0.5 );
             this->aabb_label.pose.position.z += this->aabb.scale.z / 2;
-            this->aabb_label.text             = std::string( "l:" ) + r_thing.get_label() + std::string( "|id:" )
+            this->aabb_label.text             = std::string( "l:" ) + r_thing.get_label().first + std::string( "|id:" )
                                   + std::to_string( r_thing.id ) + std::string( "|v:" )
                                   + std::to_string( graph[ e ].index ) + std::string( "|c:" )
                                   + std::to_string( r_thing.get_combined_confidence() );

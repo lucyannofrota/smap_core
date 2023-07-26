@@ -26,7 +26,7 @@ void observation_histogram::register_obs( double distance, double angle, bool po
     double add_value = HISTOGRAM_BIN_CHANGE_VALUE / ( 1 + distance );
 
     int idx;
-    printf( "----------------\n" );
+    // printf( "----------------\n" );
     for( int i = -int( floor( this->l / 2 ) ), j = 0; i <= int( floor( this->l / 2 ) ); i++, j++ )
     {
         idx = this->histogram.axis().index( angle + this->bin_width * i );
@@ -41,7 +41,7 @@ void observation_histogram::register_obs( double distance, double angle, bool po
         // Clamping
         if( this->histogram[ idx ] < -LOG_ODDS_CLAMPING ) this->histogram[ idx ] = -LOG_ODDS_CLAMPING;
         if( this->histogram[ idx ] > LOG_ODDS_CLAMPING ) this->histogram[ idx ] = LOG_ODDS_CLAMPING;
-        printf( "reg: [%i]: %6.2f\n", i, (double) this->histogram[ idx ] );
+        // printf( "reg: [%i]: %6.2f\n", i, (double) this->histogram[ idx ] );
         assert( this->histogram[ idx ] >= -LOG_ODDS_CLAMPING && this->histogram[ idx ] <= LOG_ODDS_CLAMPING );
     }
 }

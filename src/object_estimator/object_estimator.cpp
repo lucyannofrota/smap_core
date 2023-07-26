@@ -208,7 +208,7 @@ void object_estimator::detections_callback( const smap_interfaces::msg::SmapDete
     if( !this->pcl_lock )
     {
         lock_cloud = pcl_point_cloud;
-        pcl::io::savePCDFileASCII( "src/smap/smap_core/samples/example_pcd.pcd", *lock_cloud );
+        // pcl::io::savePCDFileASCII( "src/smap/smap_core/samples/example_pcd.pcd", *lock_cloud );
     }
 
     // launch depth_map_thread

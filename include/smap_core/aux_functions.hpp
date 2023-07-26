@@ -3,6 +3,7 @@
 
 // STL
 #include <math.h>
+#include <string>
 #include <vector>
 
 // ROS
@@ -37,6 +38,8 @@ double log_odds_inv( double lodds )
     if( ret > 1 ) ret = 1;
     return ret;
 }
+
+bool compare_str( const std::string str1, const std::string str2 ) { return str1 == str2; }
 
 // inline float& occlusion_matrix_indexer(
 //     std_msgs::msg::Float32MultiArray& occ_mat, const size_t& r, const size_t& c, const size_t& lims,

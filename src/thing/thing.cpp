@@ -5,23 +5,29 @@
 namespace smap
 {
 
-std::string thing::get_label( void ) const
+std::pair< std::string, int > thing::get_label( void ) const
 {
     if( this->reg_classes == nullptr )
     {
-        return UNDEFINED_LABEL;
+        return std::pair< std::string, int >( UNDEFINED_LABEL, -1 );
         //
     }
-    std::string ret = UNDEFINED_LABEL;
-    float value     = 0;
+    std::pair< std::string, int > ret( UNDEFINED_LABEL, 0 );
+    float value = 0;
+    int i       = 0;
     for( const auto& e: this->class_probabilities )
     {
-        if( e.second > value )
+        if( log_odds_inv( e.second ) > value )
         {
-            value = e.second;
-            ret   = e.first;
+            value      = log_odds_inv( e.second );
+            ret.first  = e.first;
+            ret.second = i;
         }
+        i++;
     }
+
+    if( value < 0.5 ) return std::pair< std::string, int >( UNDEFINED_LABEL, -1 );
+    // printf( "get_label: %s| value: %f\n", ret.c_str(), value );
 
     return ret;
 }
@@ -34,7 +40,7 @@ bool thing::label_is_equal( const uint8_t& module_id, const uint8_t& obs_label )
     // Determine the string value of the current label
     // for( auto reg: ( **this->reg_classes ) )
     //     printf( "reg: %s|%i|%i\n", reg.first.c_str(), reg.second.first, reg.second.second );
-    std::string current_label = this->get_label();
+    std::string current_label = this->get_label().first;
     if( this->reg_classes->find( current_label ) != this->reg_classes->end() )
     {
         // Compare it's value with the given one
@@ -74,6 +80,10 @@ void thing::set(
     auto it = probability_distribution.begin();
     for( i = 0; it != probability_distribution.end(); ++it, i++ )
         this->class_probabilities[ detector.classes.at( i ) ] = log_odds( *it );
+    stack_normalization( this->class_probabilities );
+    assert( this->class_prob_is_valid() );
+    assert( this->get_label().second == 75 || this->get_label().second == -1 );  // TODO: Remove
+    // stack_vectors( this->class_probabilities, probability_distribution, detector );
 }
 
 geometry_msgs::msg::Point thing::update(
@@ -81,11 +91,13 @@ geometry_msgs::msg::Point thing::update(
     std::pair< geometry_msgs::msg::Point, geometry_msgs::msg::Point > aabb, const float& pos_confidence,
     double distance, double angle, const detector_t& detector )
 {
+    // TODO: Debug update changing label!
     // 1. Histogram update
-    printf( "%s-id: %i\n", this->get_label().c_str(), this->id );
+    // printf( "Update b l:%s |id:%i\n", this->get_label().first.c_str(), this->id );
     this->observations->register_obs( distance, angle, true );
 
     // 2. Position update
+    // TODO: Change pos_confidence to 3D
     this->pos_confidence += log_odds( pos_confidence );
     // Clamping
     if( this->pos_confidence < -LOG_ODDS_CLAMPING ) this->pos_confidence = -LOG_ODDS_CLAMPING;
@@ -99,7 +111,6 @@ geometry_msgs::msg::Point thing::update(
 
     this->aabb.first  = this->aabb.first * p + aabb.first * ( 1 - p );
     this->aabb.second = this->aabb.second * p + aabb.second * ( 1 - p );
-    return this->pos;
 
     // 3. Probabilities vector update
     if( this->class_probabilities.size() != this->reg_classes->size() )
@@ -109,10 +120,25 @@ geometry_msgs::msg::Point thing::update(
         {
             // if class not found add it to the map
             if( this->class_probabilities.find( c.first ) == this->class_probabilities.end() )
-                this->class_probabilities[ c.first ] = log_odds( 0 );
+                this->class_probabilities[ c.first ] = 0;
         }
     }
     stack_vectors( this->class_probabilities, probability_distribution, detector );
+    // printf( "Update e l:%s |id:%i\n", this->get_label().first.c_str(), this->id );
+    // test_label( this->get_label().first, "tv" );
+    double sum = 0;
+    for( const auto& x: this->class_probabilities ) sum += log_odds_inv( x.second );
+    if( sum > 1.1 )
+    {
+        printf( "Pval\n" );
+        printf( "Pval\n" );
+    }
+    if( this->get_label().second != 75 && this->get_label().second != -1 )
+        printf( "\n\n\n----------------------------------------\n----------------------------------------\nthing::"
+                "update()\n\t label != tv\n"
+                "----------------------------------------\n----------------------------------------\n\n\n\n" );
+    assert( this->class_prob_is_valid() );
+    return this->pos;
 }
 
 bool thing::is_valid( void ) const
@@ -121,11 +147,12 @@ bool thing::is_valid( void ) const
     {
     case semantic_type_t::OBJECT:
         return (
-            this->observations->object_is_valid() && ( this->get_combined_confidence() > CONFIDENCE_OBJECT_VALID )
-            && ( ( log_odds_inv( this->class_probabilities.at( this->get_label() ) ) > 0.5 )
+            this->observations->object_is_valid() && this->class_prob_is_valid()
+            && ( this->get_combined_confidence() > CONFIDENCE_OBJECT_VALID )
+            && ( ( log_odds_inv( this->class_probabilities.at( this->get_label().first ) ) > 0.7 )
                  && ( log_odds_inv( this->pos_confidence ) > 0.5 )
                  && ( this->observations->get_histogram_ratio() > 0.5 ) )
-            && ( this->get_label() != UNDEFINED_LABEL ) );
+            && ( this->get_label().first != UNDEFINED_LABEL ) );
         break;
     case semantic_type_t::LOCATION:
         return true;

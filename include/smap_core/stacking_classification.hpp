@@ -22,9 +22,9 @@ inline void stack_normalization( std::map< std::string, float >& prob_map )
     // Min-max feature scaling:
     //														X' = (X - X_min)/(X_max - X_min)
     double sum = 0 /*, bef*/;
-    printf( "Normalization: \n" );
+    // printf( "Normalization: \n" );
     for( const auto& x: prob_map ) sum += log_odds_inv( x.second );
-    for( auto& x: prob_map ) x.second = log_odds( x.second / sum );
+    for( auto& x: prob_map ) x.second = log_odds( log_odds_inv( x.second ) / sum );
 }
 
 inline void stack_vectors(
@@ -33,10 +33,17 @@ inline void stack_vectors(
     // current_likelihood - is a map containing a vector of probabilities that represents the probability of beeing each
     // 											class given the current observation
     // 1. Probability combination
-    int i   = 0;
-    auto it = new_vector.begin();
+    int i       = 0;
+    auto it     = new_vector.begin();
+    double max  = 0;
+    int idx_max = 0;
     for( i = 0; it != new_vector.end(); ++it, i++ )
     {
+        if( *it > max )
+        {
+            idx_max = i;
+            max     = *it;
+        }
         current_likelihood[ det.classes.at( i ) ] += log_odds( *it );
         // Clamping
         if( current_likelihood[ det.classes.at( i ) ] > LOG_ODDS_CLAMPING )
@@ -44,7 +51,7 @@ inline void stack_vectors(
         if( current_likelihood[ det.classes.at( i ) ] < -LOG_ODDS_CLAMPING )
             current_likelihood[ det.classes.at( i ) ] = -LOG_ODDS_CLAMPING;
     }
-    // stack_normalization( current_likelihood );  // TODO: Test the influence of the normalization
+    stack_normalization( current_likelihood );  // TODO: Test the influence of the normalization
 }
 }  // namespace smap
 

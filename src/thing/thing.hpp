@@ -73,32 +73,32 @@ class thing
 
     virtual ~thing() {}
 
-    std::string get_label( void ) const;
+    std::pair< std::string, int > get_label( void ) const;
 
     // TODO: Transform inline
 
     double get_class_confidence( void ) const
     {
-        if( this->get_label() == UNDEFINED_LABEL ) return 0.0;
-        return log_odds_inv( this->class_probabilities.at( this->get_label() ) );
+        if( this->get_label().first == UNDEFINED_LABEL ) return 0.0;
+        return log_odds_inv( this->class_probabilities.at( this->get_label().first ) );
     }
 
     double get_position_confidence( void ) const
     {
-        if( this->get_label() == UNDEFINED_LABEL ) return 0.0;
+        if( this->get_label().first == UNDEFINED_LABEL ) return 0.0;
         return log_odds_inv( this->pos_confidence );
     }
 
     double get_combined_confidence( void ) const
     {
-        if( this->get_label() == UNDEFINED_LABEL ) return 0.0;
+        if( this->get_label().first == UNDEFINED_LABEL ) return 0.0;
 
-        double t1 = ( log_odds_inv( this->class_probabilities.at( this->get_label() ) ) / 3 );
-        printf( "\t\tt1: %f\n", t1 );
+        double t1 = ( log_odds_inv( this->class_probabilities.at( this->get_label().first ) ) / 3 );
+        // printf( "\t\tt1: %f\n", t1 );
         double t2 = ( log_odds_inv( this->pos_confidence ) / 3 );
-        printf( "\t\tt2: %f\n", t2 );
+        // printf( "\t\tt2: %f\n", t2 );
         double t3 = ( this->observations->get_histogram_ratio() / 3 );
-        printf( "\t\tt3: %f\n", t3 );
+        // printf( "\t\tt3: %f\n", t3 );
 
         return t1 + t2 + t3;
     }
@@ -135,6 +135,13 @@ class thing
 
     bool is_valid( void ) const;
 
+    inline bool class_prob_is_valid( void ) const
+    {
+        double sum = 0;
+        for( const auto& c: this->class_probabilities ) sum += log_odds_inv( c.second );
+        return ( sum < 1.0001 );
+    }
+
   private:
 
     float pos_confidence;
@@ -149,8 +156,6 @@ class thing
         ar& type;
         // TODO: Implement
     }
-
-    // int _get_label( void );
 };
 
 }  // namespace smap
