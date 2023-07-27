@@ -192,7 +192,6 @@ void topo_marker::update_markers( const graph_t& graph, std::mutex& map_mutex )
         double offset_theta, r;
         for( const auto& r_thing: graph[ e ].related_things )
         {
-            i_obj++;
             printf(
                 "\t%s - [%s]\n",
                 ( std::string( "l:" ) + r_thing.get_label().first + std::string( "|id:" ) + std::to_string( r_thing.id )
@@ -254,6 +253,7 @@ void topo_marker::update_markers( const graph_t& graph, std::mutex& map_mutex )
             this->aabb_label.header.stamp = clock->now();
             this->array.markers.push_back( this->aabb_label );
 
+            i_obj++;
             obj_id++;
         }
     }

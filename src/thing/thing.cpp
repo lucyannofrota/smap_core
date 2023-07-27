@@ -146,13 +146,30 @@ bool thing::is_valid( void ) const
     switch( this->type )
     {
     case semantic_type_t::OBJECT:
-        return (
-            this->observations->object_is_valid() && this->class_prob_is_valid()
-            && ( this->get_combined_confidence() > CONFIDENCE_OBJECT_VALID )
-            && ( ( log_odds_inv( this->class_probabilities.at( this->get_label().first ) ) > 0.7 )
-                 && ( log_odds_inv( this->pos_confidence ) > 0.5 )
-                 && ( this->observations->get_histogram_ratio() > 0.5 ) )
-            && ( this->get_label().first != UNDEFINED_LABEL ) );
+        if( !( this->observations->object_is_valid() && this->class_prob_is_valid()
+               && ( this->get_combined_confidence() > CONFIDENCE_OBJECT_VALID )
+               && ( ( log_odds_inv( this->class_probabilities.at( this->get_label().first ) ) > 0.7 )
+                    && ( log_odds_inv( this->pos_confidence ) > 0.5 )
+                    && ( this->observations->get_histogram_ratio() > 0.5 ) )
+               && ( this->get_label().first != UNDEFINED_LABEL ) ) )
+        {
+            printf( " " );
+            printf( " " );
+        }
+        if( !this->observations->object_is_valid() ) return false;
+        if( !this->class_prob_is_valid() ) return false;
+        if( !( this->get_combined_confidence() > CONFIDENCE_OBJECT_VALID ) ) return false;
+        if( !( log_odds_inv( this->pos_confidence ) > 0.5 ) ) return false;
+        if( !( this->observations->get_histogram_ratio() > 0.5 ) ) return false;
+        if( !( this->get_label().first != UNDEFINED_LABEL ) ) return false;
+        return true;
+        // return (
+        //     this->observations->object_is_valid() && this->class_prob_is_valid()
+        //     && ( this->get_combined_confidence() > CONFIDENCE_OBJECT_VALID )
+        //     && ( ( log_odds_inv( this->class_probabilities.at( this->get_label().first ) ) > 0.7 )
+        //          && ( log_odds_inv( this->pos_confidence ) > 0.5 )
+        //          && ( this->observations->get_histogram_ratio() > 0.5 ) )
+        //     && ( this->get_label().first != UNDEFINED_LABEL ) );
         break;
     case semantic_type_t::LOCATION:
         return true;

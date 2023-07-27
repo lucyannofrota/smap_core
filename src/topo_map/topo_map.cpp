@@ -109,6 +109,7 @@ void topo_map::depth_map_callback( const smap_interfaces::msg::DepthMap::SharedP
                 // printf(
                 //     "1 : %f|2 : %f\n", rad2deg( this->compute_object_direction( object.pos, msg->camera_pose ) ),
                 //     rad2deg( this->compute_corner_direction( msg->camera_pose, object.pos ) ) );
+                if( !object.is_valid() ) continue;
                 if( abs( rad2deg( this->compute_object_direction( object.pos, msg->camera_pose ) ) ) > ACTIVE_FOV_H )
                     continue;
 
@@ -323,7 +324,7 @@ void topo_map::cleaning_map_callback( void )
         // }
         // histogram
         graph[ e ].related_things.remove_if( [ &things_count ]( const smap::thing& item ) {
-            if( item.is_valid() )
+            if( !item.is_valid() )
             {
                 things_count++;
                 return true;
