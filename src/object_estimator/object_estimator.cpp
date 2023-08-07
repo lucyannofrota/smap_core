@@ -49,6 +49,8 @@ void object_estimator::object_estimation_thread(
 
     // if(obj->confidence <= 70) return;
 
+    this->tim_object_estimation_thread.start();
+
     try
     {
         RCLCPP_DEBUG_EXPRESSION( this->get_logger(), DEBUG_MODE, "object_estimation_thread" );
@@ -70,7 +72,9 @@ void object_estimator::object_estimation_thread(
         count_time filter_timer;
         // this->box_filter( point_cloud, segment_cloud_pcl, obs.object );
         count_time box_filter_timer;
+        this->tim_box_filter.start();
         box_filter( point_cloud, segment_cloud_pcl, obs.object.bb_2d.keypoint_1, obs.object.bb_2d.keypoint_2 );
+        this->tim_box_filter.stop();
         const char box_filt_str[] = "box_filter";
         box_filter_timer.get_time( this->get_logger(), box_filt_str, box_filter_plot );
 
@@ -78,7 +82,9 @@ void object_estimator::object_estimation_thread(
         {
             // this->roi_filter( segment_cloud_pcl );
             count_time roi_filt_timer;
+            this->tim_roi_filter.start();
             roi_filter( segment_cloud_pcl, this->pcl_lims );
+            this->tim_roi_filter.stop();
             const char roi_filt_str[] = "roi_filter";
             roi_filt_timer.get_time( this->get_logger(), roi_filt_str, roi_filter_plot );
         }
@@ -87,7 +93,9 @@ void object_estimator::object_estimation_thread(
 
             // this->pcl_voxelization( segment_cloud_pcl );
             count_time pcl_vox_timer;
+            this->tim_voxelization.start();
             pcl_voxelization( segment_cloud_pcl, this->leaf_size );
+            this->tim_voxelization.stop();
             const char pcl_vox_str[] = "pcl_vox";
             pcl_vox_timer.get_time( this->get_logger(), pcl_vox_str, voxelization_plot );
         }
@@ -96,7 +104,9 @@ void object_estimator::object_estimation_thread(
         {
             // this->statistical_outlier_filter( segment_cloud_pcl );
             count_time statistical_outlier_filter_timer;
+            this->tim_sof.start();
             statistical_outlier_filter( segment_cloud_pcl, this->mean_k, this->mu );
+            this->tim_sof.stop();
             const char sof_filt_str[] = "statistical_outlier_filter";
             statistical_outlier_filter_timer.get_time( this->get_logger(), sof_filt_str, sof_filter_plot );
         }
@@ -106,7 +116,9 @@ void object_estimator::object_estimation_thread(
         {
             // this->euclidean_clustering( segment_cloud_pcl, segment_cloud_pcl );
             count_time euclidean_clustering_timer;
+            this->tim_euclidean_clustering.start();
             euclidean_clustering( segment_cloud_pcl, object_cloud_pcl, this->ClusterTolerance );
+            this->tim_euclidean_clustering.stop();
             const char euc_clust_str[] = "euclidean_clustering";
             euclidean_clustering_timer.get_time( this->get_logger(), euc_clust_str, euclidean_clustering_plot );
         }
@@ -118,12 +130,16 @@ void object_estimator::object_estimation_thread(
         if( this->euclidean_clust )
         {
             // this->estimate_confidence( segment_cloud_pcl, obs.object.aabb.confidence );
+            this->tim_estimate_confidence.start();
             estimate_confidence( object_cloud_pcl, obs.object.aabb.confidence, this->pcl_lims, OBJECT_SIZE_LIM_CONF );
+            this->tim_estimate_confidence.stop();
         }
         else
         {
             // this->estimate_confidence( segment_cloud_pcl, obs.object.aabb.confidence );
+            this->tim_estimate_confidence.start();
             estimate_confidence( segment_cloud_pcl, obs.object.aabb.confidence, this->pcl_lims, OBJECT_SIZE_LIM_CONF );
+            this->tim_estimate_confidence.stop();
         }
 
         // Transform
@@ -180,6 +196,7 @@ void object_estimator::object_estimation_thread(
 
         const std::lock_guard< std::mutex > object_pcl_pub_lock( this->object_pcl_pub_mutex );
         if( this->object_pcl_pub->get_subscription_count() > 0 ) this->object_pcl_pub->publish( obs.object.pointcloud );
+        this->tim_object_estimation_thread.stop();
     }
     catch( std::exception& e )
     {

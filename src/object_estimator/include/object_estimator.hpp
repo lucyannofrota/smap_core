@@ -176,6 +176,18 @@ class object_estimator : public rclcpp::Node
 
     std::shared_ptr< thread_queue > thread_ctl = std::make_shared< thread_queue >( thread_queue( this->max_threads ) );
 
+    count_time tim_object_estimation_thread {
+        std::string( "/workspace/src/smap/timers/object_estimator/tim_object_estimation_thread.txt" ) },
+        tim_box_filter { std::string( "/workspace/src/smap/timers/object_estimator/tim_box_filter.txt" ) },
+        tim_roi_filter { std::string( "/workspace/src/smap/timers/object_estimator/tim_roi_filter.txt" ) },
+        tim_voxelization { std::string( "/workspace/src/smap/timers/object_estimator/tim_voxelization.txt" ) },
+        tim_sof { std::string( "/workspace/src/smap/timers/object_estimator/tim_sof.txt" ) },
+        tim_euclidean_clustering {
+            std::string( "/workspace/src/smap/timers/object_estimator/tim_euclidean_clustering.txt" ) },
+        tim_estimate_confidence {
+            std::string( "/workspace/src/smap/timers/object_estimator/tim_estimate_confidence.txt" ) };
+    // TODO: COMPLETE EXPORTS
+
   public:
 
     // TODO: move to private

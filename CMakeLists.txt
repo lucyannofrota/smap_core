@@ -75,6 +75,9 @@ install(DIRECTORY
   # outputs
   SemMap
   maps
+  timers
+  timers/object_estimator
+  timers/timers/object_estimator
   DESTINATION share/${PROJECT_NAME}/
 )
 
