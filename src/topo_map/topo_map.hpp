@@ -270,7 +270,8 @@ class topo_map : public rclcpp::Node
                 else RCLCPP_DEBUG( this->get_logger(), "2.2.1 Check label: PASS" );
 
                 // Check active cone
-                if( abs( rad2deg( this->compute_object_direction( obj_pos, robot_pose ) ) ) > ACTIVE_FOV_H )
+                if( abs( rad2deg( this->compute_object_direction( obj_pos, robot_pose ) ) )
+                    > this->get_parameter( "Active_FOV" ).as_double() )
                 {
 
                     RCLCPP_DEBUG(
@@ -290,13 +291,27 @@ class topo_map : public rclcpp::Node
                 else RCLCPP_DEBUG( this->get_logger(), "2.2.2 Check active cone: PASS" );
 
                 // Check position
-                if( !( ( ( obj_pos.x > obj.aabb.first.x - OBJECT_TRACKING_TOLERANCE )
-                         && ( obj_pos.x < obj.aabb.second.x + OBJECT_TRACKING_TOLERANCE ) )
-                       && ( ( obj_pos.y > obj.aabb.first.y - OBJECT_TRACKING_TOLERANCE )
-                            && ( obj_pos.y < obj.aabb.second.y + OBJECT_TRACKING_TOLERANCE ) )
-                       && ( ( obj_pos.z > obj.aabb.first.z - OBJECT_TRACKING_TOLERANCE )
-                            && ( obj_pos.z < obj.aabb.second.z + OBJECT_TRACKING_TOLERANCE ) ) )
-                    && ( this->_calc_distance( obj_pos, obj.pos ) > OBJECT_ERROR_DISTANCE ) )
+                if( !( ( ( obj_pos.x > obj.aabb.first.x
+                                           - this->get_parameter( "Object_Error_Distance" ).as_double()
+                                                 * this->get_parameter( "Object_Tracking_Factor" ).as_double() )
+                         && ( obj_pos.x < obj.aabb.second.x
+                                              + this->get_parameter( "Object_Error_Distance" ).as_double()
+                                                    * this->get_parameter( "Object_Tracking_Factor" ).as_double() ) )
+                       && ( ( obj_pos.y > obj.aabb.first.y
+                                              - this->get_parameter( "Object_Error_Distance" ).as_double()
+                                                    * this->get_parameter( "Object_Tracking_Factor" ).as_double() )
+                            && ( obj_pos.y < obj.aabb.second.y
+                                                 + this->get_parameter( "Object_Error_Distance" ).as_double()
+                                                       * this->get_parameter( "Object_Tracking_Factor" ).as_double() ) )
+                       && ( ( obj_pos.z > obj.aabb.first.z
+                                              - this->get_parameter( "Object_Error_Distance" ).as_double()
+                                                    * this->get_parameter( "Object_Tracking_Factor" ).as_double() )
+                            && ( obj_pos.z
+                                 < obj.aabb.second.z
+                                       + this->get_parameter( "Object_Error_Distance" ).as_double()
+                                             * this->get_parameter( "Object_Tracking_Factor" ).as_double() ) ) )
+                    && ( this->_calc_distance( obj_pos, obj.pos )
+                         > this->get_parameter( "Object_Error_Distance" ).as_double() ) )
                 {
                     RCLCPP_DEBUG( this->get_logger(), "2.3 Check position: FAIL" );
                     continue;
@@ -395,7 +410,8 @@ class topo_map : public rclcpp::Node
                 }
             }
         }
-        if( ( min_distance_valid < OBJECT_ERROR_DISTANCE * 0.8 ) && closest_valid.second->id != closest.second->id )
+        if( ( min_distance_valid < this->get_parameter( "Object_Error_Distance" ).as_double() * 0.8 )
+            && closest_valid.second->id != closest.second->id )
         {
             printf( "Object Combination!\n" );
             int pred_obj_idx =
@@ -456,6 +472,34 @@ class topo_map : public rclcpp::Node
     topo_map( void ) : Node( "topo_map" )
     {
         RCLCPP_INFO( this->get_logger(), "Initializing topo_map" );
+        // Declare parameters
+        auto param_desc        = rcl_interfaces::msg::ParameterDescriptor {};
+        param_desc.description = "Default path to save maps";
+        this->declare_parameter( "Map_Path", DEFAULT_OUTPUT_PATH, param_desc );
+        param_desc.description = "Minimum distance to create a new vertex";
+        this->declare_parameter( "Vertex_Distance", DEFAULT_VERTEX_DISTANCE, param_desc );
+        param_desc.description = "Distance factor to create a new edge";
+        this->declare_parameter( "Edge_Factor", DEFAULT_NEW_EDGE_FACTOR, param_desc );
+        param_desc.description = "FOV of the robot";
+        this->declare_parameter( "Active_FOV", DEFAULT_ACTIVE_FOV_H, param_desc );
+        param_desc.description = "Max positional error allowed to objects to be considered the same instance";
+        this->declare_parameter( "Object_Error_Distance", DEFAULT_OBJECT_ERROR_DISTANCE, param_desc );
+        param_desc.description = "Distance factor considered in moving objects";
+        this->declare_parameter( "Object_Tracking_Factor", DEFAULT_OBJECT_TRACKING_FACTOR, param_desc );
+        // param_desc.description = "Tracking tolerance of moving objects";
+        // this->declare_parameter( "Object_Tracking_Tolerance", OBJECT_TRACKING_TOLERANCE, param_desc );
+        param_desc.description = "Distance factor applied to objects to be considered as an occlusion";
+        this->declare_parameter(
+            "Occlusion_Object_Distance_Tolerance_Factor", DEFAULT_OCCLUSION_OBJECT_DISTANCE_TOLERANCE_FACTOR,
+            param_desc );
+        param_desc.description = "Max distance allowed for an observation to be considered as an occlusion";
+        this->declare_parameter(
+            "Occlusion_Object_Distance_Tolerance_Max", DEFAULT_OCCLUSION_OBJECT_DISTANCE_TOLERANCE_MAX, param_desc );
+        param_desc.description =
+            "The max percentage of cells to be considerate as an occlusion [Occlusion_Max_Percentage*100 = %]";
+        this->declare_parameter( "Occlusion_Max_Percentage", DEFAULT_OCCLUSION_MAX_PERCENTAGE, param_desc );
+
+        // Topics Setup
         this->sub_options.callback_group = this->map_cb_group;
         this->pose_sub                   = this->create_subscription< geometry_msgs::msg::PoseStamped >(
             std::string( this->get_namespace() ) + std::string( "/sampler/pose" ), 10,
@@ -476,11 +520,11 @@ class topo_map : public rclcpp::Node
         this->map_cleaning_timer = this->create_wall_timer(
             std::chrono::seconds( 15 ), std::bind( &topo_map::cleaning_map_callback, this ), this->map_cb_group );
 
-        if( NEW_EDGE_FACTOR > 1 )
+        if( this->get_parameter( "Edge_Factor" ).as_double() > 1 )
         {
-            RCLCPP_ERROR( this->get_logger(), "NEW_EDGE_FACTOR must be >= 1" );
+            RCLCPP_ERROR( this->get_logger(), "Edge_Factor must be >= 1" );
             rclcpp::exceptions::throw_from_rcl_error(  // TODO error handling
-                RCL_RET_INVALID_ARGUMENT, "NEW_EDGE_FACTOR must be <= 1", nullptr, nullptr );
+                RCL_RET_INVALID_ARGUMENT, "Edge_Factor must be <= 1", nullptr, nullptr );
         }
 
         this->markers.set_com( this->publisher_marker_vertex, this->get_clock() );
@@ -519,9 +563,6 @@ class topo_map : public rclcpp::Node
         this->face_marker.scale.z             = 0.01;
         this->face_marker.lifetime.sec        = 1;
         this->face_marker.lifetime.nanosec    = 500 * 1000 * 1000;
-
-        // Declare parameters
-        // this->de
     }
 
     ~topo_map( void ) { this->export_graph( "TopoGraph" ); }
@@ -563,7 +604,7 @@ class topo_map : public rclcpp::Node
 
     void export_graph( const std::string& f_name )
     {
-        std::ofstream dotfile( OUTPUT_PATH + f_name + ".dot" );
+        std::ofstream dotfile( this->get_parameter( "Map_Path" ).as_string() + f_name + ".dot" );
 
         write_graphviz(
             dotfile, this->graph,
@@ -573,16 +614,19 @@ class topo_map : public rclcpp::Node
                 boost::get( &edge_data_t::distance, this->graph ),
                 boost::get( &edge_data_t::modifier, this->graph ) ) );
 
-        if( std::system( ( "dot -Tpng " + OUTPUT_PATH + f_name + ".dot > " + OUTPUT_PATH + f_name + ".png" ).c_str() )
+        if( std::system( ( "dot -Tpng " + this->get_parameter( "Map_Path" ).as_string() + f_name + ".dot > "
+                           + this->get_parameter( "Map_Path" ).as_string() + f_name + ".png" )
+                             .c_str() )
             == 0 )
         {
-            if( std::system( ( "rm " + OUTPUT_PATH + f_name + ".dot" ).c_str() ) == 0 )
+            if( std::system( ( "rm " + this->get_parameter( "Map_Path" ).as_string() + f_name + ".dot" ).c_str() )
+                == 0 )
             {
                 // https://stackoverflow.com/questions/2616906/how-do-i-output-coloured-text-to-a-linux-terminal
                 printf(
                     "\033[42m[Export Complete]\033[0m png file successfully "
                     "exported to: %s.png\n",
-                    std::string( OUTPUT_PATH + f_name ).c_str() );
+                    std::string( this->get_parameter( "Map_Path" ).as_string() + f_name ).c_str() );
             }
         }
     }

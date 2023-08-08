@@ -18,6 +18,9 @@ def generate_launch_description():
             # name='smap_node',
             namespace='smap',
             output='screen',
+            # parameters=[
+            #     {"my_parameter": "earth"}
+            # ],
             # arguments=['--ros-args', '--log-level', 'debug'],
     )
 

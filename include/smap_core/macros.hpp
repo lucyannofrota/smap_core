@@ -13,25 +13,25 @@ namespace smap
 
 #define DEBUG_MODE 1
 
-#define OUTPUT_PATH std::string( "src/smap/smap_core/maps/" )  // Output path of files
+#define DEFAULT_OUTPUT_PATH std::string( "src/smap/smap_core/maps/" )  // Output path of files
 
 #define DEFAULT_FILE_NAME "Sem_Map.smp"
 
 #define SAVE_LOAD_PATH std::string( "src/smap/smap_core/maps/" )  // Save/Load path
 
-#define VERTEX_DISTANCE 1                                         // Minimum distance to create a new vertex
+#define DEFAULT_VERTEX_DISTANCE 1.0                               // Minimum distance to create a new vertex
 
-#define NEW_EDGE_FACTOR 0.95                                      // Must be < 1
+#define DEFAULT_NEW_EDGE_FACTOR 0.95                              // Must be < 1
 
-#define ACTIVE_FOV_H 100                                          // Horizontal active FOV
+#define DEFAULT_ACTIVE_FOV_H 100.0                                // Horizontal active FOV
 
-#define OBJECT_ERROR_DISTANCE 0.2  // Max position error of an object and max distance between objects
+#define DEFAULT_OBJECT_ERROR_DISTANCE 0.2  // Max position error of an object and max distance between objects
 
-#define ROI_FILTER_METHOD 1        // 0 - Precise, 1 - Fast
+#define ROI_FILTER_METHOD 1                // 0 - Precise, 1 - Fast
 
-#define OBJECT_TRACKING_FACTOR 1 / 2
+#define DEFAULT_OBJECT_TRACKING_FACTOR ( 1.0 / 2.0 )
 
-#define OBJECT_TRACKING_TOLERANCE OBJECT_ERROR_DISTANCE* OBJECT_TRACKING_FACTOR
+#define DEFAULT_OBJECT_TRACKING_TOLERANCE DEFAULT_OBJECT_ERROR_DISTANCE* DEFAULT_OBJECT_TRACKING_FACTOR
 
 #define R_TRIANGLES 0.025               // Size of the histogram triangles
 
@@ -53,11 +53,11 @@ namespace smap
 
 // #define OCCLUSION_ANGULAR_TOL 20
 
-#define OCCLUSION_OBJECT_DISTANCE_TOLERANCE_FACTOR 0.4
+#define DEFAULT_OCCLUSION_OBJECT_DISTANCE_TOLERANCE_FACTOR 0.4
 
-#define OCCLUSION_OBJECT_DISTANCE_TOLERANCE_MAX 0.20
+#define DEFAULT_OCCLUSION_OBJECT_DISTANCE_TOLERANCE_MAX 0.20
 
-#define OCCLUSION_MAX_PERCENTAGE                                                                                       \
+#define DEFAULT_OCCLUSION_MAX_PERCENTAGE                                                                               \
     0.4  // The max percentage of cells to be considerate as an occlusion [OCCLUSION_MAX_PERCENTAGE*100 = %]
 
 #define OBJECT_PROB_DECAY 0.08  // The decay will vary between OBJECT_PROB_DECAY and 2xOBJECT_PROB_DECAY

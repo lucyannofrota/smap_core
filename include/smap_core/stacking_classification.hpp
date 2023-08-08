@@ -33,16 +33,16 @@ inline void stack_vectors(
     // current_likelihood - is a map containing a vector of probabilities that represents the probability of beeing each
     // 											class given the current observation
     // 1. Probability combination
-    int i       = 0;
-    auto it     = new_vector.begin();
-    double max  = 0;
-    int idx_max = 0;
+    int i      = 0;
+    auto it    = new_vector.begin();
+    double max = 0;
+    // int idx_max = 0;
     for( i = 0; it != new_vector.end(); ++it, i++ )
     {
         if( *it > max )
         {
-            idx_max = i;
-            max     = *it;
+            // idx_max = i;
+            max = *it;
         }
         current_likelihood[ det.classes.at( i ) ] += log_odds( *it );
         // Clamping

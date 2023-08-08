@@ -113,7 +113,8 @@ void topo_map::depth_map_callback( const smap_interfaces::msg::DepthMap::SharedP
                 //     "1 : %f|2 : %f\n", rad2deg( this->compute_object_direction( object.pos, msg->camera_pose ) ),
                 //     rad2deg( this->compute_corner_direction( msg->camera_pose, object.pos ) ) );
                 if( !object.is_valid() ) continue;
-                if( abs( rad2deg( this->compute_object_direction( object.pos, msg->camera_pose ) ) ) > ACTIVE_FOV_H )
+                if( abs( rad2deg( this->compute_object_direction( object.pos, msg->camera_pose ) ) )
+                    > this->get_parameter( "Active_FOV" ).as_double() )
                     continue;
 
                 // 2.2. Check cell occlusion
@@ -239,9 +240,11 @@ std::numeric_limits< double >::infinity() },
                                    gPoint_distance( msg->camera_pose.position, depth_map[ occ_row ][ occ_col ][ 2 ] ),
                                object_tolerance_radius =
                                    ( gPoint_distance( object.aabb.second, object.aabb.first ) / 2 )
-                                   * OCCLUSION_OBJECT_DISTANCE_TOLERANCE_FACTOR;
-                        if( object_tolerance_radius > OCCLUSION_OBJECT_DISTANCE_TOLERANCE_MAX )
-                            object_tolerance_radius = OCCLUSION_OBJECT_DISTANCE_TOLERANCE_MAX;
+                                   * this->get_parameter( "Occlusion_Object_Distance_Tolerance_Factor" ).as_double();
+                        if( object_tolerance_radius
+                            > this->get_parameter( "Occlusion_Object_Distance_Tolerance_Max" ).as_double() )
+                            object_tolerance_radius =
+                                this->get_parameter( "Occlusion_Object_Distance_Tolerance_Max" ).as_double();
                         // 2.2.3.2.2-1 cell before obj
                         if( distance_camera_to_cell < distance_camera_to_object - object_tolerance_radius )
                         {
@@ -268,7 +271,8 @@ std::numeric_limits< double >::infinity() },
                 size_t cells_total = cells_before + cells_in + cells_after;
                 if( cells_total == 0 ) return;
                 // 2.3.1 Check for occluded objects
-                if( ( cells_before / ( cells_total * 1.0 ) ) > OCCLUSION_MAX_PERCENTAGE )
+                if( ( cells_before / ( cells_total * 1.0 ) )
+                    > this->get_parameter( "Occlusion_Max_Percentage" ).as_double() )
                 {
                     // 2.3.1-1 Object occluded
                     // Decay the histogram probabilities
@@ -316,7 +320,7 @@ std::numeric_limits< double >::infinity() },
 void topo_map::cleaning_map_callback( void )
 {
     const std::lock_guard< std::mutex > lock( this->map_mutex );
-		this->tim_cleaning_callback.start();
+    this->tim_cleaning_callback.start();
     int things_count = 0;
     for( const auto& e: boost::make_iterator_range( boost::vertices( graph ) ) )
     {
@@ -339,7 +343,7 @@ void topo_map::cleaning_map_callback( void )
     }
     printf( "Map Cleaning. %i invalid objects cleaned\n", things_count );
     RCLCPP_INFO( this->get_logger(), "Map Cleaning. %i invalid objects cleaned", things_count );
-		this->tim_cleaning_callback.stop();
+    this->tim_cleaning_callback.stop();
 }
 
 bool topo_map::add_edge( const size_t& previous, const size_t& current )
@@ -397,7 +401,8 @@ void topo_map::add_vertex( const geometry_msgs::msg::Point& pos, size_t& current
     this->get_vertex( closest, clo );
 
     if( ( previous != (size_t) -1 ) && ( closest != (size_t) -1 ) && ( closest != current )
-        && ( dist_current <= VERTEX_DISTANCE * NEW_EDGE_FACTOR ) )
+        && ( dist_current <= this->get_parameter( "Vertex_Distance" ).as_double()
+                                 * this->get_parameter( "Edge_Factor" ).as_double() ) )
     {
         if( ( closest != previous ) ) this->add_edge( current, closest );
 
@@ -411,9 +416,12 @@ void topo_map::add_vertex( const geometry_msgs::msg::Point& pos, size_t& current
     }
 
     // New vertex
-    if( dist_current < VERTEX_DISTANCE * NEW_EDGE_FACTOR ) return;
+    if( dist_current
+        < this->get_parameter( "Vertex_Distance" ).as_double() * this->get_parameter( "Edge_Factor" ).as_double() )
+        return;
 
-    if( dist_current > VERTEX_DISTANCE * NEW_EDGE_FACTOR )
+    if( dist_current
+        > this->get_parameter( "Vertex_Distance" ).as_double() * this->get_parameter( "Edge_Factor" ).as_double() )
     {
 
         int n_new_vertex, count = 1;
@@ -425,10 +433,10 @@ void topo_map::add_vertex( const geometry_msgs::msg::Point& pos, size_t& current
         base_point   = pre.pos;
         new_point    = pre.pos;
 
-        n_new_vertex = floor( dist_current / VERTEX_DISTANCE );
-        t            = ( VERTEX_DISTANCE ) / dist_current;
+        n_new_vertex = floor( dist_current / this->get_parameter( "Vertex_Distance" ).as_double() );
+        t            = ( this->get_parameter( "Vertex_Distance" ).as_double() ) / dist_current;
 
-        while( dist_current > VERTEX_DISTANCE && n_new_vertex > 0 )
+        while( dist_current > this->get_parameter( "Vertex_Distance" ).as_double() && n_new_vertex > 0 )
         {
             new_point.x = ( 1 - t * count ) * base_point.x + t * count * pos.x;
             new_point.y = ( 1 - t * count ) * base_point.y + t * count * pos.y;
@@ -468,7 +476,7 @@ thing& topo_map::add_object( const smap_interfaces::msg::SmapObservation::Shared
     vertex_data_t pre;
     this->get_vertex( previous, pre );
 
-    if( distance > 2 * VERTEX_DISTANCE )
+    if( distance > 2 * this->get_parameter( "Vertex_Distance" ).as_double() )
     {
 
         int n_new_vertex, count = 1;
@@ -476,9 +484,9 @@ thing& topo_map::add_object( const smap_interfaces::msg::SmapObservation::Shared
         base_point   = pre.pos;
         new_point    = pre.pos;
 
-        n_new_vertex = floor( distance / VERTEX_DISTANCE );
-        t            = ( VERTEX_DISTANCE ) / distance;
-        while( distance > VERTEX_DISTANCE && n_new_vertex > 0 )
+        n_new_vertex = floor( distance / this->get_parameter( "Vertex_Distance" ).as_double() );
+        t            = ( this->get_parameter( "Vertex_Distance" ).as_double() ) / distance;
+        while( distance > this->get_parameter( "Vertex_Distance" ).as_double() && n_new_vertex > 0 )
         {
             new_point.x = ( 1 - t * count ) * base_point.x + t * count * observation->object.pose.pose.position.x;
             new_point.y = ( 1 - t * count ) * base_point.y + t * count * observation->object.pose.pose.position.y;
