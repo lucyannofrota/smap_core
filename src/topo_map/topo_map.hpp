@@ -33,6 +33,7 @@
 #include "../thing/thing.hpp"
 #include "graph.hpp"
 #include "label_writers.hpp"
+#include "smap_core/count_time.hpp"
 #include "smap_interfaces/msg/depth_map.hpp"
 #include "smap_interfaces/msg/smap_object.hpp"
 #include "smap_interfaces/msg/smap_observation.hpp"
@@ -114,6 +115,13 @@ class topo_map : public rclcpp::Node
     std::mutex map_mutex;
 
     // topo_marker markers;
+
+    count_time tim_observation_callback {
+        std::string( "/workspace/src/smap/smap_core/timers/topo_map/tim_observation_callback.txt" ) },
+        tim_depth_map_callback {
+            std::string( "/workspace/src/smap/smap_core/timers/topo_map/tim_depth_map_callback.txt" ) },
+        tim_cleaning_callback {
+            std::string( "/workspace/src/smap/smap_core/timers/topo_map/tim_cleaning_callback.txt" ) };
 
     // Internal Functions
     template< class Archive >
@@ -511,6 +519,9 @@ class topo_map : public rclcpp::Node
         this->face_marker.scale.z             = 0.01;
         this->face_marker.lifetime.sec        = 1;
         this->face_marker.lifetime.nanosec    = 500 * 1000 * 1000;
+
+        // Declare parameters
+        // this->de
     }
 
     ~topo_map( void ) { this->export_graph( "TopoGraph" ); }

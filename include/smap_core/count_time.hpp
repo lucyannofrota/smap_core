@@ -106,9 +106,9 @@ class count_time
 
     inline void export_times( const std::string& name )
     {
-        std::cout << "Exporting times " << this->file_name << "." << std::endl;
+        std::cout << "Exporting times " << name << "." << std::endl;
         std::ofstream file;
-        file.open( this->file_name, std::ios_base::trunc );
+        file.open( name, std::ios_base::trunc );
         if( file.is_open() )
         {
             file << "Exec Times in nanonseconds [ns] | [samples:" << this->count << "]" << std::endl;

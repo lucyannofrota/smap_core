@@ -68,6 +68,14 @@ install(
   DESTINATION include
 )
 
+file(MAKE_DIRECTORY 
+    SemMap 
+    maps 
+    timers 
+    timers/object_estimator
+    timers/topo_map
+)
+
 install(DIRECTORY
   launch
   scripts
@@ -77,7 +85,7 @@ install(DIRECTORY
   maps
   timers
   timers/object_estimator
-  timers/timers/object_estimator
+  timers/topo_map
   DESTINATION share/${PROJECT_NAME}/
 )
 

@@ -144,6 +144,7 @@ void object_estimator::object_estimation_thread(
 
         // Transform
         // TODO: check the possibility to apply the transform only to the centroids
+        this->tim_transform.start();
         if( this->euclidean_clust ) pcl::toROSMsg( *object_cloud_pcl, obs.object.pointcloud );
         else pcl::toROSMsg( *segment_cloud_pcl, obs.object.pointcloud );
         // this->transform_object_pcl( obs.object, transform );
@@ -156,12 +157,17 @@ void object_estimator::object_estimation_thread(
         // Parameter Estimation
         count_time estimation_timer;
         pcl::fromROSMsg( obs.object.pointcloud, *segment_cloud_pcl );
+        this->tim_transform.stop();
         // if( !this->estimate_object_3D_AABB( segment_cloud_pcl, obs.object ) ) return;
         count_time timer_3D_AABB;
+        this->tim_3D_AAB.start();
         if( !estimate_object_3D_AABB(
                 segment_cloud_pcl, obs.object.pose.pose.position, obs.object.aabb.min.point,
                 obs.object.aabb.max.point ) )
+        {
+            this->tim_3D_AAB.stop();
             return;
+        }
         const char AABB_str[] = "3D_AABB";
         timer_3D_AABB.get_time( this->get_logger(), AABB_str, centroid_plot );
 

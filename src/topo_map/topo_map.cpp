@@ -30,6 +30,7 @@ void topo_map::observation_callback( const smap_interfaces::msg::SmapObservation
     // TODO: Objetos detectados na mesma posição tambem devem ser considerados candidatos. Não é pra ser somente os de
     // mesma label
     if( this->reg_classes == nullptr || this->reg_detectors == nullptr ) return;
+    this->tim_observation_callback.start();
     count_time timer;
     RCLCPP_DEBUG( this->get_logger(), "observation_callback" );
     RCLCPP_DEBUG( this->get_logger(), "0. Check graph integrity" );
@@ -71,6 +72,7 @@ void topo_map::observation_callback( const smap_interfaces::msg::SmapObservation
     // for( const auto& e: boost::make_iterator_range( boost::vertices( this->graph ) ) )
     //     for( const auto& r_thing: graph[ e ].related_things ) printf( "\t\t%s\n", r_thing.get_label().first.c_str()
     //     );
+    this->tim_observation_callback.stop();
     if( closest.second->get_label().second != 75 && closest.second->get_label().second != -1 )
         printf( "\n\n\n----------------------------------------\n----------------------------------------\nthing::"
                 "update()\n\t label != tv\n"
@@ -87,6 +89,7 @@ void topo_map::depth_map_callback( const smap_interfaces::msg::DepthMap::SharedP
         // const std::lock_guard< std::mutex > lock( this->map_mutex );
         if( this->reg_classes == nullptr || this->reg_detectors == nullptr || boost::num_vertices( this->graph ) == 0 )
             return;
+        this->tim_depth_map_callback.start();
         RCLCPP_DEBUG( this->get_logger(), "Occlusion_callback" );
         static depth_map_t depth_map;
         from_msg( *msg, depth_map );
@@ -301,6 +304,7 @@ std::numeric_limits< double >::infinity() },
         //     }
         //     printf( "\n" );
         // }
+        this->tim_depth_map_callback.stop();
     }
     catch( std::exception& e )
     {
@@ -312,6 +316,7 @@ std::numeric_limits< double >::infinity() },
 void topo_map::cleaning_map_callback( void )
 {
     const std::lock_guard< std::mutex > lock( this->map_mutex );
+		this->tim_cleaning_callback.start();
     int things_count = 0;
     for( const auto& e: boost::make_iterator_range( boost::vertices( graph ) ) )
     {
@@ -334,6 +339,7 @@ void topo_map::cleaning_map_callback( void )
     }
     printf( "Map Cleaning. %i invalid objects cleaned\n", things_count );
     RCLCPP_INFO( this->get_logger(), "Map Cleaning. %i invalid objects cleaned", things_count );
+		this->tim_cleaning_callback.stop();
 }
 
 bool topo_map::add_edge( const size_t& previous, const size_t& current )
