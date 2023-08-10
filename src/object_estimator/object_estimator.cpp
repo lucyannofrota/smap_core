@@ -203,6 +203,7 @@ void object_estimator::object_estimation_thread(
         const std::lock_guard< std::mutex > object_pcl_pub_lock( this->object_pcl_pub_mutex );
         if( this->object_pcl_pub->get_subscription_count() > 0 ) this->object_pcl_pub->publish( obs.object.pointcloud );
         this->tim_object_estimation_thread.stop();
+        RCLCPP_INFO( this->get_logger(), "Object Detected" );
     }
     catch( std::exception& e )
     {
@@ -328,7 +329,9 @@ void object_estimator::depth_map_thread(
     }
 
     // Compute Occlusion Map
-    auto cell_dims = compute_depth_map( depth_map, ros_pcl, transform, this->pcl_lims );
+    auto cell_dims = compute_depth_map(
+        depth_map, ros_pcl, transform, this->pcl_lims, this->get_parameter( "Max_Occlusion_Cell_Volume" ).as_double(),
+        this->get_parameter( "Max_Occlusion_Cell_Volume_Factor" ).as_double() );
 
     // Publish marker
     if( this->occlusion_boxes_pub->get_subscription_count() > 0 )

@@ -219,6 +219,14 @@ class object_estimator : public rclcpp::Node
                 ( pcl_lims->second - pcl_lims->first ), OBJECT_SIZE_LIM_CONF );
             this->~object_estimator();
         }
+
+        auto param_desc        = rcl_interfaces::msg::ParameterDescriptor {};
+        param_desc.description = "Max occlusion cell volume";
+        this->declare_parameter( "Max_Occlusion_Cell_Volume", DEFAULT_MAX_OCCLUSION_CELL_VOLUME, param_desc );
+        param_desc.description = "Max occlusion cell length in each dimension";
+        this->declare_parameter(
+            "Max_Occlusion_Cell_Volume_Factor", DEFAULT_MAX_OCCLUSION_CELL_VOLUME_FACTOR, param_desc );
+
         this->box_marker.header.frame_id    = "map";
         this->box_marker.header.stamp       = this->get_clock()->now();
         this->box_marker.type               = visualization_msgs::msg::Marker::CUBE;

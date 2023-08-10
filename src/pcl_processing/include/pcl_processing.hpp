@@ -112,7 +112,7 @@ inline void set_marker(
 std::pair< int, int > compute_depth_map(
     depth_map_t& depth_map, const std::shared_ptr< sensor_msgs::msg::PointCloud2 >& pcl_ros,
     const std::shared_ptr< geometry_msgs::msg::TransformStamped >& transform,
-    const std::shared_ptr< std::pair< float, float > >& pcl_lims );
+    const std::shared_ptr< std::pair< float, float > >& pcl_lims, const double& Max_Occlusion_Cell_Volume, const double& Max_Occlusion_Cell_Volume_Factor );
 
 // inline void set_AABB(
 //     std::array< geometry_msgs::msg::PointStamped, 8 >& AABB, const geometry_msgs::msg::Point& min,

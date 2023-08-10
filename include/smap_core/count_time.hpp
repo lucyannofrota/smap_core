@@ -1,7 +1,7 @@
 #ifndef SMAP_CORE__COUNT_TIME_HPP_
 #define SMAP_CORE__COUNT_TIME_HPP_
 
-#define ARRAY_SIZE 16384
+#define ARRAY_SIZE 8192
 
 // C
 #include <stdlib.h>
