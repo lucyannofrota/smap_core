@@ -175,7 +175,7 @@ class topo_map : public rclcpp::Node
     inline size_t _add_vertex( size_t v_index, const geometry_msgs::msg::Point& pos, bool strong_vertex )
     {
         vertex_data_t vert {
-            v_index, pos, thing( this->reg_classes, ++this->thing_id_count ), std::list< smap::thing >(),
+            v_index, pos, thing( this->reg_classes, ++this->thing_id_count , this->get_logger()), std::list< smap::thing >(),
             strong_vertex };
         size_t ret = boost::add_vertex( vert, this->graph );
 

@@ -156,12 +156,37 @@ bool thing::is_valid( void ) const
             printf( " " );
             printf( " " );
         }
-        if( !this->observations->object_is_valid() ) return false;
-        if( !this->class_prob_is_valid() ) return false;
-        if( !( this->get_combined_confidence() > CONFIDENCE_OBJECT_VALID ) ) return false;
-        if( !( log_odds_inv( this->pos_confidence ) > 0.5 ) ) return false;
-        if( !( this->observations->get_histogram_ratio() > 0.5 ) ) return false;
-        if( !( this->get_label().first != UNDEFINED_LABEL ) ) return false;
+        if( !this->observations->object_is_valid() )
+        {  // Cond 1
+            RCLCPP_WARN( this->logger, "observations->object_is_valid invalid\n" );
+            return false;
+        }
+        if( !this->class_prob_is_valid() )
+        {  // Cond 2
+            RCLCPP_WARN( this->logger, "class_prob_is_valid invalid\n" );
+            return false;
+        }
+        if( !( this->get_combined_confidence() > CONFIDENCE_OBJECT_VALID ) )
+        {  // Cond 3
+            RCLCPP_WARN( this->logger, "( this->get_combined_confidence() > CONFIDENCE_OBJECT_VALID ) invalid\n" );
+            return false;
+        }
+        if( !( log_odds_inv( this->pos_confidence ) > 0.5 ) )
+        {  // Cond 4
+            RCLCPP_WARN( this->logger, "( log_odds_inv( this->pos_confidence ) > 0.5 ) invalid\n" );
+            return false;
+        }
+        if( !( this->observations->get_histogram_ratio() > 0.5 ) )
+        {  // Cond 5
+            RCLCPP_WARN( this->logger, "( this->observations->get_histogram_ratio() > 0.5 ) invalid\n" );
+            return false;
+        }
+        if( !( this->get_label().first != UNDEFINED_LABEL ) )
+        {  // Cond 6
+            RCLCPP_WARN( this->logger, "( this->get_label().first != UNDEFINED_LABEL ) invalid\n" );
+            return false;
+        }
+        RCLCPP_WARN( this->logger, "Cond Pass\n" );
         return true;
         // return (
         //     this->observations->object_is_valid() && this->class_prob_is_valid()

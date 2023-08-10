@@ -68,10 +68,6 @@ void topo_map::observation_callback( const smap_interfaces::msg::SmapObservation
     // If necessary, move the object to another vertex
     // this->object_vert_move( valid_idxs, closest );
 
-    // TODO: Remove for
-    // for( const auto& e: boost::make_iterator_range( boost::vertices( this->graph ) ) )
-    //     for( const auto& r_thing: graph[ e ].related_things ) printf( "\t\t%s\n", r_thing.get_label().first.c_str()
-    //     );
     this->tim_observation_callback.stop();
     if( closest.second->get_label().second != 75 && closest.second->get_label().second != -1 )
         printf( "\n\n\n----------------------------------------\n----------------------------------------\nthing::"
@@ -319,6 +315,8 @@ std::numeric_limits< double >::infinity() },
 
 void topo_map::cleaning_map_callback( void )
 {
+    RCLCPP_INFO( this->get_logger(), "cleaning_map_callback disabled" );
+    return;
     const std::lock_guard< std::mutex > lock( this->map_mutex );
     this->tim_cleaning_callback.start();
     int things_count = 0;
@@ -507,7 +505,7 @@ thing& topo_map::add_object( const smap_interfaces::msg::SmapObservation::Shared
     // current = this->get_closest_vertex( observation->object.pose.pose.position, distance );
 
     RCLCPP_DEBUG( this->get_logger(), "append_object" );
-    thing new_thing( this->reg_classes, ++this->thing_id_count );
+    thing new_thing( this->reg_classes, ++this->thing_id_count, this->get_logger() );
     // probabilities
     // *this->reg_detectors[]
 

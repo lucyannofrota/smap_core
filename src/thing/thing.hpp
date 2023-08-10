@@ -52,10 +52,13 @@ class thing
     int id = -1;
 
     // Methods
-    thing( void ) {}
+    thing( void ) : logger( rclcpp::get_logger( "thing_misc" ) ) {}
 
-    thing( std::shared_ptr< std::map< std::string, std::pair< int, int > > >& class_map, int id ) :
-        observations( std::make_unique< observation_histogram >( HISTOGRAM_BINS ) ), reg_classes( class_map ), id( id )
+    thing(
+        std::shared_ptr< std::map< std::string, std::pair< int, int > > >& class_map, int id,
+        const rclcpp::Logger& _logger ) :
+        observations( std::make_unique< observation_histogram >( HISTOGRAM_BINS ) ),
+        reg_classes( class_map ), id( id ), logger( _logger )
     // observations(std::make_unique<observation_histogram>(HISTOGRAM_BINS))
     // o(std::make_unique<observation_histogram>(HISTOGRAM_BINS))
     {
@@ -65,7 +68,7 @@ class thing
         // this->reg_classes = class_map;
     }
 
-    thing( semantic_type_t type, int id )
+    thing( semantic_type_t type, int id, const rclcpp::Logger& _logger ) : logger( _logger )
     {
         this->type = type;
         this->id   = id;
@@ -138,7 +141,13 @@ class thing
     inline bool class_prob_is_valid( void ) const
     {
         double sum = 0;
-        for( const auto& c: this->class_probabilities ) sum += log_odds_inv( c.second );
+        std::string vals;
+        for( const auto& c: this->class_probabilities )
+        {
+            sum  += log_odds_inv( c.second );
+            vals += std::to_string( log_odds_inv( c.second ) );
+        }
+        RCLCPP_WARN( this->logger, "class_prob sum: %f %s| ", sum, vals.c_str() );
         return ( sum < 1.0001 );
     }
 
@@ -147,7 +156,7 @@ class thing
     float pos_confidence;
 
     friend class boost::serialization::access;
-    rclcpp::Logger logger = rclcpp::get_logger( "thing" );
+    rclcpp::Logger logger;
 
     template< class Archive >
     void serialize( Archive& ar, const unsigned int version )
