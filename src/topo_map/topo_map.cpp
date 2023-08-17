@@ -53,7 +53,7 @@ void topo_map::observation_callback( const smap_interfaces::msg::SmapObservation
         RCLCPP_WARN( this->get_logger(), "No detector was found!" );
         return;
     }
-    // 4. Update vertex
+    // 4. Vertex transaction (Add or Update)
     // If true add object otherwise update an existing one
     std::pair< size_t, thing* > closest( 0, nullptr ), closest_valid( 0, nullptr );
     // thing *closest = nullptr, *closest_valid = nullptr;
