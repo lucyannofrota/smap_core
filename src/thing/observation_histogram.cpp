@@ -29,15 +29,18 @@ void observation_histogram::register_obs( double distance, double angle, bool po
     // printf( "----------------\n" );
     for( int i = -int( floor( this->l / 2 ) ), j = 0; i <= int( floor( this->l / 2 ) ); i++, j++ )
     {
+        // TODO: Check -= log_odds() -> This should be += log_odds()
+        // 			Check if p_value < 0.5 in negative case and p_value > 0.5 in positive case.
         idx = this->histogram.axis().index( angle + this->bin_width * i );
         if( std::isnan( this->histogram[ idx ] ) || std::isinf( this->histogram[ idx ] ) )
             this->histogram[ idx ] = log_odds( 0.5 );
-        double p_value = 0.5 + this->factor * this->weights[ j ] * add_value;
+        double p_value = 0.5;
+        if( positive ) p_value += this->factor * this->weights[ j ] * add_value;
+        else p_value -= this->factor * this->weights[ j ] * add_value;
         // Clamping
         if( p_value < 0 ) p_value = 0;
         if( p_value > 1 ) p_value = 1;
-        if( positive ) this->histogram[ idx ] += log_odds( p_value );
-        else this->histogram[ idx ] -= log_odds( p_value );
+        this->histogram[ idx ] += log_odds( p_value );
         // Clamping
         if( this->histogram[ idx ] < -LOG_ODDS_CLAMPING ) this->histogram[ idx ] = -LOG_ODDS_CLAMPING;
         if( this->histogram[ idx ] > LOG_ODDS_CLAMPING ) this->histogram[ idx ] = LOG_ODDS_CLAMPING;

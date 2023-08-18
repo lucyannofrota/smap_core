@@ -12,6 +12,7 @@
 // ROS
 #include <geometry_msgs/msg/point.hpp>
 #include <rclcpp/rclcpp.hpp>
+#include <rcpputils/asserts.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 
 // SMAP
@@ -96,11 +97,11 @@ class thing
     {
         if( this->get_label().first == UNDEFINED_LABEL ) return 0.0;
 
-        double t1 = ( log_odds_inv( this->class_probabilities.at( this->get_label().first ) ) / 3 );
+        double t1 = ( log_odds_inv( this->class_probabilities.at( this->get_label().first ) ) * 4.0 / 6.0 );
         // printf( "\t\tt1: %f\n", t1 );
-        double t2 = ( log_odds_inv( this->pos_confidence ) / 3 );
+        double t2 = ( log_odds_inv( this->pos_confidence ) / 6.0 );
         // printf( "\t\tt2: %f\n", t2 );
-        double t3 = ( this->observations->get_histogram_ratio() / 3 );
+        double t3 = ( this->observations->get_histogram_ratio() / 6.0 );
         // printf( "\t\tt3: %f\n", t3 );
 
         return t1 + t2 + t3;
@@ -126,14 +127,23 @@ class thing
     {
         // current_likelihood - is a map containing a vector of probabilities that represents the probability of beeing
         // each class
-
+        // RCLCPP_WARN( this->logger, "THING DECAY_CONF" );
+        assert( factor < distance );
+        float pre_sum = 0, sum = 0;
         for( auto& class_likelihood: this->class_probabilities )
         {
-            class_likelihood.second -= log_odds( ( OBJECT_PROB_DECAY * ( 1 + factor ) ) / ( 1 + distance ) );
+            pre_sum += log_odds_inv( class_likelihood.second );
+            assert( ( ( ( 1 + factor ) ) / ( 1 + distance ) ) < 1 );
+            assert( ( ( OBJECT_PROB_DECAY * ( 1 + factor ) ) / ( 1 + distance ) ) < 0.5 );
+            class_likelihood.second += log_odds( ( OBJECT_PROB_DECAY * ( 1 + factor ) ) / ( 1 + distance ) );
             // Clamping
             if( class_likelihood.second < -LOG_ODDS_CLAMPING ) class_likelihood.second = -LOG_ODDS_CLAMPING;
             if( class_likelihood.second > LOG_ODDS_CLAMPING ) class_likelihood.second = LOG_ODDS_CLAMPING;
+            sum += log_odds_inv( class_likelihood.second );
         }
+        // TODO: CONTINUE
+        RCLCPP_WARN( this->logger, "factor: %f, distance: %f", factor, distance );
+        assert( sum < pre_sum );
     }
 
     bool is_valid( void ) const;
@@ -145,10 +155,10 @@ class thing
         for( const auto& c: this->class_probabilities )
         {
             sum  += log_odds_inv( c.second );
-            vals += std::to_string( log_odds_inv( c.second ) );
+            vals += std::to_string( log_odds_inv( c.second ) ) + std::string( ", " );
         }
-        RCLCPP_WARN( this->logger, "class_prob sum: %f %s| ", sum, vals.c_str() );
-        return ( sum < 1.0001 );
+        RCLCPP_WARN( this->logger, "class_prob sum: %f | %s| ", sum, vals.c_str() );
+        return ( sum < 1.01 );
     }
 
   private:
