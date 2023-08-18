@@ -168,6 +168,7 @@ void object_estimator::object_estimation_thread(
             this->tim_3D_AAB.stop();
             return;
         }
+				this->tim_3D_AAB.stop();
         const char AABB_str[] = "3D_AABB";
         timer_3D_AABB.get_time( this->get_logger(), AABB_str, centroid_plot );
 

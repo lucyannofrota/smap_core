@@ -87,21 +87,22 @@ class count_time
 
     inline void get_time( const rclcpp::Logger& logger, const char* str, plot_vec& vec )
     {
-        end = std::chrono::high_resolution_clock::now();
+        this->end = std::chrono::high_resolution_clock::now();
 
-        vec.push_back( ( std::chrono::duration_cast< std::chrono::milliseconds >( end - beginning ) ).count() );
+        vec.push_back( ( std::chrono::duration_cast< std::chrono::milliseconds >( this->end - this->beginning ) ).count() );
 
         RCLCPP_DEBUG(
             logger, "%s %ims", str,
-            ( std::chrono::duration_cast< std::chrono::milliseconds >( end - beginning ) ).count() );
+            ( std::chrono::duration_cast< std::chrono::milliseconds >( this->end - this->beginning ) ).count() );
     }
 
     inline void start( void ) { this->beginning = std::chrono::high_resolution_clock::now(); }
 
     inline void stop( void )
     {
+			this->end = std::chrono::high_resolution_clock::now();
         this->exec_times->at( count++ ) =
-            ( std::chrono::duration_cast< std::chrono::nanoseconds >( end - beginning ) ).count();
+            ( std::chrono::duration_cast< std::chrono::nanoseconds >( this->end - this->beginning ) ).count();
     }
 
     inline void export_times( const std::string& name )
