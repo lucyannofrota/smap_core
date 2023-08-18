@@ -226,6 +226,8 @@ class object_estimator : public rclcpp::Node
         param_desc.description = "Max occlusion cell length in each dimension";
         this->declare_parameter(
             "Max_Occlusion_Cell_Volume_Factor", DEFAULT_MAX_OCCLUSION_CELL_VOLUME_FACTOR, param_desc );
+        param_desc.description = "Minimum confidence for an object to be considered";
+        this->declare_parameter( "Minimum_Object_Confidence", 0.60, param_desc );
 
         this->box_marker.header.frame_id    = "map";
         this->box_marker.header.stamp       = this->get_clock()->now();

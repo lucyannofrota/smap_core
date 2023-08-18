@@ -124,20 +124,15 @@ geometry_msgs::msg::Point thing::update(
         }
     }
     stack_vectors( this->class_probabilities, probability_distribution, detector );
+    assert( this->class_prob_is_valid() );
     // printf( "Update e l:%s |id:%i\n", this->get_label().first.c_str(), this->id );
     // test_label( this->get_label().first, "tv" );
-    double sum = 0;
-    for( const auto& x: this->class_probabilities ) sum += log_odds_inv( x.second );
-    if( sum > 1.1 )
-    {
-        printf( "Pval\n" );
-        printf( "Pval\n" );
-    }
-    if( this->get_label().second != 75 && this->get_label().second != -1 )
-        printf( "\n\n\n----------------------------------------\n----------------------------------------\nthing::"
-                "update()\n\t label != tv\n"
-                "----------------------------------------\n----------------------------------------\n\n\n\n" );
-    assert( this->class_prob_is_valid() );
+    // double sum = 0;
+    // for( const auto& x: this->class_probabilities ) sum += log_odds_inv( x.second );
+    // if( this->get_label().second != 75 && this->get_label().second != -1 )
+    //     printf( "\n\n\n----------------------------------------\n----------------------------------------\nthing::"
+    //             "update()\n\t label != tv\n"
+    //             "----------------------------------------\n----------------------------------------\n\n\n\n" );
     return this->pos;
 }
 
@@ -146,16 +141,17 @@ bool thing::is_valid( void ) const
     switch( this->type )
     {
     case semantic_type_t::OBJECT:
-        if( !( this->observations->object_is_valid() && this->class_prob_is_valid()
-               && ( this->get_combined_confidence() > CONFIDENCE_OBJECT_VALID )
-               && ( ( log_odds_inv( this->class_probabilities.at( this->get_label().first ) ) > 0.7 )
-                    && ( log_odds_inv( this->pos_confidence ) > 0.5 )
-                    && ( this->observations->get_histogram_ratio() > 0.5 ) )
-               && ( this->get_label().first != UNDEFINED_LABEL ) ) )
-        {
-            printf( " " );
-            printf( " " );
-        }
+        // if( !( this->observations->object_is_valid() && this->class_prob_is_valid()
+        //        && ( this->get_combined_confidence() > CONFIDENCE_OBJECT_VALID )
+        //        && ( ( log_odds_inv( this->class_probabilities.at( this->get_label().first ) ) > 0.7 )
+        //             && ( log_odds_inv( this->pos_confidence ) > 0.5 )
+        //             && ( this->observations->get_histogram_ratio() > 0.5 ) )
+        //        && ( this->get_label().first != UNDEFINED_LABEL ) ) )
+        // {
+        //     printf( " " );
+        //     printf( " " );
+        // }
+        // Test
         if( !this->observations->object_is_valid() )
         {  // Cond 1
             RCLCPP_WARN( this->logger, "observations->object_is_valid invalid\n" );
@@ -171,14 +167,16 @@ bool thing::is_valid( void ) const
             RCLCPP_WARN( this->logger, "( this->get_combined_confidence() > CONFIDENCE_OBJECT_VALID ) invalid\n" );
             return false;
         }
-        if( !( log_odds_inv( this->pos_confidence ) > 0.5 ) )
+        if( !( log_odds_inv( this->pos_confidence ) > 0.3 ) )
         {  // Cond 4
             RCLCPP_WARN( this->logger, "( log_odds_inv( this->pos_confidence ) > 0.5 ) invalid\n" );
             return false;
         }
-        if( !( this->observations->get_histogram_ratio() > 0.5 ) )
+        if( !( this->observations->get_histogram_ratio() >= 0.5 ) )
         {  // Cond 5
-            RCLCPP_WARN( this->logger, "( this->observations->get_histogram_ratio() > 0.5 ) invalid\n" );
+            RCLCPP_WARN(
+                this->logger, "( this->observations->get_histogram_ratio() [%f] > 0.5 ) invalid\n",
+                this->observations->get_histogram_ratio() );
             return false;
         }
         if( !( this->get_label().first != UNDEFINED_LABEL ) )

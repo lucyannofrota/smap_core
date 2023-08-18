@@ -60,7 +60,7 @@ namespace smap
 #define DEFAULT_OCCLUSION_MAX_PERCENTAGE                                                                               \
     0.4  // The max percentage of cells to be considerate as an occlusion [OCCLUSION_MAX_PERCENTAGE*100 = %]
 
-#define OBJECT_PROB_DECAY 0.08  // The decay will vary between OBJECT_PROB_DECAY and 2xOBJECT_PROB_DECAY
+#define OBJECT_PROB_DECAY 0.05  // The decay will vary between OBJECT_PROB_DECAY and 2xOBJECT_PROB_DECAY
 
 #define CONFIDENCE_OBJECT_VALID 0.85
 
@@ -68,7 +68,7 @@ namespace smap
 
 #define HISTOGRAM_BIN_CHANGE_VALUE 2.5
 
-#define LOG_ODDS_CLAMPING 20  // log_odds(0.9999) == -log_odds(0.0001) == 9.2102
+#define LOG_ODDS_CLAMPING 10  // log_odds(0.9999) == -log_odds(0.0001) == 9.2102
 
 #define USE_MEDIANS 0
 
