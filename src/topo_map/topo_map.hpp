@@ -170,7 +170,7 @@ class topo_map : public rclcpp::Node
 
     void add_vertex( const geometry_msgs::msg::Point& pos, size_t& current, size_t& previous, bool strong_vertex );
 
-    thing& add_object( const smap_interfaces::msg::SmapObservation::SharedPtr observation, detector_t& det );
+    thing& add_object( const smap_interfaces::msg::SmapObservation::SharedPtr observation, detector_t& det, bool& is_valid );
 
     inline size_t _add_vertex( size_t v_index, const geometry_msgs::msg::Point& pos, bool strong_vertex )
     {
@@ -348,14 +348,15 @@ class topo_map : public rclcpp::Node
     inline void vertex_transaction(
         const smap_interfaces::msg::SmapObservation::SharedPtr observation,
         const std::vector< std::pair< size_t, std::vector< thing* > > >& candidates,
-        std::vector< detector_t >::iterator& det, std::pair< size_t, thing* >& closest )
+        std::vector< detector_t >::iterator& det, std::pair< size_t, thing* >& closest, bool& valid_transaction )
     {
         double min_distance = 0;
         RCLCPP_DEBUG( this->get_logger(), "3. Update vertex" );
         if( candidates.size() == 0 )
         {
             RCLCPP_DEBUG( this->get_logger(), "3.1.1 Object add" );
-            closest.second = &( this->add_object( observation, *det ) );
+            closest.second = &( this->add_object( observation, *det , valid_transaction) );
+						if (!valid_transaction) return;
         }
         else
         {

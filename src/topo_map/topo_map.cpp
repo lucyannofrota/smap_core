@@ -58,12 +58,14 @@ void topo_map::observation_callback( const smap_interfaces::msg::SmapObservation
     std::pair< size_t, thing* > closest( 0, nullptr ), closest_valid( 0, nullptr );
     // thing *closest = nullptr, *closest_valid = nullptr;
     // size_t vert_idx = 0, vert_idx_valid = 0;
-    this->vertex_transaction( observation, candidates, det, closest );
+    bool valid_transaction;
+    this->vertex_transaction( observation, candidates, det, closest, valid_transaction );
+    if( !valid_transaction ) return;
     printf( "l: %s|vid:%i\n", closest.second->get_label().first.c_str(), (int_least16_t) closest.first );
 
     // Object combination
     // TODO: Check this method
-    // this->object_combination( candidates, closest, closest_valid );
+    this->object_combination( candidates, closest, closest_valid );
 
     // If necessary, move the object to another vertex
     // this->object_vert_move( valid_idxs, closest );
@@ -460,7 +462,8 @@ void topo_map::add_vertex( const geometry_msgs::msg::Point& pos, size_t& current
     this->add_edge( previous, current );
 }
 
-thing& topo_map::add_object( const smap_interfaces::msg::SmapObservation::SharedPtr observation, detector_t& det )
+thing& topo_map::add_object(
+    const smap_interfaces::msg::SmapObservation::SharedPtr observation, detector_t& det, bool& is_valid )
 {
     // TODO: create callback group. Should be mutually exclusive
     RCLCPP_DEBUG( this->get_logger(), "add_object" );
@@ -483,7 +486,13 @@ thing& topo_map::add_object( const smap_interfaces::msg::SmapObservation::Shared
         new_point    = pre.pos;
 
         n_new_vertex = floor( distance / this->get_parameter( "Vertex_Distance" ).as_double() );
-        t            = ( this->get_parameter( "Vertex_Distance" ).as_double() ) / distance;
+        if( n_new_vertex > 1 )
+        {
+            is_valid = false;
+            for( size_t b = 0; b < boost::num_vertices( this->graph ); b++ )
+                for( auto& th: this->graph[ b ].related_things ) return th;
+        }
+        t = ( this->get_parameter( "Vertex_Distance" ).as_double() ) / distance;
         while( distance > this->get_parameter( "Vertex_Distance" ).as_double() && n_new_vertex > 0 )
         {
             new_point.x = ( 1 - t * count ) * base_point.x + t * count * observation->object.pose.pose.position.x;
@@ -532,6 +541,7 @@ thing& topo_map::add_object( const smap_interfaces::msg::SmapObservation::Shared
             break;
         }
     }
+    is_valid = true;
     return *th_ret;
 }
 
