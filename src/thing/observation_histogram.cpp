@@ -31,27 +31,30 @@ void observation_histogram::register_obs( double distance, double angle, bool po
     {
         // TODO: Check -= log_odds() -> This should be += log_odds()
         // 			Check if p_value < 0.5 in negative case and p_value > 0.5 in positive case.
-        idx = this->histogram.axis().index( angle + this->bin_width * i );
-        if( std::isnan( this->histogram[ idx ] ) || std::isinf( this->histogram[ idx ] ) )
-            this->histogram[ idx ] = log_odds( 0.5 );
-        double p_value = 0.5;
-        if( positive ) p_value += this->factor * this->weights[ j ] * add_value;
-        else p_value -= this->factor * this->weights[ j ] * add_value;
+        idx            = this->histogram.axis().index( angle + this->bin_width * i );
+        double p_value = 0.5 + ( positive ? 1 : -1 ) * this->factor * this->weights[ j ] * add_value;
         assert( positive ? ( p_value >= 0.5 ) : ( p_value <= 0.5 ) );
-        // Clamping
-        if( p_value <= 0 || p_value <= log_odds_inv( -LOG_ODDS_CLAMPING )
-            || ( ( this->histogram[ idx ] + log_odds( p_value ) ) < -LOG_ODDS_CLAMPING ) )
-            this->histogram[ idx ] = -LOG_ODDS_CLAMPING;
-        else
-        {
-            //
-            if( p_value >= 1 || p_value >= log_odds_inv( +LOG_ODDS_CLAMPING )
-                || ( ( this->histogram[ idx ] + log_odds( p_value ) ) > +LOG_ODDS_CLAMPING ) )
-                this->histogram[ idx ] = +LOG_ODDS_CLAMPING;
-            else this->histogram[ idx ] += log_odds( p_value );
-        }
-        // printf( "reg: [%i]: %6.2f\n", i, (double) this->histogram[ idx ] );
-        assert( this->histogram[ idx ] >= -LOG_ODDS_CLAMPING && this->histogram[ idx ] <= LOG_ODDS_CLAMPING );
+        this->histogram[ idx ] = clamping_log_odds_sum< double >( this->histogram[ idx ], p_value );
+        // if( std::isnan( this->histogram[ idx ] ) || std::isinf( this->histogram[ idx ] ) )
+        //     this->histogram[ idx ] = log_odds( 0.5 );
+        // double p_value = 0.5;
+        // if( positive ) p_value += this->factor * this->weights[ j ] * add_value;
+        // else p_value -= this->factor * this->weights[ j ] * add_value;
+        // assert( positive ? ( p_value >= 0.5 ) : ( p_value <= 0.5 ) );
+        // // Clamping
+        // if( p_value <= 0 || p_value <= log_odds_inv( -LOG_ODDS_CLAMPING )
+        //     || ( ( this->histogram[ idx ] + log_odds( p_value ) ) < -LOG_ODDS_CLAMPING ) )
+        //     this->histogram[ idx ] = -LOG_ODDS_CLAMPING;
+        // else
+        // {
+        //     //
+        //     if( p_value >= 1 || p_value >= log_odds_inv( +LOG_ODDS_CLAMPING )
+        //         || ( ( this->histogram[ idx ] + log_odds( p_value ) ) > +LOG_ODDS_CLAMPING ) )
+        //         this->histogram[ idx ] = +LOG_ODDS_CLAMPING;
+        //     else this->histogram[ idx ] += log_odds( p_value );
+        // }
+        // // printf( "reg: [%i]: %6.2f\n", i, (double) this->histogram[ idx ] );
+        // assert( this->histogram[ idx ] >= -LOG_ODDS_CLAMPING && this->histogram[ idx ] <= LOG_ODDS_CLAMPING );
     }
 }
 

@@ -55,32 +55,25 @@ inline void stack_vectors(
             max = p_value;
         }
 
-        if( ( p_value <= 0 ) || ( p_value <= log_odds_inv( -LOG_ODDS_CLAMPING ) )
-            || ( ( current_likelihood[ det.classes.at( i ) ] + log_odds( p_value ) ) < -LOG_ODDS_CLAMPING ) )
-            current_likelihood[ det.classes.at( i ) ] = -LOG_ODDS_CLAMPING;
-        else
-        {
-            //
-            if( p_value >= 1 || p_value >= log_odds_inv( +LOG_ODDS_CLAMPING )
-                || ( ( current_likelihood[ det.classes.at( i ) ] + log_odds( p_value ) ) > +LOG_ODDS_CLAMPING ) )
-                current_likelihood[ det.classes.at( i ) ] = +LOG_ODDS_CLAMPING;
+        current_likelihood[ det.classes.at( i ) ] =
+            clamping_log_odds_sum< float >( current_likelihood[ det.classes.at( i ) ], p_value );
 
-            else current_likelihood[ det.classes.at( i ) ] += log_odds( p_value );
-        }
+        // if( ( p_value <= 0 ) || ( p_value <= log_odds_inv( -LOG_ODDS_CLAMPING ) )
+        //     || ( ( current_likelihood[ det.classes.at( i ) ] + log_odds( p_value ) ) < -LOG_ODDS_CLAMPING ) )
+        //     current_likelihood[ det.classes.at( i ) ] = -LOG_ODDS_CLAMPING;
+        // else
+        // {
+        //     //
+        //     if( p_value >= 1 || p_value >= log_odds_inv( +LOG_ODDS_CLAMPING )
+        //         || ( ( current_likelihood[ det.classes.at( i ) ] + log_odds( p_value ) ) > +LOG_ODDS_CLAMPING ) )
+        //         current_likelihood[ det.classes.at( i ) ] = +LOG_ODDS_CLAMPING;
 
-        assert(
-            current_likelihood[ det.classes.at( i ) ] >= -LOG_ODDS_CLAMPING
-            && current_likelihood[ det.classes.at( i ) ] <= LOG_ODDS_CLAMPING );
+        // else current_likelihood[ det.classes.at( i ) ] += log_odds( p_value );
+        // }
 
-        // new_value = current_likelihood[ det.classes.at( i ) ] + log_odds( *it );
-
-        // Clamping
-        // assert( !( std::isnan( new_value ) || std::isinf( new_value ) ) );
-        // // if(std::isnan(new_value) || std::isinf(new_value))
-        // if( new_value > LOG_ODDS_CLAMPING ) new_value = LOG_ODDS_CLAMPING;
-        // if( new_value < -LOG_ODDS_CLAMPING ) new_value = -LOG_ODDS_CLAMPING;
-
-        // current_likelihood[ det.classes.at( i ) ] = new_value;
+        // assert(
+        //     current_likelihood[ det.classes.at( i ) ] >= -LOG_ODDS_CLAMPING
+        //     && current_likelihood[ det.classes.at( i ) ] <= LOG_ODDS_CLAMPING );
     }
     stack_normalization( current_likelihood );
 }

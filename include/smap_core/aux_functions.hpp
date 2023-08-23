@@ -41,6 +41,27 @@ double log_odds_inv( double lodds )
 
 bool compare_str( const std::string str1, const std::string str2 ) { return str1 == str2; }
 
+template< typename T >
+T clamping_log_odds_sum( const T likelihood, const T& p_value )
+{
+    T new_likelihood = likelihood;
+    if( ( p_value <= 0 ) || ( p_value <= log_odds_inv( -LOG_ODDS_CLAMPING ) )
+        || ( ( new_likelihood + log_odds( p_value ) ) < -LOG_ODDS_CLAMPING ) )
+        new_likelihood = -LOG_ODDS_CLAMPING;
+    else
+    {
+        //
+        if( p_value >= 1 || p_value >= log_odds_inv( +LOG_ODDS_CLAMPING )
+            || ( ( new_likelihood + log_odds( p_value ) ) > +LOG_ODDS_CLAMPING ) )
+            new_likelihood = +LOG_ODDS_CLAMPING;
+
+        else new_likelihood += log_odds( p_value );
+    }
+    assert( new_likelihood >= -LOG_ODDS_CLAMPING && new_likelihood <= LOG_ODDS_CLAMPING );
+    assert( ( !std::isnan( new_likelihood ) ) && !( std::isinf( new_likelihood ) ) );
+    return new_likelihood;
+}
+
 // inline float& occlusion_matrix_indexer(
 //     std_msgs::msg::Float32MultiArray& occ_mat, const size_t& r, const size_t& c, const size_t& lims,
 //     const size_t& comp )
