@@ -39,11 +39,15 @@ void observation_histogram::register_obs( double distance, double angle, bool po
         else p_value -= this->factor * this->weights[ j ] * add_value;
         assert( positive ? ( p_value >= 0.5 ) : ( p_value <= 0.5 ) );
         // Clamping
-        if( p_value < 0 || p_value < log_odds_inv( -LOG_ODDS_CLAMPING ) ) this->histogram[ idx ] = -LOG_ODDS_CLAMPING;
+        if( p_value <= 0 || p_value <= log_odds_inv( -LOG_ODDS_CLAMPING )
+            || ( ( this->histogram[ idx ] + log_odds( p_value ) ) < -LOG_ODDS_CLAMPING ) )
+            this->histogram[ idx ] = -LOG_ODDS_CLAMPING;
         else
         {
             //
-            if( p_value > 1 || p_value > log_odds_inv( LOG_ODDS_CLAMPING ) ) this->histogram[ idx ] = LOG_ODDS_CLAMPING;
+            if( p_value >= 1 || p_value >= log_odds_inv( +LOG_ODDS_CLAMPING )
+                || ( ( this->histogram[ idx ] + log_odds( p_value ) ) > +LOG_ODDS_CLAMPING ) )
+                this->histogram[ idx ] = +LOG_ODDS_CLAMPING;
             else this->histogram[ idx ] += log_odds( p_value );
         }
         // printf( "reg: [%i]: %6.2f\n", i, (double) this->histogram[ idx ] );

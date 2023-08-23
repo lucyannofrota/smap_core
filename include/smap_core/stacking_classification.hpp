@@ -2,6 +2,7 @@
 #define SMAP_CORE__STACKING_CLASSIFICATION_HPP_
 
 // STL
+#include <assert.h>
 #include <map>
 #include <string>
 #include <vector>
@@ -41,28 +42,45 @@ inline void stack_vectors(
     // current_likelihood - is a map containing a vector of probabilities that represents the probability of beeing each
     // 											class given the current observation
     // 1. Probability combination
-    int i           = 0;
-    auto it         = new_vector.begin();
-    float max       = 0;
-    float new_value = 0;
+    int i     = 0;
+    auto it   = new_vector.begin();
+    float max = 0;
     // int idx_max = 0;
     for( i = 0; it != new_vector.end(); ++it, i++ )
     {
-        if( *it > max )
+        float p_value = ( *it );
+        if( p_value > max )
         {
             // idx_max = i;
-            max = *it;
+            max = p_value;
         }
 
-        new_value = current_likelihood[ det.classes.at( i ) ] + log_odds( *it );
+        if( ( p_value <= 0 ) || ( p_value <= log_odds_inv( -LOG_ODDS_CLAMPING ) )
+            || ( ( current_likelihood[ det.classes.at( i ) ] + log_odds( p_value ) ) < -LOG_ODDS_CLAMPING ) )
+            current_likelihood[ det.classes.at( i ) ] = -LOG_ODDS_CLAMPING;
+        else
+        {
+            //
+            if( p_value >= 1 || p_value >= log_odds_inv( +LOG_ODDS_CLAMPING )
+                || ( ( current_likelihood[ det.classes.at( i ) ] + log_odds( p_value ) ) > +LOG_ODDS_CLAMPING ) )
+                current_likelihood[ det.classes.at( i ) ] = +LOG_ODDS_CLAMPING;
+
+            else current_likelihood[ det.classes.at( i ) ] += log_odds( p_value );
+        }
+
+        assert(
+            current_likelihood[ det.classes.at( i ) ] >= -LOG_ODDS_CLAMPING
+            && current_likelihood[ det.classes.at( i ) ] <= LOG_ODDS_CLAMPING );
+
+        // new_value = current_likelihood[ det.classes.at( i ) ] + log_odds( *it );
 
         // Clamping
-        assert( !( std::isnan( new_value ) || std::isinf( new_value ) ) );
-        // if(std::isnan(new_value) || std::isinf(new_value))
-        if( new_value > LOG_ODDS_CLAMPING ) new_value = LOG_ODDS_CLAMPING;
-        if( new_value < -LOG_ODDS_CLAMPING ) new_value = -LOG_ODDS_CLAMPING;
+        // assert( !( std::isnan( new_value ) || std::isinf( new_value ) ) );
+        // // if(std::isnan(new_value) || std::isinf(new_value))
+        // if( new_value > LOG_ODDS_CLAMPING ) new_value = LOG_ODDS_CLAMPING;
+        // if( new_value < -LOG_ODDS_CLAMPING ) new_value = -LOG_ODDS_CLAMPING;
 
-        current_likelihood[ det.classes.at( i ) ] = new_value;
+        // current_likelihood[ det.classes.at( i ) ] = new_value;
     }
     stack_normalization( current_likelihood );
 }
