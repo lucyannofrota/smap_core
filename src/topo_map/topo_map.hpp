@@ -146,7 +146,7 @@ class topo_map : public rclcpp::Node
         if( boost::num_vertices( this->graph ) == 0 ) return;
         RCLCPP_DEBUG( this->get_logger(), "monitor_callback" );
         if( this->publisher_marker_vertex->get_subscription_count() > 0 )
-            this->markers.async_update_markers( this->graph, this->map_mutex );
+            this->markers.async_update_markers( this->graph, this->map_mutex,this->get_parameter( "Confidence_Object_Valid" ).as_double() );
     }
 
     inline void pose_callback( const geometry_msgs::msg::PoseStamped::SharedPtr pose )
@@ -170,13 +170,14 @@ class topo_map : public rclcpp::Node
 
     void add_vertex( const geometry_msgs::msg::Point& pos, size_t& current, size_t& previous, bool strong_vertex );
 
-    thing& add_object( const smap_interfaces::msg::SmapObservation::SharedPtr observation, detector_t& det, bool& is_valid );
+    thing& add_object(
+        const smap_interfaces::msg::SmapObservation::SharedPtr observation, detector_t& det, bool& is_valid );
 
     inline size_t _add_vertex( size_t v_index, const geometry_msgs::msg::Point& pos, bool strong_vertex )
     {
         vertex_data_t vert {
-            v_index, pos, thing( this->reg_classes, ++this->thing_id_count , this->get_logger()), std::list< smap::thing >(),
-            strong_vertex };
+            v_index, pos, thing( this->reg_classes, ++this->thing_id_count, this->get_logger() ),
+            std::list< smap::thing >(), strong_vertex };
         size_t ret = boost::add_vertex( vert, this->graph );
 
         RCLCPP_INFO( this->get_logger(), "Vertex added (%li) [%4.1f,%4.1f,%4.1f]", this->v_index, pos.x, pos.y, pos.z );
@@ -355,8 +356,8 @@ class topo_map : public rclcpp::Node
         if( candidates.size() == 0 )
         {
             RCLCPP_DEBUG( this->get_logger(), "3.1.1 Object add" );
-            closest.second = &( this->add_object( observation, *det , valid_transaction) );
-						if (!valid_transaction) return;
+            closest.second = &( this->add_object( observation, *det, valid_transaction ) );
+            if( !valid_transaction ) return;
         }
         else
         {
@@ -499,6 +500,10 @@ class topo_map : public rclcpp::Node
         param_desc.description =
             "The max percentage of cells to be considerate as an occlusion [Occlusion_Max_Percentage*100 = %]";
         this->declare_parameter( "Occlusion_Max_Percentage", DEFAULT_OCCLUSION_MAX_PERCENTAGE, param_desc );
+        param_desc.description = "The probability decay factor for subtractive observations";
+        this->declare_parameter( "Object_Prob_Decay", DEFAULT_OBJECT_PROB_DECAY, param_desc );
+        param_desc.description = "The minimum value of combined confidence for an object to be considered as valid";
+        this->declare_parameter( "Confidence_Object_Valid", DEFAULT_CONFIDENCE_OBJECT_VALID, param_desc );
 
         // Topics Setup
         this->sub_options.callback_group = this->map_cb_group;

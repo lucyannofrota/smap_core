@@ -82,6 +82,7 @@ void topo_map::observation_callback( const smap_interfaces::msg::SmapObservation
 
 void topo_map::depth_map_callback( const smap_interfaces::msg::DepthMap::SharedPtr msg )
 {
+    // return;
     try
     {
         // const std::lock_guard< std::mutex > lock( this->map_mutex );
@@ -110,7 +111,7 @@ void topo_map::depth_map_callback( const smap_interfaces::msg::DepthMap::SharedP
                 // printf(
                 //     "1 : %f|2 : %f\n", rad2deg( this->compute_object_direction( object.pos, msg->camera_pose ) ),
                 //     rad2deg( this->compute_corner_direction( msg->camera_pose, object.pos ) ) );
-                if( !object.is_valid() ) continue;
+                if( !object.is_valid( this->get_parameter( "Confidence_Object_Valid" ).as_double() ) ) continue;
                 if( abs( rad2deg( this->compute_object_direction( object.pos, msg->camera_pose ) ) )
                     > this->get_parameter( "Active_FOV" ).as_double() )
                     continue;
@@ -269,25 +270,101 @@ std::numeric_limits< double >::infinity() },
                 size_t cells_total = cells_before + cells_in + cells_after;
                 if( cells_total == 0 ) return;
                 // 2.3.1 Check for occluded objects
-                if( ( cells_before / ( cells_total * 1.0 ) )
-                    > this->get_parameter( "Occlusion_Max_Percentage" ).as_double() )
+                // 2.3.1-1 Most of collisions happens before the object [Occluded - case 1]
+                RCLCPP_DEBUG(
+                    this->get_logger(), "[OCC] Cells: cells_before=%i | cells_in=%i | cells_after=%i | cells_total=%i",
+                    cells_before, cells_in, cells_after, cells_total );
+                if( cells_before > cells_in + cells_after )
                 {
-                    // 2.3.1-1 Object occluded
-                    // Decay the histogram probabilities
-                    // TODO: Consider a small decay
-
+                    RCLCPP_DEBUG(
+                        this->get_logger(), "[OCC] Occluded case 1 | factor: %f",
+                        ( ( cells_before + cells_after ) * 1.0 / ( cells_total * 1.0 ) ) / 4.0 );
                     object.observations->register_obs(
                         distance_camera_to_object, this->compute_corner_direction( msg->camera_pose, object.pos ),
                         false );
                     object.decay_confidence(
-                        distance_camera_to_object, ( ( cells_before + cells_after ) / ( cells_total * 1.0 ) ) / 4 );
+                        this->get_parameter( "Object_Prob_Decay" ).as_double(), distance_camera_to_object,
+                        ( ( cells_before + cells_after ) * 1.0 / ( cells_total * 1.0 ) ) / 4.0 );
                     continue;
                 }
-                // 2.3.1-2 Object not occluded
-                // 2.3.2 Reduce the object confidence in proportion to (cells_before + cells_in + cells_after)
-                object.decay_confidence(
-                    distance_camera_to_object, ( cells_before + cells_after ) / ( cells_total * 1.0 ) );
-                // this->observations.register_obs( distance, angle, false );
+                // 2.3.1-2 Most of collisions happens at the object [Non-Occluded - case 2]
+                if( cells_in > cells_before + cells_after )
+                {
+                    RCLCPP_DEBUG( this->get_logger(), "[OCC] Non-Occluded case 2 | factor: 0" );
+                    // object.observations->register_obs(
+                    //     distance_camera_to_object, this->compute_corner_direction( msg->camera_pose, object.pos ),
+                    //     false );
+                    // object.decay_confidence(
+                    //     this->get_parameter( "Object_Prob_Decay" ).as_double(), distance_camera_to_object,
+                    //     ( ( cells_before + cells_after ) * 1.0 / ( cells_total * 1.0 ) ) / 4 );
+                    continue;
+                }
+                // 2.3.1-3 Most of collisions happens after the object [Non-Occluded - case 3]
+                if( cells_after > cells_before + cells_in )
+                {
+                    RCLCPP_DEBUG(
+                        this->get_logger(), "[OCC] Non-Occluded case 3 | factor: %f",
+                        ( ( cells_before + cells_after ) * 1.0 / ( cells_total * 1.0 ) ) );
+                    object.observations->register_obs(
+                        distance_camera_to_object, this->compute_corner_direction( msg->camera_pose, object.pos ),
+                        false );
+                    object.decay_confidence(
+                        this->get_parameter( "Object_Prob_Decay" ).as_double(), distance_camera_to_object,
+                        ( ( cells_before + cells_after ) * 1.0 / ( cells_total * 1.0 ) ) );
+                    continue;
+                }
+
+                // 2.3.1-4 Percentage of occlusion case [Occluded - case 4]
+                if( ( cells_before / ( cells_total * 1.0 ) )
+                    > this->get_parameter( "Occlusion_Max_Percentage" ).as_double() )
+                {
+                    RCLCPP_DEBUG(
+                        this->get_logger(), "[OCC] Occluded case 4 | factor: %f",
+                        ( ( cells_before + cells_after ) * 1.0 / ( cells_total * 1.0 ) ) / 4.0 );
+                    object.observations->register_obs(
+                        distance_camera_to_object, this->compute_corner_direction( msg->camera_pose, object.pos ),
+                        false );
+                    object.decay_confidence(
+                        this->get_parameter( "Object_Prob_Decay" ).as_double(), distance_camera_to_object,
+                        ( ( cells_before + cells_after ) * 1.0 / ( cells_total * 1.0 ) ) / 4.0 );
+                    continue;
+                }
+
+                // 2.3.1-5 Generalized case [Generalized - case 5]
+                // 2.3.1-5.1 Determining the biggest group
+                int d_max_cells = 0;  // 0 - cells_before, 1 - cells_in, 2 - cells_after
+                d_max_cells     = ( cells_before > cells_in ) ? 0 : 1;
+                if( d_max_cells == 0 ) d_max_cells = ( cells_before > cells_after ) ? 0 : 2;
+                if( d_max_cells == 1 ) d_max_cells = ( cells_in > cells_after ) ? 1 : 2;
+                RCLCPP_DEBUG( this->get_logger(), "[OCC] Generalized case 5| group: %i", d_max_cells );
+                switch( d_max_cells )
+                {
+                case 0:
+                    RCLCPP_DEBUG(
+                        this->get_logger(), "[OCC] Occluded case 5.1 | factor: %f",
+                        ( ( ( cells_before + cells_after ) * 1.0 / ( cells_total * 1.0 ) ) / 4.0 ) * 0.5 );
+                    object.observations->register_obs(
+                        distance_camera_to_object, this->compute_corner_direction( msg->camera_pose, object.pos ),
+                        false );
+                    object.decay_confidence(
+                        this->get_parameter( "Object_Prob_Decay" ).as_double(), distance_camera_to_object,
+                        ( ( ( cells_before + cells_after ) * 1.0 / ( cells_total * 1.0 ) ) / 4.0 ) * 0.5 );
+                    break;
+                case 1:
+                    RCLCPP_DEBUG( this->get_logger(), "[OCC] Non-Occluded case 5.2 | factor: 0" );
+                    break;
+                case 2:
+                    RCLCPP_DEBUG(
+                        this->get_logger(), "[OCC] Non-Occluded case 5.3 | factor: %f",
+                        ( ( cells_before + cells_after ) * 1.0 / ( cells_total * 1.0 ) ) * 0.5 );
+                    object.observations->register_obs(
+                        distance_camera_to_object, this->compute_corner_direction( msg->camera_pose, object.pos ),
+                        false );
+                    object.decay_confidence(
+                        this->get_parameter( "Object_Prob_Decay" ).as_double(), distance_camera_to_object,
+                        ( ( cells_before + cells_after ) * 1.0 / ( cells_total * 1.0 ) ) * 0.5 );
+                    break;
+                }
             }
         }
 
@@ -332,8 +409,9 @@ void topo_map::cleaning_map_callback( void )
         // 		if(edge_count <= 1) // remove node
         // }
         // histogram
-        graph[ e ].related_things.remove_if( [ &things_count ]( const smap::thing& item ) {
-            if( !item.is_valid() )
+        double confidence_threshold = this->get_parameter( "Confidence_Object_Valid" ).as_double();
+        graph[ e ].related_things.remove_if( [ &things_count, &confidence_threshold ]( const smap::thing& item ) {
+            if( !item.is_valid( confidence_threshold ) )
             {
                 things_count++;
                 return true;

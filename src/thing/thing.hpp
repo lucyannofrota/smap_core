@@ -93,16 +93,25 @@ class thing
         return log_odds_inv( this->pos_confidence );
     }
 
-    double get_combined_confidence( void ) const
+    double get_combined_confidence( const double confidence_threshold ) const
     {
-        if( this->get_label().first == UNDEFINED_LABEL ) return 0.0;
+        if( this->get_label().first == UNDEFINED_LABEL )
+        {
+            RCLCPP_WARN( this->logger, "undefined label" );
+            return 0.0;
+        }
 
         double t1 = ( log_odds_inv( this->class_probabilities.at( this->get_label().first ) ) * 4.0 / 6.0 );
         // printf( "\t\tt1: %f\n", t1 );
         double t2 = ( log_odds_inv( this->pos_confidence ) / 6.0 );
         // printf( "\t\tt2: %f\n", t2 );
-        double t3 = ( this->observations->get_histogram_ratio() / 6.0 );
+        // double t3 = ( this->observations->get_histogram_ratio() / 6.0 );
+        // TODO: Revert
+        double t3 = ( 1 / 6.0 );
         // printf( "\t\tt3: %f\n", t3 );
+
+        if( !( ( t1 + t2 + t3 ) > confidence_threshold ) )
+            RCLCPP_WARN( this->logger, "Combined conf| t1: %f, t2: %f, t3: %f", t1, t2, t3 );
 
         return t1 + t2 + t3;
     }
@@ -123,30 +132,44 @@ class thing
         std::pair< geometry_msgs::msg::Point, geometry_msgs::msg::Point > aabb, const float& pos_confidence,
         double distance, double angle, const detector_t& detector );
 
-    inline void decay_confidence( const double& distance, const double& factor )
+    inline void decay_confidence( const double prob_decay_factor, const double& distance, const double& factor )
     {
         // current_likelihood - is a map containing a vector of probabilities that represents the probability of beeing
         // each class
-        // RCLCPP_WARN( this->logger, "THING DECAY_CONF" );
+        if( !( factor > 0 && factor < 1 ) )
+        {
+            RCLCPP_ERROR(
+                this->logger, "Decay confidence error. Factor: %f. It should be ( factor > 0 && factor < 1 )" );
+        }
         assert( factor < distance );
         float pre_sum = 0, sum = 0;
         for( auto& class_likelihood: this->class_probabilities )
         {
+            float p_value = 0.5
+                          - prob_decay_factor * ( 1 / 4.0 )
+                                * ( ( 1 + factor )
+                                    / ( 1 + distance ) );  // Maximum absolute value should be 0.5-prob_decay_factor*0.5
+            RCLCPP_DEBUG(
+                this->logger, "p_value: %f, comp: %f, distance: %f, prob_decay_factor: %f",
+                0.5 - prob_decay_factor * ( 1 / 4.0 ) * ( ( 1 + factor ) / ( 1 + distance ) ),
+                abs( 0.5 - prob_decay_factor * 0.5 ), distance, prob_decay_factor );
+            // assert( p_value <= abs( 0.5 - prob_decay_factor * 0.5 ) );
             pre_sum += log_odds_inv( class_likelihood.second );
-            assert( ( ( ( 1 + factor ) ) / ( 1 + distance ) ) < 1 );
-            assert( ( ( OBJECT_PROB_DECAY * ( 1 + factor ) ) / ( 1 + distance ) ) < 0.5 );
-            class_likelihood.second += log_odds( ( OBJECT_PROB_DECAY * ( 1 + factor ) ) / ( 1 + distance ) );
-            // Clamping
-            if( class_likelihood.second < -LOG_ODDS_CLAMPING ) class_likelihood.second = -LOG_ODDS_CLAMPING;
-            if( class_likelihood.second > LOG_ODDS_CLAMPING ) class_likelihood.second = LOG_ODDS_CLAMPING;
-            sum += log_odds_inv( class_likelihood.second );
+            // class_likelihood.second += log_odds( ( prob_decay_factor * ( 1 + factor ) ) / ( 1 + distance ) );
+            // // Clamping
+            // if( class_likelihood.second < -LOG_ODDS_CLAMPING ) class_likelihood.second = -LOG_ODDS_CLAMPING;
+            // if( class_likelihood.second > LOG_ODDS_CLAMPING ) class_likelihood.second = LOG_ODDS_CLAMPING;
+
+            assert( p_value <= 0.5 );
+
+            class_likelihood.second  = clamping_log_odds_sum< float >( class_likelihood.second, p_value );
+            sum                     += log_odds_inv( class_likelihood.second );
         }
-        // TODO: CONTINUE
-        RCLCPP_WARN( this->logger, "factor: %f, distance: %f", factor, distance );
-        assert( sum < pre_sum );
+        RCLCPP_INFO( this->logger, "sum: %f, pre_sum: %f", sum, pre_sum );
+        assert( sum <= pre_sum );
     }
 
-    bool is_valid( void ) const;
+    bool is_valid( const double confidence_threshold ) const;
 
     inline bool class_prob_is_valid( void ) const
     {
@@ -157,7 +180,8 @@ class thing
             sum  += log_odds_inv( c.second );
             vals += std::to_string( log_odds_inv( c.second ) ) + std::string( ", " );
         }
-        RCLCPP_WARN( this->logger, "class_prob sum: %f | %s| ", sum, vals.c_str() );
+        // RCLCPP_WARN( this->logger, "class_prob sum: %f | %s| ", sum, vals.c_str() );
+        assert( sum < 1.01 );
         return ( sum < 1.01 );
     }
 

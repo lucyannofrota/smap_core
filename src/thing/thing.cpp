@@ -7,6 +7,7 @@ namespace smap
 
 std::pair< std::string, int > thing::get_label( void ) const
 {
+    RCLCPP_DEBUG( this->logger, "get_label()" );
     if( this->reg_classes == nullptr )
     {
         return std::pair< std::string, int >( UNDEFINED_LABEL, -1 );
@@ -26,7 +27,7 @@ std::pair< std::string, int > thing::get_label( void ) const
         i++;
     }
 
-    if( value < 0.5 ) return std::pair< std::string, int >( UNDEFINED_LABEL, -1 );
+    if( value < 0.35 ) return std::pair< std::string, int >( UNDEFINED_LABEL, -1 );
     // printf( "get_label: %s| value: %f\n", ret.c_str(), value );
 
     return ret;
@@ -35,12 +36,16 @@ std::pair< std::string, int > thing::get_label( void ) const
 bool thing::label_is_equal( const uint8_t& module_id, const uint8_t& obs_label )
 {
     (void) module_id;  // TODO: module_id verification
+    RCLCPP_DEBUG( this->logger, "thing::label_is_equal(), u_val: %i", (int) obs_label );
     if( this->reg_classes == nullptr ) return false;
 
     // Determine the string value of the current label
     // for( auto reg: ( **this->reg_classes ) )
     //     printf( "reg: %s|%i|%i\n", reg.first.c_str(), reg.second.first, reg.second.second );
     std::string current_label = this->get_label().first;
+    RCLCPP_DEBUG( this->logger, "current_label: --" );
+    RCLCPP_DEBUG( this->logger, "current_label: %s", current_label.c_str() );
+
     if( this->reg_classes->find( current_label ) != this->reg_classes->end() )
     {
         // Compare it's value with the given one
@@ -136,7 +141,7 @@ geometry_msgs::msg::Point thing::update(
     return this->pos;
 }
 
-bool thing::is_valid( void ) const
+bool thing::is_valid( const double confidence_threshold ) const
 {
     switch( this->type )
     {
@@ -152,33 +157,29 @@ bool thing::is_valid( void ) const
         //     printf( " " );
         // }
         // Test
-        if( !this->observations->object_is_valid() )
-        {  // Cond 1
-            RCLCPP_WARN( this->logger, "observations->object_is_valid invalid\n" );
-            return false;
-        }
-        if( !this->class_prob_is_valid() )
-        {  // Cond 2
-            RCLCPP_WARN( this->logger, "class_prob_is_valid invalid\n" );
-            return false;
-        }
-        if( !( this->get_combined_confidence() > CONFIDENCE_OBJECT_VALID ) )
+        // if( !this->observations->object_is_valid() )
+        // {  // Cond 1
+        //     RCLCPP_WARN( this->logger, "observations->object_is_valid invalid\n" );
+        //     return false;
+        // }
+        if( !( this->get_combined_confidence(confidence_threshold) > confidence_threshold ) )
         {  // Cond 3
-            RCLCPP_WARN( this->logger, "( this->get_combined_confidence() > CONFIDENCE_OBJECT_VALID ) invalid\n" );
+
+            RCLCPP_WARN( this->logger, "( this->get_combined_confidence(confidence_threshold) > confidence_threshold ) invalid\n" );
             return false;
         }
-        if( !( log_odds_inv( this->pos_confidence ) > 0.3 ) )
-        {  // Cond 4
-            RCLCPP_WARN( this->logger, "( log_odds_inv( this->pos_confidence ) > 0.5 ) invalid\n" );
-            return false;
-        }
-        if( !( this->observations->get_histogram_ratio() >= 0.5 ) )
-        {  // Cond 5
-            RCLCPP_WARN(
-                this->logger, "( this->observations->get_histogram_ratio() [%f] > 0.5 ) invalid\n",
-                this->observations->get_histogram_ratio() );
-            return false;
-        }
+        // if( !( log_odds_inv( this->pos_confidence ) > 0.3 ) )
+        // {  // Cond 4
+        //     RCLCPP_WARN( this->logger, "( log_odds_inv( this->pos_confidence ) > 0.5 ) invalid\n" );
+        //     return false;
+        // }
+        // if( !( this->observations->get_histogram_ratio() >= 0.5 ) )
+        // {  // Cond 5
+        //     RCLCPP_WARN(
+        //         this->logger, "( this->observations->get_histogram_ratio() [%f] > 0.5 ) invalid\n",
+        //         this->observations->get_histogram_ratio() );
+        //     return false;
+        // }
         if( !( this->get_label().first != UNDEFINED_LABEL ) )
         {  // Cond 6
             RCLCPP_WARN( this->logger, "( this->get_label().first != UNDEFINED_LABEL ) invalid\n" );

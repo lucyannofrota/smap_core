@@ -80,12 +80,13 @@ class topo_marker
         this->fut_pub = std::async( std::launch::async, &topo_marker::publish_markers, this );
     }
 
-    void update_markers( const graph_t& graph, std::mutex& map_mutex );
+    void update_markers( const graph_t& graph, std::mutex& map_mutex, const double confidence_threshold );
 
-    inline void async_update_markers( const graph_t& graph, std::mutex& map_mutex )
+    inline void async_update_markers( const graph_t& graph, std::mutex& map_mutex, const double confidence_threshold )
     {
         this->fut_upd = std::async(
-            std::launch::async, &topo_marker::update_markers, this, std::ref( graph ), std::ref( map_mutex ) );
+            std::launch::async, &topo_marker::update_markers, this, std::ref( graph ), std::ref( map_mutex ),
+            confidence_threshold );
     }
 };
 }  // namespace smap

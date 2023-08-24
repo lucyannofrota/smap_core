@@ -131,7 +131,7 @@ std_msgs::msg::ColorRGBA topo_marker::histogram_color_picker( double min, double
     return color;
 }
 
-void topo_marker::update_markers( const graph_t& graph, std::mutex& map_mutex )
+void topo_marker::update_markers( const graph_t& graph, std::mutex& map_mutex, const double confidence_threshold )
 {
     const std::lock_guard< std::mutex > map_lock( map_mutex );
     const std::lock_guard< std::mutex > lock( this->mutex );
@@ -196,17 +196,18 @@ void topo_marker::update_markers( const graph_t& graph, std::mutex& map_mutex )
                 "\t%s - [%s]\n",
                 ( std::string( "l:" ) + r_thing.get_label().first + std::string( "|id:" ) + std::to_string( r_thing.id )
                   + std::string( "|v:" ) + std::to_string( graph[ e ].index ) + std::string( "|c:" )
-                  + std::to_string( r_thing.get_combined_confidence() ) )
+                  + std::to_string( r_thing.get_combined_confidence( confidence_threshold ) ) )
                     .c_str(),
-                ( r_thing.is_valid() ? std::string( "Valid" ) : std::string( "Invalid" ) ).c_str() );
-            if( !r_thing.is_valid() ) continue;
+                ( r_thing.is_valid( confidence_threshold ) ? std::string( "Valid" ) : std::string( "Invalid" ) )
+                    .c_str() );
+            if( !r_thing.is_valid( confidence_threshold ) ) continue;
             if( r_thing.get_label().second != 75 )
                 printf(
                     "\n\n\n----------------------------------------\n----------------------------------------\nthing::"
                     "update()\n\t label != tv\n"
                     "----------------------------------------\n----------------------------------------\n\n\n\n" );
-            // r_thing.is_valid();
-            // if( !( r_thing.is_valid() ) ) continue;
+            // r_thing.is_valid(confidence_threshold));
+            // if( !( r_thing.is_valid(confidence_threshold)) ) ) continue;
             // Histogram
             int j = 0;
             std_msgs::msg::ColorRGBA color;
@@ -248,7 +249,7 @@ void topo_marker::update_markers( const graph_t& graph, std::mutex& map_mutex )
             this->aabb_label.text             = std::string( "l:" ) + r_thing.get_label().first + std::string( "|id:" )
                                   + std::to_string( r_thing.id ) + std::string( "|v:" )
                                   + std::to_string( graph[ e ].index ) + std::string( "|c:" )
-                                  + std::to_string( r_thing.get_combined_confidence() );
+                                  + std::to_string( r_thing.get_combined_confidence( confidence_threshold ) );
             this->aabb_label.id           = obj_id;
             this->aabb_label.header.stamp = clock->now();
             this->array.markers.push_back( this->aabb_label );
