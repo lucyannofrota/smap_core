@@ -102,7 +102,6 @@ geometry_msgs::msg::Point thing::update(
     this->observations->register_obs( distance, angle, true );
 
     // 2. Position update
-    // TODO: Change pos_confidence to 3D
     this->pos_confidence += log_odds( pos_confidence );
     // Clamping
     if( this->pos_confidence < -LOG_ODDS_CLAMPING ) this->pos_confidence = -LOG_ODDS_CLAMPING;

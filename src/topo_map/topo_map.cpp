@@ -145,7 +145,7 @@ std::numeric_limits< double >::infinity() },
                 {
                     // 2.2.2.1 Compute the angle from the camera to the corner
                     double camera_to_corner_angle = this->compute_corner_direction( msg->camera_pose, corner.value() );
-                    // 2.2.2.2 Loop through all cells of the depth_map
+                    // 2.2.2.2 Loop through cells of the depth_map
                     for( const auto& o_map_row: depth_map | boost::adaptors::indexed( 0 ) )
                     {
                         for( const auto& o_map_col: o_map_row.value() | boost::adaptors::indexed( 0 ) )
