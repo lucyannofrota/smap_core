@@ -235,8 +235,9 @@ std::numeric_limits< double >::infinity() },
                         // 2.2.3.2.1 Compute the the distance between cell centroids and the object centroid with
                         // tolerance distance_cell_to_object = gPoint_distance( depth_map[ occ_row ][ occ_col ][ 2 ],
                         // object.pos )
-                        double distance_camera_to_cell =
-                                   gPoint_distance( msg->camera_pose.position, depth_map[ occ_row ][ occ_col ][ 2 ] ),
+                        geometry_msgs::msg::Point aux_point = depth_map[ occ_row ][ occ_col ][ 2 ];
+                        aux_point.z                         = depth_map[ occ_row ][ occ_col ][ 0 ].z;
+                        double distance_camera_to_cell      = gPoint_distance( msg->camera_pose.position, aux_point ),
                                object_tolerance_radius =
                                    ( gPoint_distance( object.aabb.second, object.aabb.first ) / 2 )
                                    * this->get_parameter( "Occlusion_Object_Distance_Tolerance_Factor" ).as_double();
