@@ -93,10 +93,11 @@ class thread_queue :
 
     inline float __compute_timeout( const size_t active_threads ) const
     {
-        const float tau = 2.5;
-        double timeout  = (double) this->_max_size - 1;
-        if( active_threads > 0 ) timeout = (double) this->_max_size * ( exp( -( active_threads * 1.0 ) / ( tau ) ) );
-        return timeout * 100;
+        const float tau = 1.5205;
+        // double timeout  = (double) this->_max_size - 1;
+        // if( active_threads > 0 ) timeout = (double) this->_max_size * ( exp( -( active_threads * 1.0 ) / ( tau ) ) );
+				timeout = (double) 1.0 * ( exp( -( active_threads * 1.0 ) / ( tau ) ) );
+        return timeout * 1000;
     }
 
     inline bool push_back( const std::shared_ptr< std::future< void > >& element )
