@@ -96,6 +96,7 @@ install(DIRECTORY
 
 
 add_executable(smap_node src/smap_node.cpp)
+add_executable(smap_node_headless src/smap_node_headless.cpp)
 
 
 
@@ -113,6 +114,12 @@ ament_target_dependencies(
   smap_interfaces
 )
 
+ament_target_dependencies(
+  smap_node_headless
+  rclcpp
+  smap_interfaces
+)
+
 
 target_link_libraries(
   smap_node
@@ -122,7 +129,18 @@ target_link_libraries(
   perception_server
 )
 
+target_link_libraries(
+  smap_node_headless
+  thing
+  topo_map
+  object_estimator
+  perception_server
+)
+
 install(TARGETS smap_node
+  DESTINATION lib/${PROJECT_NAME})
+
+install(TARGETS smap_node_headless
   DESTINATION lib/${PROJECT_NAME})
 
 if(BUILD_TESTING)

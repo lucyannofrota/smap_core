@@ -12,9 +12,9 @@ from launch.launch_context import LaunchContext
 
 def generate_launch_description():
 
-    smap_node_headless = launch_ros.actions.Node(
+    object_estimator_node = launch_ros.actions.Node(
             package='smap_core',
-            executable='smap_node_headless',
+            executable='object_estimator_node',
             # name='smap_node',
             namespace='smap',
             output='screen',
@@ -26,5 +26,5 @@ def generate_launch_description():
 
 
     return LaunchDescription([
-        smap_node_headless
+        object_estimator_node
     ])

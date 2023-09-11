@@ -150,7 +150,7 @@ set(DEPENDENCIES
     )
 
     install(TARGETS object_estimator_node
-      DESTINATION lib/${PROJECT_NAME}
+      DESTINATION lib/smap_core
     )
 
   ## Node ##
