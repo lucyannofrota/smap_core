@@ -78,7 +78,7 @@ int main( int argc, char** argv )
 {
     rclcpp::init( argc, argv );
     // rclcpp::NodeOptions options;
-    std::shared_ptr< smap::smap_node > _smap_node                      = std::make_shared< smap::smap_node >();
+    // std::shared_ptr< smap::smap_node > _smap_node                      = std::make_shared< smap::smap_node >();
     std::shared_ptr< smap::topo_map > _topo_map_node                   = std::make_shared< smap::topo_map >();
     std::shared_ptr< smap::object_estimator > _object_estimator_node   = std::make_shared< smap::object_estimator >();
     std::shared_ptr< smap::perception_server > _perception_server_node = std::make_shared< smap::perception_server >();
@@ -87,7 +87,7 @@ int main( int argc, char** argv )
     _topo_map_node->define_reg_detectors( _perception_server_node->detectors );
     // _smap_node->topological_map = _topological_map_node;
     rclcpp::executors::MultiThreadedExecutor executor;
-    executor.add_node( _smap_node );
+    // executor.add_node( _smap_node );
     executor.add_node( _topo_map_node );
     executor.add_node( _object_estimator_node );
     executor.add_node( _perception_server_node );
