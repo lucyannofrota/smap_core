@@ -268,7 +268,7 @@ void object_estimator::detections_callback( const smap_interfaces::msg::SmapDete
         obj.module_id = input_msg->module_id;
 
         // Block until thread pool is available
-        while( !this->thread_ctl->available() ) std::this_thread::sleep_for( 10ms );
+        while( !this->thread_ctl->available() ) std::this_thread::sleep_for( 1ms );
 
         this->object_estimation_thread(
             lock_cloud, transform, pose, std::make_shared< smap_interfaces::msg::SmapObject >( obj ) );

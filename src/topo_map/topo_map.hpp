@@ -518,10 +518,10 @@ class topo_map : public rclcpp::Node
             std::bind( &topo_map::depth_map_callback, this, std::placeholders::_1 ), this->sub_options );
 
         this->marker_timer =
-            this->create_wall_timer( std::chrono::milliseconds( 500 ), std::bind( &topo_map::timer_callback, this ) );
+            this->create_wall_timer( std::chrono::milliseconds( 250 ), std::bind( &topo_map::timer_callback, this ) );
 
         this->monitor_timer = this->create_wall_timer(
-            std::chrono::milliseconds( 2000 / 2 ), std::bind( &topo_map::monitor_callback, this ) );
+            std::chrono::milliseconds( 1000 ), std::bind( &topo_map::monitor_callback, this ) );
 
         this->map_cleaning_timer = this->create_wall_timer(
             std::chrono::seconds( 15 ), std::bind( &topo_map::cleaning_map_callback, this ), this->map_cb_group );
