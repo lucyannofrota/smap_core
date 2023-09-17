@@ -102,7 +102,7 @@ class thing
         }
 
         double t1 = ( log_odds_inv( this->class_probabilities.at( this->get_label().first ) ) * 4.0 / 6.0 );
-        // printf( "\t\tt1: %f\n", t1 );
+
         double t2 = ( log_odds_inv( this->pos_confidence ) / 6.0 );
         // printf( "\t\tt2: %f\n", t2 );
         double t3 = ( this->observations->get_histogram_ratio() / 6.0 );
@@ -118,8 +118,6 @@ class thing
 
     bool label_is_equal( const uint8_t& module_id, const uint8_t& obs_label );
 
-    // std::string get_label( uint8_t module_id );
-
     std::pair< std::string, std::string > get_vertex_representation();
 
     void set(
@@ -134,7 +132,8 @@ class thing
 
     void decay_confidence( const double prob_decay_factor, const double& distance, const double& factor );
     // {
-    //     // current_likelihood - is a map containing a vector of probabilities that represents the probability of beeing
+    //     // current_likelihood - is a map containing a vector of probabilities that represents the probability of
+    //     beeing
     //     // each class
     //     if( !( factor > 0 && factor < 1 ) )
     //     {
@@ -161,13 +160,13 @@ class thing
     //         // if( class_likelihood.second < -LOG_ODDS_CLAMPING ) class_likelihood.second = -LOG_ODDS_CLAMPING;
     //         // if( class_likelihood.second > LOG_ODDS_CLAMPING ) class_likelihood.second = LOG_ODDS_CLAMPING;
 
-    //         assert( p_value <= 0.5 );
+    // assert( p_value <= 0.5 );
 
-    //         class_likelihood.second  = clamping_log_odds_sum< float >( class_likelihood.second, p_value );
-    //         sum                     += log_odds_inv( class_likelihood.second );
-    //     }
-    //     RCLCPP_INFO( this->logger, "sum: %f, pre_sum: %f", sum, pre_sum );
-    //     assert( sum <= pre_sum );
+    // class_likelihood.second  = clamping_log_odds_sum< float >( class_likelihood.second, p_value );
+    // sum                     += log_odds_inv( class_likelihood.second );
+    // }
+    // RCLCPP_INFO( this->logger, "sum: %f, pre_sum: %f", sum, pre_sum );
+    // assert( sum <= pre_sum );
     // }
 
     bool is_valid( const double confidence_threshold ) const;

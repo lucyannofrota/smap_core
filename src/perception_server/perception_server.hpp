@@ -47,7 +47,7 @@ class perception_server : public rclcpp::Node
 
     rclcpp::Subscription< smap_interfaces::msg::SmapObservation >::SharedPtr objects_sub =
         this->create_subscription< smap_interfaces::msg::SmapObservation >(
-            std::string( this->get_namespace() ) + std::string( "/object_estimator/objects" ), 10,
+            std::string( this->get_namespace() ) + std::string( "/object_estimator/objects" ), 2,
             std::bind( &perception_server::observations_callback, this, std::placeholders::_1 ) );
 
   public:

@@ -93,15 +93,15 @@ class topo_map : public rclcpp::Node
     // Publishers
     rclcpp::Publisher< visualization_msgs::msg::MarkerArray >::SharedPtr publisher_marker_vertex =
         this->create_publisher< visualization_msgs::msg::MarkerArray >(
-            std::string( this->get_namespace() ) + std::string( "/topo_map/markers" ), 10 );
+            std::string( this->get_namespace() ) + std::string( "/topo_map/markers" ), 2 );
 
     rclcpp::Publisher< visualization_msgs::msg::MarkerArray >::SharedPtr selected_panels_pub =
         this->create_publisher< visualization_msgs::msg::MarkerArray >(
-            std::string( this->get_namespace() ) + std::string( "/topo_map/selected_panels" ), 10 );
+            std::string( this->get_namespace() ) + std::string( "/topo_map/selected_panels" ), 2 );
 
     rclcpp::Publisher< visualization_msgs::msg::Marker >::SharedPtr selected_face_pub =
         this->create_publisher< visualization_msgs::msg::Marker >(
-            std::string( this->get_namespace() ) + std::string( "/topo_map/selected_face" ), 10 );
+            std::string( this->get_namespace() ) + std::string( "/topo_map/selected_face" ), 2 );
 
     // Threads
     // std::thread marker_thread;
@@ -508,13 +508,13 @@ class topo_map : public rclcpp::Node
         // Topics Setup
         this->sub_options.callback_group = this->map_cb_group;
         this->pose_sub                   = this->create_subscription< geometry_msgs::msg::PoseStamped >(
-            std::string( this->get_namespace() ) + std::string( "/sampler/pose" ), 10,
+            std::string( this->get_namespace() ) + std::string( "/sampler/pose" ), 2,
             std::bind( &topo_map::pose_callback, this, std::placeholders::_1 ), this->sub_options );
         this->object_sub = this->create_subscription< smap_interfaces::msg::SmapObservation >(
-            std::string( this->get_namespace() ) + std::string( "/object_estimator/observations" ), 10,
+            std::string( this->get_namespace() ) + std::string( "/object_estimator/observations" ), 2,
             std::bind( &topo_map::observation_callback, this, std::placeholders::_1 ), this->sub_options );
         this->depth_map_sub = this->create_subscription< smap_interfaces::msg::DepthMap >(
-            std::string( this->get_namespace() ) + std::string( "/object_estimator/depth_map" ), 10,
+            std::string( this->get_namespace() ) + std::string( "/object_estimator/depth_map" ), 2,
             std::bind( &topo_map::depth_map_callback, this, std::placeholders::_1 ), this->sub_options );
 
         this->marker_timer =
