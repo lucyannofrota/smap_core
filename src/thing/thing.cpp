@@ -140,6 +140,32 @@ geometry_msgs::msg::Point thing::update(
     return this->pos;
 }
 
+void thing::decay_confidence( const double prob_decay_factor, const double& distance, const double& factor )
+{
+    // current_likelihood - is a map containing a vector of probabilities that represents the probability of beeing
+    // each class
+    if( !( factor > 0 && factor < 1 ) )
+        RCLCPP_ERROR( this->logger, "Decay confidence error. Factor: %f. It should be ( factor > 0 && factor < 1 )" );
+    assert( factor < distance );
+    float pre_sum = 0, sum = 0;
+    for( auto& class_likelihood: this->class_probabilities )
+    {
+        float mod = ( ( 1 + factor * 3 ) / ( 1 + ( distance / 4 ) ) )
+                  * ( 1 - ( this->observations->get_histogram_ratio() / 4 ) );
+        // 0 <= mod <= 4
+        float p_value = 0.5 - prob_decay_factor * ( mod / 8.0 );
+        // 0 < pvalue <= 0.5
+        pre_sum += log_odds_inv( class_likelihood.second );
+
+        assert( p_value <= 0.5 );
+
+        class_likelihood.second  = clamping_log_odds_sum< float >( class_likelihood.second, p_value );
+        sum                     += log_odds_inv( class_likelihood.second );
+    }
+    RCLCPP_INFO( this->logger, "sum: %f, pre_sum: %f", sum, pre_sum );
+    assert( sum <= pre_sum );
+}
+
 bool thing::is_valid( const double confidence_threshold ) const
 {
     switch( this->type )
@@ -161,10 +187,12 @@ bool thing::is_valid( const double confidence_threshold ) const
         //     RCLCPP_WARN( this->logger, "observations->object_is_valid invalid\n" );
         //     return false;
         // }
-        if( !( this->get_combined_confidence(confidence_threshold) > confidence_threshold ) )
+        if( !( this->get_combined_confidence( confidence_threshold ) > confidence_threshold ) )
         {  // Cond 3
 
-            RCLCPP_WARN( this->logger, "( this->get_combined_confidence(confidence_threshold) > confidence_threshold ) invalid\n" );
+            RCLCPP_WARN(
+                this->logger,
+                "( this->get_combined_confidence(confidence_threshold) > confidence_threshold ) invalid\n" );
             return false;
         }
         // if( !( log_odds_inv( this->pos_confidence ) > 0.3 ) )

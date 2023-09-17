@@ -61,7 +61,7 @@ namespace smap
     0.4  // The max percentage of cells to be considerate as an occlusion [OCCLUSION_MAX_PERCENTAGE*100 = %]
 
 #define DEFAULT_OBJECT_PROB_DECAY                                                                                      \
-    0.4  // It should be 0 <= value < 0.25. The decay will vary between OBJECT_PROB_DECAY and 2xOBJECT_PROB_DECAY
+    0.8  // It should be 0 <= value < 1. The decay will vary between OBJECT_PROB_DECAY and 2xOBJECT_PROB_DECAY
          // OBJECT_PROB_DECAY
 
 #define DEFAULT_CONFIDENCE_OBJECT_VALID 0.6

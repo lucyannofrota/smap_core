@@ -105,9 +105,9 @@ class thing
         // printf( "\t\tt1: %f\n", t1 );
         double t2 = ( log_odds_inv( this->pos_confidence ) / 6.0 );
         // printf( "\t\tt2: %f\n", t2 );
-        // double t3 = ( this->observations->get_histogram_ratio() / 6.0 );
+        double t3 = ( this->observations->get_histogram_ratio() / 6.0 );
         // TODO: Revert
-        double t3 = ( 1 / 6.0 );
+        // double t3 = ( 1 / 6.0 );
         // printf( "\t\tt3: %f\n", t3 );
 
         if( !( ( t1 + t2 + t3 ) > confidence_threshold ) )
@@ -132,42 +132,43 @@ class thing
         std::pair< geometry_msgs::msg::Point, geometry_msgs::msg::Point > aabb, const float& pos_confidence,
         double distance, double angle, const detector_t& detector );
 
-    inline void decay_confidence( const double prob_decay_factor, const double& distance, const double& factor )
-    {
-        // current_likelihood - is a map containing a vector of probabilities that represents the probability of beeing
-        // each class
-        if( !( factor > 0 && factor < 1 ) )
-        {
-            RCLCPP_ERROR(
-                this->logger, "Decay confidence error. Factor: %f. It should be ( factor > 0 && factor < 1 )" );
-        }
-        assert( factor < distance );
-        float pre_sum = 0, sum = 0;
-        for( auto& class_likelihood: this->class_probabilities )
-        {
-            float p_value = 0.5
-                          - prob_decay_factor * ( 1 / 4.0 )
-                                * ( ( 1 + factor )
-                                    / ( 1 + distance ) );  // Maximum absolute value should be 0.5-prob_decay_factor*0.5
-            RCLCPP_DEBUG(
-                this->logger, "p_value: %f, comp: %f, distance: %f, prob_decay_factor: %f",
-                0.5 - prob_decay_factor * ( 1 / 4.0 ) * ( ( 1 + factor ) / ( 1 + distance ) ),
-                abs( 0.5 - prob_decay_factor * 0.5 ), distance, prob_decay_factor );
-            // assert( p_value <= abs( 0.5 - prob_decay_factor * 0.5 ) );
-            pre_sum += log_odds_inv( class_likelihood.second );
-            // class_likelihood.second += log_odds( ( prob_decay_factor * ( 1 + factor ) ) / ( 1 + distance ) );
-            // // Clamping
-            // if( class_likelihood.second < -LOG_ODDS_CLAMPING ) class_likelihood.second = -LOG_ODDS_CLAMPING;
-            // if( class_likelihood.second > LOG_ODDS_CLAMPING ) class_likelihood.second = LOG_ODDS_CLAMPING;
+    void decay_confidence( const double prob_decay_factor, const double& distance, const double& factor );
+    // {
+    //     // current_likelihood - is a map containing a vector of probabilities that represents the probability of beeing
+    //     // each class
+    //     if( !( factor > 0 && factor < 1 ) )
+    //     {
+    //         RCLCPP_ERROR(
+    //             this->logger, "Decay confidence error. Factor: %f. It should be ( factor > 0 && factor < 1 )" );
+    //     }
+    //     assert( factor < distance );
+    //     float pre_sum = 0, sum = 0;
+    //     for( auto& class_likelihood: this->class_probabilities )
+    //     {
+    //         float mod = ( ( 1 + factor * 3 ) / ( 1 + ( distance / 2 ) ) )
+    //                   * ( 1 - ( this->observations->get_histogram_ratio() / 2 ) );
+    //         // 0 <= mod <= 4
+    //         float p_value = 0.5 - prob_decay_factor * ( mod / 8.0 );
+    //         // 0 < pvalue <= 0.5
+    //         // RCLCPP_DEBUG(
+    //         //     this->logger, "p_value: %f, comp: %f, distance: %f, prob_decay_factor: %f",
+    //         //     0.5 - prob_decay_factor * ( 1 / 4.0 ) * ( ( 1 + 3 * factor ) / ( 1 + distance ) ),
+    //         //     abs( 0.5 - prob_decay_factor * 0.5 ), distance, prob_decay_factor );
+    //         // assert( p_value <= abs( 0.5 - prob_decay_factor * 0.5 ) );
+    //         pre_sum += log_odds_inv( class_likelihood.second );
+    //         // class_likelihood.second += log_odds( ( prob_decay_factor * ( 1 + factor ) ) / ( 1 + distance ) );
+    //         // // Clamping
+    //         // if( class_likelihood.second < -LOG_ODDS_CLAMPING ) class_likelihood.second = -LOG_ODDS_CLAMPING;
+    //         // if( class_likelihood.second > LOG_ODDS_CLAMPING ) class_likelihood.second = LOG_ODDS_CLAMPING;
 
-            assert( p_value <= 0.5 );
+    //         assert( p_value <= 0.5 );
 
-            class_likelihood.second  = clamping_log_odds_sum< float >( class_likelihood.second, p_value );
-            sum                     += log_odds_inv( class_likelihood.second );
-        }
-        RCLCPP_INFO( this->logger, "sum: %f, pre_sum: %f", sum, pre_sum );
-        assert( sum <= pre_sum );
-    }
+    //         class_likelihood.second  = clamping_log_odds_sum< float >( class_likelihood.second, p_value );
+    //         sum                     += log_odds_inv( class_likelihood.second );
+    //     }
+    //     RCLCPP_INFO( this->logger, "sum: %f, pre_sum: %f", sum, pre_sum );
+    //     assert( sum <= pre_sum );
+    // }
 
     bool is_valid( const double confidence_threshold ) const;
 
@@ -196,7 +197,7 @@ class thing
     void serialize( Archive& ar, const unsigned int version )
     {
         (void) version;
-        ar& type;
+        ar & type;
         // TODO: Implement
     }
 };
