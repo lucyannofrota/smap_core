@@ -134,33 +134,33 @@ class object_estimator : public rclcpp::Node
 
     rclcpp::Subscription< smap_interfaces::msg::SmapDetections >::SharedPtr smap_detections_sub =
         this->create_subscription< smap_interfaces::msg::SmapDetections >(
-            std::string( this->get_namespace() ) + std::string( "/perception/predictions" ), 10,
+            std::string( this->get_namespace() ) + std::string( "/perception/predictions" ), 2,
             std::bind( &smap::object_estimator::detections_callback, this, std::placeholders::_1 ) );
 
     rclcpp::Publisher< sensor_msgs::msg::PointCloud2 >::SharedPtr pcl_pub =
         this->create_publisher< sensor_msgs::msg::PointCloud2 >(
-            std::string( this->get_namespace() ) + std::string( "/object_estimator/pcl" ), 10 );
+            std::string( this->get_namespace() ) + std::string( "/object_estimator/pcl" ), 2 );
     rclcpp::Publisher< sensor_msgs::msg::PointCloud2 >::SharedPtr object_pcl_pub =
         this->create_publisher< sensor_msgs::msg::PointCloud2 >(
-            std::string( this->get_namespace() ) + std::string( "/object_estimator/object_pcl" ), 10 );
+            std::string( this->get_namespace() ) + std::string( "/object_estimator/object_pcl" ), 2 );
     rclcpp::Publisher< visualization_msgs::msg::Marker >::SharedPtr object_bb_pub =
         this->create_publisher< visualization_msgs::msg::Marker >(
-            std::string( this->get_namespace() ) + std::string( "/object_estimator/object_bb" ), 10 );
+            std::string( this->get_namespace() ) + std::string( "/object_estimator/object_bb" ), 2 );
     rclcpp::Publisher< smap_interfaces::msg::SmapObservation >::SharedPtr object_pub =
         this->create_publisher< smap_interfaces::msg::SmapObservation >(
-            std::string( this->get_namespace() ) + std::string( "/object_estimator/observations" ), 10 );
+            std::string( this->get_namespace() ) + std::string( "/object_estimator/observations" ), 2 );
 
     rclcpp::Publisher< visualization_msgs::msg::MarkerArray >::SharedPtr occlusion_boxes_pub =
         this->create_publisher< visualization_msgs::msg::MarkerArray >(
-            std::string( this->get_namespace() ) + std::string( "/object_estimator/occlusionBoxes" ), 10 );
+            std::string( this->get_namespace() ) + std::string( "/object_estimator/occlusionBoxes" ), 2 );
 
     rclcpp::Publisher< smap_interfaces::msg::DepthMap >::SharedPtr depth_map_pub =
         this->create_publisher< smap_interfaces::msg::DepthMap >(
-            std::string( this->get_namespace() ) + std::string( "/object_estimator/depth_map" ), 10 );
+            std::string( this->get_namespace() ) + std::string( "/object_estimator/depth_map" ), 2 );
 
     // rclcpp::Publisher< visualization_msgs::msg::Marker >::SharedPtr transform_pub =
     //     this->create_publisher< visualization_msgs::msg::Marker >(
-    //         std::string( this->get_namespace() ) + std::string( "/object_estimator/transform" ), 10 );
+    //         std::string( this->get_namespace() ) + std::string( "/object_estimator/transform" ), 2 );
 
     visualization_msgs::msg::MarkerArray marker_array;
     visualization_msgs::msg::Marker box_marker;
@@ -172,7 +172,7 @@ class object_estimator : public rclcpp::Node
 
     // rclcpp::Publisher< smap_interfaces::msg::SmapObservation >::SharedPtr object_pub =
     //     this->create_publisher< smap_interfaces::msg::SmapObservation >(
-    //         std::string( this->get_namespace() ) + std::string( "/object_estimator/depth_map" ), 10 );
+    //         std::string( this->get_namespace() ) + std::string( "/object_estimator/depth_map" ), 2 );
     std::mutex pcl_pub_mutex, object_bb_pub_mutex, object_pub_mutex, object_pcl_pub_mutex;
 
     std::shared_ptr< thread_queue > thread_ctl = std::make_shared< thread_queue >( thread_queue( this->max_threads ) );
