@@ -16,7 +16,11 @@
 
   <depend>smap_interfaces</depend>
   <depend>smap_base</depend>
+  <depend>thing</depend>
   <depend>topo_map</depend>
+  <depend>tf2</depend>
+  <depend>tf2_geometry_msgs</depend>
+  <depend>visualization_msgs</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
