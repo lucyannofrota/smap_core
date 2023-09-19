@@ -11,9 +11,9 @@ if(NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 14)
 endif()
 
-if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  add_compile_options(-Wall -Wextra -Wpedantic -fPIC)
-endif()
+# if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+#   add_compile_options(-Wall -Wextra -Wpedantic -fPIC)
+# endif()
 
 if (POLICY CMP0074)
   cmake_policy(SET CMP0074 NEW)
@@ -101,25 +101,34 @@ install(
 ## /topo_marker ##
 ##################
 
-add_library(graph
-    include/topo_map/graph.hpp
-  )
+# add_library(graph
+#     include/topo_map/graph.hpp
+#   )
 
-target_link_libraries(graph
-  thing::thing
-  ${Boost_LIBRARIES}
-)
+# target_link_libraries(graph
+#   thing::thing
+#   ${Boost_LIBRARIES}
+# )
 
 
 ##############
 ## topo_map ##
 ##############
 
+include_directories(include/topo_map)
+
   ## Lib ##
   add_library(topo_map
+    include/topo_map/graph.hpp
     include/topo_map/topo_map.hpp
     topo_map.cpp
     include/topo_map/label_writers.hpp
+  )
+
+  target_include_directories(topo_map PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>
+      ${Boost_INCLUDE_DIRS}
   )
 #   pcl_processing
   target_link_libraries(topo_map
@@ -127,14 +136,8 @@ target_link_libraries(graph
     smap_base::smap_base
     # pcl_processing::pcl_processing
     topo_marker
-    graph
     ${Boost_LIBRARIES}
 )
-target_include_directories(topo_map PUBLIC
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-  $<INSTALL_INTERFACE:include>
-      ${Boost_INCLUDE_DIRS}
-  )
 
 ament_target_dependencies(
   topo_map
@@ -149,11 +152,27 @@ ament_target_dependencies(
 target_compile_definitions(topo_map PRIVATE "SMAP_BUILDING_LIBRARY")
 
 install(
+    TARGETS topo_map
+    EXPORT export_${PROJECT_NAME}
+    ARCHIVE DESTINATION lib
+    LIBRARY DESTINATION lib
+    RUNTIME DESTINATION bin
+)
+    
+ament_export_targets(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
+
+install(
+  DIRECTORY include/topo_map
+  DESTINATION include
+)
+
+install(
   TARGETS topo_map
-  EXPORT export_${PROJECT_NAME}
-  ARCHIVE DESTINATION lib
+  EXPORT topo_map
   LIBRARY DESTINATION lib
+  ARCHIVE DESTINATION lib
   RUNTIME DESTINATION bin
+  INCLUDES DESTINATION include
 )
 
 ## /Lib ##
@@ -161,3 +180,5 @@ install(
 ###############
 ## /topo_map ##
 ###############
+
+ament_package()
