@@ -82,7 +82,7 @@ include_directories(
 
 
 add_executable(smap_node smap_node.cpp)
-add_executable(smap_node_headless smap_node_headless.cpp)
+# add_executable(smap_node_headless smap_node_headless.cpp)
 
 
 
@@ -100,11 +100,11 @@ ament_target_dependencies(
   smap_interfaces
 )
 
-ament_target_dependencies(
-  smap_node_headless
-  rclcpp
-  smap_interfaces
-)
+# ament_target_dependencies(
+#   smap_node_headless
+#   rclcpp
+#   smap_interfaces
+# )
 
 
 target_link_libraries(
@@ -117,21 +117,21 @@ target_link_libraries(
   thing::thing
 )
 
-target_link_libraries(
-    smap_node_headless
-  smap_base::smap_base
-  object_estimator::object_estimator
-  pcl_processing::pcl_processing
-  perception_server::perception_server
-  topo_map::topo_map
-  thing::thing
-)
+# target_link_libraries(
+#     smap_node_headless
+#   smap_base::smap_base
+#   object_estimator::object_estimator
+#   pcl_processing::pcl_processing
+#   perception_server::perception_server
+#   topo_map::topo_map
+#   thing::thing
+# )
 
 install(TARGETS smap_node
   DESTINATION lib/${PROJECT_NAME})
 
-install(TARGETS smap_node_headless
-  DESTINATION lib/${PROJECT_NAME})
+# install(TARGETS smap_node_headless
+#   DESTINATION lib/${PROJECT_NAME})
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
