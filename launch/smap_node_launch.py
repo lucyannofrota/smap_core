@@ -13,7 +13,7 @@ from launch.launch_context import LaunchContext
 def generate_launch_description():
 
     smap_node_headless = launch_ros.actions.Node(
-            package='smap_core',
+            package='smap_node',
             executable='smap_node_headless',
             # name='smap_node',
             namespace='smap',

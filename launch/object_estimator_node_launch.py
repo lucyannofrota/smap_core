@@ -13,7 +13,7 @@ from launch.launch_context import LaunchContext
 def generate_launch_description():
 
     object_estimator_node = launch_ros.actions.Node(
-            package='smap_core',
+            package='object_estimator',
             executable='object_estimator_node',
             # name='smap_node',
             namespace='smap',
