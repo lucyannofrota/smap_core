@@ -25,7 +25,6 @@ endif()
         find_package(smap_interfaces REQUIRED)
         find_package(pcl_processing REQUIRED)
         find_package(smap_base REQUIRED)
-        # find_package(pcl_processing REQUIRED PATHS ${CMAKE_CURRENT_SOURCE_DIR}/pcl_processing)
 
 
 set(INC
@@ -60,8 +59,6 @@ add_definitions(${PCL_DEFINITIONS})
 # ## /PCL DEPENDENCIES ##
 # #######################
 
-include_directories(include/pcl_processing)
-
 ######################
 ## object_estimator ##
 ######################
@@ -86,6 +83,8 @@ include_directories(include/pcl_processing)
     ${IMGUI_DIR}/backends/imgui_impl_sdl2.cpp #imgui
     ${IMGUI_DIR}/backends/imgui_impl_opengl3.cpp #imgui
   )
+
+  include_directories(include/object_estimator)
 
   ## Lib ##
 
@@ -120,13 +119,32 @@ include_directories(include/pcl_processing)
     ament_export_dependencies(${DEPENDENCIES})
 
     install(
+        TARGETS ${PROJECT_NAME}
+        EXPORT export_${PROJECT_NAME}
+        ARCHIVE DESTINATION lib
+        LIBRARY DESTINATION lib
+        RUNTIME DESTINATION bin
+    )
+
+    ament_export_targets(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
+
+    install(
         DIRECTORY include/object_estimator
         DESTINATION include
     )
 
-    install(TARGETS object_estimator
-      DESTINATION lib/${PROJECT_NAME}/
-    )
+    # install(TARGETS object_estimator
+    #   DESTINATION lib/
+    # )
+
+    # install(
+    #     TARGETS object_estimator
+    #     EXPORT object_estimator
+    #     LIBRARY DESTINATION lib
+    #     ARCHIVE DESTINATION lib
+    #     RUNTIME DESTINATION bin
+    #     INCLUDES DESTINATION include
+    # )
 
 
   ## Lib ##
@@ -161,8 +179,11 @@ include_directories(include/pcl_processing)
     )
 
     install(TARGETS object_estimator_node
-      DESTINATION lib/${PROJECT_NAME}/
-    )
+        DESTINATION lib/${PROJECT_NAME}/)
+
+    # install(TARGETS object_estimator_node
+    #   DESTINATION lib/
+    # )
 
   ## Node ##
 

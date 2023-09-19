@@ -18,28 +18,15 @@
 namespace smap
 {
 // TODO: convert all to inline
-double rad2deg( double rad ) { return rad * ( 180 / M_PI ); }
+double rad2deg( double rad );
 
-double deg2rad( double deg ) { return deg * ( M_PI / 180 ); }
+double deg2rad( double deg );
 
-double log_odds( double prob )
-{
-    // assert( ( prob <= 1 ) && ( prob >= 0 ) );
-    double ret = log( prob / ( 1 - prob ) );
-    if( ret < -LOG_ODDS_CLAMPING ) ret = -LOG_ODDS_CLAMPING;
-    if( ret > LOG_ODDS_CLAMPING ) ret = LOG_ODDS_CLAMPING;
-    return ret;
-}
+double log_odds( double prob );
 
-double log_odds_inv( double lodds )
-{
-    double ret = ( 1 - 1 / ( 1 + exp( lodds ) ) );
-    if( ret < 0 ) ret = 0;
-    if( ret > 1 ) ret = 1;
-    return ret;
-}
+double log_odds_inv( double lodds );
 
-bool compare_str( const std::string str1, const std::string str2 ) { return str1 == str2; }
+bool compare_str( const std::string str1, const std::string str2 );
 
 template< typename T >
 T clamping_log_odds_sum( const T likelihood, const T& p_value )
@@ -62,14 +49,6 @@ T clamping_log_odds_sum( const T likelihood, const T& p_value )
     return new_likelihood;
 }
 
-// inline float& occlusion_matrix_indexer(
-//     std_msgs::msg::Float32MultiArray& occ_mat, const size_t& r, const size_t& c, const size_t& lims,
-//     const size_t& comp )
-// {
-//     return occ_mat.data
-//         [ occ_mat.layout.dim[ 0 ].stride * r + occ_mat.layout.dim[ 1 ].stride * c
-//           + occ_mat.layout.dim[ 2 ].stride * lims + comp ];
-// }
 }  // namespace smap
 
 #endif  // SMAP_CORE__AUX_FUNCTIONS_HPP_

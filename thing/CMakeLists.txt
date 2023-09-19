@@ -1,6 +1,24 @@
 cmake_minimum_required(VERSION 3.5)
 project(thing)
 
+# Default to C99
+if(NOT CMAKE_C_STANDARD)
+  set(CMAKE_C_STANDARD 99)
+endif()
+
+# Default to C++14
+if(NOT CMAKE_CXX_STANDARD)
+  set(CMAKE_CXX_STANDARD 14)
+endif()
+
+if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  add_compile_options(-Wall -Wextra -Wpedantic -fPIC)
+endif()
+
+if (POLICY CMP0074)
+  cmake_policy(SET CMP0074 NEW)
+endif()
+
 
 # find dependencies
     # ament
@@ -61,6 +79,8 @@ set(Boost_USE_MULTITHREADED ON)
 # ############
 # ## /thing ##
 # ############
+
+include_directories(include/thing)
 
 ###########################
 ## observation_histogram ##
@@ -127,8 +147,6 @@ ament_target_dependencies(
 # Causes the visibility macros to use dllexp<depend>smap_interfaces</depend>ort rather than dllimport,
 # which is appropriate when building the dll but not consuming it.
 target_compile_definitions(thing PRIVATE "SMAP_BUILDING_LIBRARY")
-
-include_directories(include/thing)
 
 install(
   TARGETS thing

@@ -1,29 +1,22 @@
 cmake_minimum_required(VERSION 3.5)
 project(smap_base)
 
-# Default to C99
-if(NOT CMAKE_C_STANDARD)
-  set(CMAKE_C_STANDARD 99)
-endif()
-
-# Default to C++14
-if(NOT CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD 14)
-endif()
-
-if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  add_compile_options(-Wall -Wextra -Wpedantic)
+if (POLICY CMP0074)
+  cmake_policy(SET CMP0074 NEW)
 endif()
 
 
-# find dependencies
-find_package(ament_cmake REQUIRED)
-find_package(rclcpp REQUIRED)
-# find_package(tf2_ros REQUIRED)
-# find_package(PCL 1.1 REQUIRED)
+    # find dependencies
+        # ament
+            find_package(ament_cmake REQUIRED)
+            # find_package(ament_cmake_ros REQUIRED)
+        # standard ros pkgs
+            find_package(rclcpp REQUIRED)
 
-add_library(${PROJECT_NAME} 
+
+set(LIB_INC
     include/smap_base/aux_functions.hpp
+    src/aux_functions.cpp
     include/smap_base/count_time.hpp
     include/smap_base/detector_descriptor.hpp
     include/smap_base/interface_templates.hpp
@@ -32,16 +25,41 @@ add_library(${PROJECT_NAME}
     include/smap_base/visibility_control.h
 )
 
+add_library(
+    smap_base
+    ${LIB_INC}
+)
+
 set_target_properties(${PROJECT_NAME} PROPERTIES LINKER_LANGUAGE CXX)
 
-include_directories(
-  include/smap_base
-  ${colcon_INCLUDE_DIRS}
-)
+target_include_directories(smap_base PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>)
+
+# Causes the visibility macros to use dllexp<depend>smap_interfaces</depend>ort rather than dllimport,
+# which is appropriate when building the dll but not consuming it.
+target_compile_definitions(smap_base PRIVATE "SMAP_BUILDING_LIBRARY")
+
+
+include_directories(include/smap_base)
 
 
 install(
-  DIRECTORY include/
+    TARGETS smap_base
+    EXPORT export_${PROJECT_NAME}
+    ARCHIVE DESTINATION lib
+    LIBRARY DESTINATION lib
+    RUNTIME DESTINATION bin
+)
+    
+ament_export_targets(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
+
+ament_export_include_directories(include)
+ament_export_libraries(smap_base)
+
+
+install(
+  DIRECTORY include/smap_base
   DESTINATION include
 )
 
@@ -65,34 +83,6 @@ install(DIRECTORY
   DESTINATION share/${PROJECT_NAME}/
 )
 
-# install(
-#   DIRECTORY include/smap_base
-#   DESTINATION include
-# )
-
-target_include_directories(smap_base PUBLIC
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-  $<INSTALL_INTERFACE:include>)
-
-# Causes the visibility macros to use dllexp<depend>smap_interfaces</depend>ort rather than dllimport,
-# which is appropriate when building the dll but not consuming it.
-target_compile_definitions(smap_base PRIVATE "SMAP_BUILDING_LIBRARY")
-
-include_directories(include/smap_base)
-
-install(
-  TARGETS smap_base
-  EXPORT export_${PROJECT_NAME}
-  ARCHIVE DESTINATION lib
-  LIBRARY DESTINATION lib
-  INCLUDES DESTINATION include
-)
-
-install(
-  DIRECTORY include/smap_base
-  DESTINATION include
-)
-
 install(
   TARGETS smap_base
   EXPORT smap_base
@@ -101,7 +91,5 @@ install(
   RUNTIME DESTINATION bin
   INCLUDES DESTINATION include
 )
-
-ament_export_targets(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
 
 ament_package()
