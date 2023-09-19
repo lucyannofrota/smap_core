@@ -8,8 +8,8 @@
 #include <vector>
 
 // SMAP
-#include "../../src/perception_server/detector_descriptor.hpp"
 #include "aux_functions.hpp"
+#include "detector_descriptor.hpp"
 #include "visibility_control.h"
 
 namespace smap
