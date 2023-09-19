@@ -52,8 +52,30 @@ project(perception_server)
     # visualization_msgs
   )
 
-  install(TARGETS perception_server
-    DESTINATION lib
+  include_directories(include/perception_server)
+
+  install(
+    TARGETS perception_server
+    EXPORT export_${PROJECT_NAME}
+    ARCHIVE DESTINATION lib
+    LIBRARY DESTINATION lib
+    RUNTIME DESTINATION bin
+  )
+    
+  ament_export_targets(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
+
+  install(
+    DIRECTORY include/perception_server
+    DESTINATION include
+  )
+
+  install(
+    TARGETS perception_server
+    EXPORT perception_server
+    LIBRARY DESTINATION lib
+    ARCHIVE DESTINATION lib
+    RUNTIME DESTINATION bin
+    INCLUDES DESTINATION include
   )
 
 ## /Lib ##

@@ -228,22 +228,22 @@ void perception_server::print_server_data( void ) const
 
 }  // namespace smap
 
-int main( int argc, char** argv )
-{
-    rclcpp::init( argc, argv );
+// int main( int argc, char** argv )
+// {
+//     rclcpp::init( argc, argv );
 
-    std::shared_ptr< smap::perception_server > node = std::make_shared< smap::perception_server >();
+// std::shared_ptr< smap::perception_server > node = std::make_shared< smap::perception_server >();
 
-    try
-    {
-        rclcpp::spin( node );
-    }
-    catch( std::exception& e )
-    {
-        std::cout << "SMAP Exception!" << std::endl;
-        std::cout << e.what() << std::endl;
-    }
-    rclcpp::shutdown();
+// try
+// {
+//     rclcpp::spin( node );
+// }
+// catch( std::exception& e )
+// {
+//     std::cout << "SMAP Exception!" << std::endl;
+//     std::cout << e.what() << std::endl;
+// }
+// rclcpp::shutdown();
 
-    return 0;
-}
+// return 0;
+// }

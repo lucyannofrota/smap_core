@@ -92,19 +92,19 @@ add_definitions(${PCL_DEFINITIONS})
       object_estimator
       ${INC}
       ${SRC}
-      ${IMGUI_SRC}
+    #   ${IMGUI_SRC}
     )
 
     target_include_directories(object_estimator PUBLIC
       $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
       $<INSTALL_INTERFACE:include>
-      ${SDL2_INCLUDE_DIRS} # imgui
+    #   ${SDL2_INCLUDE_DIRS} # imgui
     )
 
     target_link_libraries(object_estimator 
     #   ${PCL_LIBRARIES} 
-      GL # imgui
-      ${SDL2_LIBRARIES} # imgui
+    #   GL # imgui
+    #   ${SDL2_LIBRARIES} # imgui
       smap_base::smap_base
       pcl_processing::pcl_processing
     )
@@ -149,13 +149,24 @@ add_definitions(${PCL_DEFINITIONS})
 
   ## Lib ##
 
+#   find_package(object_estimator REQUIRED)
   ## Node ##
 
     add_executable(
         object_estimator_node
         ${INC}
-        ${SRC}
+        # ${IMGUI_SRC}
+        object_estimator.cpp
+        object_estimator_node.cpp
+    )
+
+
+    add_executable(
+        object_estimator_tuning_node
+        ${INC}
         ${IMGUI_SRC}
+        object_estimator.cpp
+        object_estimator_tuning_node.cpp
     )
 
 
@@ -165,8 +176,18 @@ add_definitions(${PCL_DEFINITIONS})
       ${SDL2_INCLUDE_DIRS} # imgui
     )
 
+    target_include_directories(object_estimator_tuning_node PUBLIC
+      $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+      $<INSTALL_INTERFACE:include>
+      ${SDL2_INCLUDE_DIRS} # imgui
+    )
+
     target_link_libraries(object_estimator_node 
-    #   ${PCL_LIBRARIES} 
+      smap_base::smap_base
+      pcl_processing::pcl_processing
+    )
+
+    target_link_libraries(object_estimator_tuning_node 
       GL # imgui
       ${SDL2_LIBRARIES} # imgui
       smap_base::smap_base
@@ -178,7 +199,15 @@ add_definitions(${PCL_DEFINITIONS})
       ${DEPENDENCIES}
     )
 
+    ament_target_dependencies(
+      object_estimator_tuning_node
+      ${DEPENDENCIES}
+    )
+
     install(TARGETS object_estimator_node
+        DESTINATION lib/${PROJECT_NAME}/)
+    
+    install(TARGETS object_estimator_tuning_node
         DESTINATION lib/${PROJECT_NAME}/)
 
     # install(TARGETS object_estimator_node
