@@ -1,4 +1,4 @@
-#include "include/pcl_processing.hpp"
+#include "include/pcl_processing/pcl_processing.hpp"
 
 // STL
 #include <cmath>
@@ -16,7 +16,7 @@
 
 // SMAP
 #include "../include/smap_core/interface_templates.hpp"
-#include "smap_core/macros.hpp"
+#include "../include/smap_core/macros.hpp"
 
 namespace smap
 {

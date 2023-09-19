@@ -39,7 +39,8 @@ add_definitions(${PCL_DEFINITIONS})
 include_directories(include ${PCL_INCLUDE_DIRS})
 
 set(LIB_INC
-    include/pcl_processing.hpp
+    include/pcl_processing/pcl_processing.hpp
+    include/pcl_processing/depth_map.hpp
 )
 
 set(LIB_SRC
@@ -78,7 +79,7 @@ add_library(
     pcl_processing
     ${LIB_INC}
     ${LIB_SRC}
-    # pcl_processing.cpp
+
 )
 
 target_include_directories(pcl_processing PUBLIC
@@ -99,32 +100,37 @@ ament_target_dependencies(
 # which is appropriate when building the dll but not consuming it.
 target_compile_definitions(pcl_processing PRIVATE "SMAP_BUILDING_LIBRARY")
 
-install(
-  TARGETS pcl_processing
-  EXPORT export_${PROJECT_NAME}
-  ARCHIVE DESTINATION lib
-  LIBRARY DESTINATION lib
-  RUNTIME DESTINATION bin
-)
 
+include_directories(include/pcl_processing)
+
+
+install(
+    TARGETS pcl_processing
+    EXPORT export_${PROJECT_NAME}
+    ARCHIVE DESTINATION lib
+    LIBRARY DESTINATION lib
+    RUNTIME DESTINATION bin
+)
+    
+ament_export_targets(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
 
 ament_export_include_directories(include)
 ament_export_libraries(pcl_processing)
 ament_export_dependencies(${DEPENDENCIES})
 
 
-
-# install(
-#   TARGETS pcl_processing
-#   EXPORT export_${PROJECT_NAME}
-#   ARCHIVE DESTINATION lib
-#   LIBRARY DESTINATION lib
-#   RUNTIME DESTINATION bin
-# )
+install(
+  DIRECTORY include/pcl_processing
+  DESTINATION include
+)
 
 install(
-  DIRECTORY include/
-  DESTINATION include/smap_core/pcl_processing
+  TARGETS pcl_processing
+  EXPORT pcl_processing
+  LIBRARY DESTINATION lib
+  ARCHIVE DESTINATION lib
+  RUNTIME DESTINATION bin
+  INCLUDES DESTINATION include
 )
 
 ament_package()
