@@ -24,8 +24,8 @@
 #include <visualization_msgs/msg/marker.hpp>
 
 // SMAP
-#include "../../../include/smap_core/macros.hpp"
-#include "../../object_estimator/include/depth_map.hpp"
+#include "../../include/smap_core/macros.hpp"
+#include "depth_map.hpp"
 
 // TODO: Transpose all PCL related function to this file
 // TODO: Solve compile error
@@ -112,7 +112,8 @@ inline void set_marker(
 std::pair< int, int > compute_depth_map(
     depth_map_t& depth_map, const std::shared_ptr< sensor_msgs::msg::PointCloud2 >& pcl_ros,
     const std::shared_ptr< geometry_msgs::msg::TransformStamped >& transform,
-    const std::shared_ptr< std::pair< float, float > >& pcl_lims, const double& Max_Occlusion_Cell_Volume, const double& Max_Occlusion_Cell_Volume_Factor );
+    const std::shared_ptr< std::pair< float, float > >& pcl_lims, const double& Max_Occlusion_Cell_Volume,
+    const double& Max_Occlusion_Cell_Volume_Factor );
 
 // inline void set_AABB(
 //     std::array< geometry_msgs::msg::PointStamped, 8 >& AABB, const geometry_msgs::msg::Point& min,

@@ -8,7 +8,7 @@
 #include <geometry_msgs/msg/point.hpp>
 
 // SMAP
-#include "../../../include/smap_core/macros.hpp"
+#include "../../include/smap_core/macros.hpp"
 #include "smap_interfaces/msg/depth_map.hpp"
 
 #define DEPTH_MAP_FIELDS 3

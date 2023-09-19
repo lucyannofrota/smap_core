@@ -15,7 +15,7 @@
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
 // SMAP
-#include "../../../include/smap_core/interface_templates.hpp"
+#include "../include/smap_core/interface_templates.hpp"
 #include "smap_core/macros.hpp"
 
 namespace smap
@@ -181,7 +181,8 @@ bool estimate_confidence(
 std::pair< int, int > compute_depth_map(
     depth_map_t& depth_map, const std::shared_ptr< sensor_msgs::msg::PointCloud2 >& pcl_ros,
     const std::shared_ptr< geometry_msgs::msg::TransformStamped >& transform,
-    const std::shared_ptr< std::pair< float, float > >& pcl_lims, const double& Max_Occlusion_Cell_Volume,const double& Max_Occlusion_Cell_Volume_Factor )
+    const std::shared_ptr< std::pair< float, float > >& pcl_lims, const double& Max_Occlusion_Cell_Volume,
+    const double& Max_Occlusion_Cell_Volume_Factor )
 {
 
     std::pair< int, int > ret(
