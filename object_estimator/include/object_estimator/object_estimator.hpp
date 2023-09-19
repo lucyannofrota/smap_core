@@ -11,7 +11,7 @@
 #include <thread>
 
 // ROS
-#include "../../include/smap_core/visibility_control.h"
+#include "smap_base/visibility_control.h"
 
 #include <rclcpp/rclcpp.hpp>
 #include <std_msgs/msg/float64_multi_array.hpp>
@@ -28,9 +28,9 @@
 #include <pcl_conversions/pcl_conversions.h>
 
 // SMAP
-#include "../../include/smap_core/count_time.hpp"
-#include "../../include/smap_core/macros.hpp"
 #include "pcl_processing/pcl_processing.hpp"
+#include "smap_base/count_time.hpp"
+#include "smap_base/macros.hpp"
 #include "smap_interfaces/msg/bounding_box2_d.hpp"
 #include "smap_interfaces/msg/depth_map.hpp"
 #include "smap_interfaces/msg/smap_detections.hpp"

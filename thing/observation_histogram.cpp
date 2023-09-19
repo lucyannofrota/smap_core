@@ -1,7 +1,7 @@
 #include "include/thing/observation_histogram.hpp"
 
-#include "../include/smap_core/aux_functions.hpp"
-#include "../include/smap_core/macros.hpp"
+#include "smap_base/aux_functions.hpp"
+#include "smap_base/macros.hpp"
 
 namespace smap
 {

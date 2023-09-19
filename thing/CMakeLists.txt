@@ -12,6 +12,7 @@ project(thing)
         find_package(tf2_geometry_msgs REQUIRED)
     # smap
         find_package(smap_interfaces REQUIRED)
+        find_package(smap_base REQUIRED)
 
 
 ###################
@@ -70,6 +71,11 @@ target_include_directories(observation_histogram PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
 
+target_link_libraries(
+    observation_histogram
+    smap_base::smap_base
+)
+
 # ament_target_dependencies(
 #   observation_histogram 
 # )
@@ -105,6 +111,7 @@ target_link_libraries(
     # topo_marker
     observation_histogram
     # ${Boost_LIBRARIES}
+    smap_base::smap_base
 )
 
 ament_target_dependencies(

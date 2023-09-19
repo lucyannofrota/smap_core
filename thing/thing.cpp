@@ -1,6 +1,6 @@
 #include "include/thing/thing.hpp"
 
-#include "../include/smap_core/stacking_classification.hpp"
+#include "smap_base/stacking_classification.hpp"
 
 namespace smap
 {

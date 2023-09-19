@@ -24,8 +24,8 @@
 #include <visualization_msgs/msg/marker.hpp>
 
 // SMAP
-#include "../../include/smap_core/macros.hpp"
 #include "depth_map.hpp"
+#include "smap_base/macros.hpp"
 
 // TODO: Transpose all PCL related function to this file
 // TODO: Solve compile error

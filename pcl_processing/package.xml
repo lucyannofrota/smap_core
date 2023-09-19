@@ -16,7 +16,7 @@
   <depend>tf2</depend>
   <depend>tf2_geometry_msgs</depend>
   
-  
+  <depend>smap_base</depend>
   <exec_depend>smap_interfaces</exec_depend>
 
   <depend>libpcl-all-dev</depend>

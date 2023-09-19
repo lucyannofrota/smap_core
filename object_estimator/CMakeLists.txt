@@ -24,6 +24,7 @@ endif()
     # smap
         find_package(smap_interfaces REQUIRED)
         find_package(pcl_processing REQUIRED)
+        find_package(smap_base REQUIRED)
         # find_package(pcl_processing REQUIRED PATHS ${CMAKE_CURRENT_SOURCE_DIR}/pcl_processing)
 
 
@@ -105,6 +106,7 @@ include_directories(include/pcl_processing)
     #   ${PCL_LIBRARIES} 
       GL # imgui
       ${SDL2_LIBRARIES} # imgui
+      smap_base::smap_base
       pcl_processing::pcl_processing
     )
 
@@ -118,8 +120,12 @@ include_directories(include/pcl_processing)
     ament_export_dependencies(${DEPENDENCIES})
 
     install(
-        DIRECTORY include/
-        DESTINATION include/smap_core/object_estimator
+        DIRECTORY include/object_estimator
+        DESTINATION include
+    )
+
+    install(TARGETS object_estimator
+      DESTINATION lib/${PROJECT_NAME}/
     )
 
 
@@ -145,6 +151,7 @@ include_directories(include/pcl_processing)
     #   ${PCL_LIBRARIES} 
       GL # imgui
       ${SDL2_LIBRARIES} # imgui
+      smap_base::smap_base
       pcl_processing::pcl_processing
     )
     
@@ -154,7 +161,7 @@ include_directories(include/pcl_processing)
     )
 
     install(TARGETS object_estimator_node
-      DESTINATION lib/smap_core
+      DESTINATION lib/${PROJECT_NAME}/
     )
 
   ## Node ##
