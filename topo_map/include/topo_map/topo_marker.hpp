@@ -10,8 +10,9 @@
 // SMAP
 #include "graph.hpp"
 #include "smap_base/aux_functions.hpp"
-#include "smap_base/interface_templates.hpp"
-#include "smap_base/macros.hpp"
+#include "smap_interfaces/interface_templates.hpp"
+// #include "smap_base/macros.hpp"
+#include "macros.hpp"
 
 // TODO: change the strong_marker policy
 

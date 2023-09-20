@@ -28,9 +28,9 @@
 #include <pcl_conversions/pcl_conversions.h>
 
 // SMAP
+#include "macros.hpp"
 #include "pcl_processing/pcl_processing.hpp"
 #include "smap_base/count_time.hpp"
-#include "smap_base/macros.hpp"
 #include "smap_interfaces/msg/bounding_box2_d.hpp"
 #include "smap_interfaces/msg/depth_map.hpp"
 #include "smap_interfaces/msg/smap_detections.hpp"

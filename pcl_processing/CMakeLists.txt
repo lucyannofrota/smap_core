@@ -30,7 +30,7 @@ add_definitions(${PCL_DEFINITIONS})
             find_package(tf2 REQUIRED)
             find_package(tf2_geometry_msgs REQUIRED)
         # smap
-            find_package(smap_base REQUIRED)
+            # find_package(smap_base REQUIRED)
 
 
 # include_directories(
@@ -89,7 +89,7 @@ target_include_directories(pcl_processing PUBLIC
 target_link_libraries(
     pcl_processing
     ${PCL_LIBRARIES}
-    smap_base::smap_base
+    # smap_base::smap_base
 )
 
 ament_target_dependencies(

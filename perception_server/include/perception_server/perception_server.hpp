@@ -13,7 +13,7 @@
 
 // SMAP
 #include "smap_base/detector_descriptor.hpp"
-#include "smap_base/macros.hpp"
+// #include "smap_base/macros.hpp"
 #include "smap_interfaces/msg/smap_detections.hpp"
 #include "smap_interfaces/msg/smap_object.hpp"
 #include "smap_interfaces/msg/smap_observation.hpp"

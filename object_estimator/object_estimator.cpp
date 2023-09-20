@@ -1,28 +1,13 @@
 #include "include/object_estimator/object_estimator.hpp"
 
 #include "include/object_estimator/imgui_vars.hpp"
-// #include "parameter_tuning.hpp"
 
 #include <math.h>
 
-// ImGui
-// #include "imgui/backends/imgui_impl_opengl3.h"
-// #include "imgui/backends/imgui_impl_sdl2.h"
-// #include "imgui/imgui.h"
-
-// #include <SDL2/SDL.h>
-// #include <SDL2/SDL_opengl.h>
-
 // SMAP
-// #include "../pcl_processing/include/pcl_processing.hpp"
-// #include "pcl_processing/pcl_processing.hpp"
+#include "include/object_estimator/macros.hpp"
 #include "pcl_processing/depth_map.hpp"
 #include "smap_base/aux_functions.hpp"
-
-// PCL
-// #include <iostream>
-// #include <pcl/io/pcd_io.h>
-// #include <pcl/point_types.h>
 
 plot_vec total_thread_time;
 plot_vec box_filter_plot, roi_filter_plot, voxelization_plot, sof_filter_plot, euclidean_clustering_plot,

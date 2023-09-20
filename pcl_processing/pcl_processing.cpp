@@ -15,8 +15,9 @@
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
 // SMAP
-#include "smap_base/interface_templates.hpp"
-#include "smap_base/macros.hpp"
+#include "smap_interfaces/interface_templates.hpp"
+
+// #include "smap_base/macros.hpp"
 
 namespace smap
 {

@@ -16,11 +16,13 @@
 #include <sensor_msgs/msg/point_cloud2.hpp>
 
 // SMAP
+#include "macros.hpp"
 #include "observation_histogram.hpp"
 #include "smap_base/aux_functions.hpp"
 #include "smap_base/detector_descriptor.hpp"
-#include "smap_base/interface_templates.hpp"
-#include "smap_base/macros.hpp"
+#include "smap_interfaces/interface_templates.hpp"
+
+// #include "smap_base/macros.hpp"
 
 namespace smap
 {

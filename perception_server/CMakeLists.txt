@@ -87,7 +87,11 @@ project(perception_server)
     perception_server.cpp
   )
 
-  target_link_libraries(perception_server_node smap_base::smap_base topo_map::topo_map)
+  target_link_libraries(
+    perception_server_node 
+    smap_base::smap_base
+    topo_map::topo_map
+)
 
   target_include_directories(perception_server_node PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
