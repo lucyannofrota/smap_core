@@ -262,21 +262,20 @@ void object_estimator::detections_callback( const smap_interfaces::msg::SmapDete
         // Block until thread pool is available
         while( !this->thread_ctl->available() ) std::this_thread::sleep_for( 1ms );
 
-        this->object_estimation_thread(
-            lock_cloud, transform, pose, std::make_shared< smap_interfaces::msg::SmapObject >( obj ) );
+        // this->object_estimation_thread(
+        //     lock_cloud, transform, pose, std::make_shared< smap_interfaces::msg::SmapObject >( obj ) );
 
         // TODO: Activate multi threading
 
-        // this->thread_ctl->push_back(
-        //   std::make_shared<std::future<void>>(
-        //     std::async(
-        //       std::launch::async,
-        //       &smap::object_estimator::object_estimation_thread,this,
-        //       pcl_point_cloud,
-        //       std::make_shared<smap_interfaces::msg::SmapObject>(obj)
-        //     )
-        //   )
-        // );
+        this->thread_ctl->push_back(
+          std::make_shared<std::future<void>>(
+            std::async(
+              std::launch::async,
+              &smap::object_estimator::object_estimation_thread,this,
+              lock_cloud, transform, pose, std::make_shared< smap_interfaces::msg::SmapObject >( obj ) 
+            )
+          )
+        );
 
         RCLCPP_DEBUG(
             this->get_logger(), "Object detection thread launched! | %i threads running | label: %i",
