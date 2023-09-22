@@ -72,7 +72,7 @@ file(MAKE_DIRECTORY
 )
 
 install(DIRECTORY
-  ../launch
+  # ../launch
   ../scripts
   ../config
   ../SemMap
