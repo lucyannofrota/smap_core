@@ -14,7 +14,7 @@ def generate_launch_description():
 
     smap_node_headless = launch_ros.actions.Node(
             package='smap_node',
-            executable='smap_node_headless',
+            executable='smap_node',
             # name='smap_node',
             namespace='smap',
             output='screen',
