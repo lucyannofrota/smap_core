@@ -150,10 +150,10 @@ void thing::decay_confidence( const double prob_decay_factor, const double& dist
     float pre_sum = 0, sum = 0;
     for( auto& class_likelihood: this->class_probabilities )
     {
-        float mod = ( ( 1 + factor * 3 ) / ( 1 + ( distance / 4 ) ) )
+        float mod = ( ( 1 + factor ) / ( 1 + ( distance / 4 ) ) )
                   * ( 1 - ( this->observations->get_histogram_ratio() / 4 ) );
-        // 0 <= mod <= 4
-        float p_value = 0.5 - prob_decay_factor * ( mod / 8.0 );
+        // 0 <= mod <= 2
+        float p_value = 0.5 - prob_decay_factor * ( mod / 4.0 );
         // 0 < pvalue <= 0.5
         pre_sum += log_odds_inv( class_likelihood.second );
 
