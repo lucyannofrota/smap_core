@@ -64,7 +64,9 @@ void object_estimator::object_estimation_thread(
         // this->box_filter( point_cloud, segment_cloud_pcl, obs.object );
         count_time box_filter_timer;
         this->tim_box_filter.start();
+        this->box_pc.start( point_cloud->width * point_cloud->height );
         box_filter( point_cloud, segment_cloud_pcl, obs.object.bb_2d.keypoint_1, obs.object.bb_2d.keypoint_2 );
+        this->box_pc.stop( segment_cloud_pcl->width * segment_cloud_pcl->height );
         this->tim_box_filter.stop();
         const char box_filt_str[] = "box_filter";
         box_filter_timer.get_time( this->get_logger(), box_filt_str, box_filter_plot );
@@ -74,7 +76,9 @@ void object_estimator::object_estimation_thread(
             // this->roi_filter( segment_cloud_pcl );
             count_time roi_filt_timer;
             this->tim_roi_filter.start();
+            this->roi_pc.start( segment_cloud_pcl->width * segment_cloud_pcl->height );
             roi_filter( segment_cloud_pcl, this->pcl_lims );
+            this->roi_pc.stop( segment_cloud_pcl->width * segment_cloud_pcl->height );
             this->tim_roi_filter.stop();
             const char roi_filt_str[] = "roi_filter";
             roi_filt_timer.get_time( this->get_logger(), roi_filt_str, roi_filter_plot );
@@ -85,7 +89,9 @@ void object_estimator::object_estimation_thread(
             // this->pcl_voxelization( segment_cloud_pcl );
             count_time pcl_vox_timer;
             this->tim_voxelization.start();
+            this->voxelization_pc.start( segment_cloud_pcl->width * segment_cloud_pcl->height );
             pcl_voxelization( segment_cloud_pcl, this->leaf_size );
+            this->voxelization_pc.stop( segment_cloud_pcl->width * segment_cloud_pcl->height );
             this->tim_voxelization.stop();
             const char pcl_vox_str[] = "pcl_vox";
             pcl_vox_timer.get_time( this->get_logger(), pcl_vox_str, voxelization_plot );
@@ -96,7 +102,9 @@ void object_estimator::object_estimation_thread(
             // this->statistical_outlier_filter( segment_cloud_pcl );
             count_time statistical_outlier_filter_timer;
             this->tim_sof.start();
+            this->sof_pc.start( segment_cloud_pcl->width * segment_cloud_pcl->height );
             statistical_outlier_filter( segment_cloud_pcl, this->mean_k, this->mu );
+            this->sof_pc.stop( segment_cloud_pcl->width * segment_cloud_pcl->height );
             this->tim_sof.stop();
             const char sof_filt_str[] = "statistical_outlier_filter";
             statistical_outlier_filter_timer.get_time( this->get_logger(), sof_filt_str, sof_filter_plot );
@@ -108,7 +116,9 @@ void object_estimator::object_estimation_thread(
             // this->euclidean_clustering( segment_cloud_pcl, segment_cloud_pcl );
             count_time euclidean_clustering_timer;
             this->tim_euclidean_clustering.start();
+            this->clustering_pc.start( segment_cloud_pcl->width * segment_cloud_pcl->height );
             euclidean_clustering( segment_cloud_pcl, object_cloud_pcl, this->ClusterTolerance );
+            this->clustering_pc.stop( segment_cloud_pcl->width * segment_cloud_pcl->height );
             this->tim_euclidean_clustering.stop();
             const char euc_clust_str[] = "euclidean_clustering";
             euclidean_clustering_timer.get_time( this->get_logger(), euc_clust_str, euclidean_clustering_plot );
@@ -267,15 +277,9 @@ void object_estimator::detections_callback( const smap_interfaces::msg::SmapDete
 
         // TODO: Activate multi threading
 
-        this->thread_ctl->push_back(
-          std::make_shared<std::future<void>>(
-            std::async(
-              std::launch::async,
-              &smap::object_estimator::object_estimation_thread,this,
-              lock_cloud, transform, pose, std::make_shared< smap_interfaces::msg::SmapObject >( obj ) 
-            )
-          )
-        );
+        this->thread_ctl->push_back( std::make_shared< std::future< void > >( std::async(
+            std::launch::async, &smap::object_estimator::object_estimation_thread, this, lock_cloud, transform, pose,
+            std::make_shared< smap_interfaces::msg::SmapObject >( obj ) ) ) );
 
         RCLCPP_DEBUG(
             this->get_logger(), "Object detection thread launched! | %i threads running | label: %i",

@@ -17,7 +17,7 @@ endif()
 set(LIB_INC
     include/smap_base/aux_functions.hpp
     src/aux_functions.cpp
-    include/smap_base/count_time.hpp
+    include/smap_base/counters.hpp
     include/smap_base/detector_descriptor.hpp
     # include/smap_base/interface_templates.hpp
     include/smap_base/macros.hpp

@@ -31,7 +31,7 @@
 #include "label_writers.hpp"
 // #include "perception_server/perception_server.hpp"
 #include "smap_base/aux_functions.hpp"
-#include "smap_base/count_time.hpp"
+#include "smap_base/counters.hpp"
 // #include "smap_base/macros.hpp"
 #include "smap_interfaces/msg/depth_map.hpp"
 #include "smap_interfaces/msg/smap_object.hpp"

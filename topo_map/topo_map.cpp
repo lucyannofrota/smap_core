@@ -1,7 +1,7 @@
 #include "include/topo_map/topo_map.hpp"
 
 #include "pcl_processing/depth_map.hpp"
-#include "smap_base/count_time.hpp"
+#include "smap_base/counters.hpp"
 
 // STL
 #include <algorithm>

@@ -20,5 +20,3 @@ pcl_test/
 samples/image_saver/
 
 samples/example_pcd.pcd
-
-timers/*

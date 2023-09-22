@@ -30,7 +30,7 @@
 // SMAP
 #include "macros.hpp"
 #include "pcl_processing/pcl_processing.hpp"
-#include "smap_base/count_time.hpp"
+#include "smap_base/counters.hpp"
 #include "smap_interfaces/msg/bounding_box2_d.hpp"
 #include "smap_interfaces/msg/depth_map.hpp"
 #include "smap_interfaces/msg/smap_detections.hpp"
@@ -185,6 +185,12 @@ class object_estimator : public rclcpp::Node
             std::string( "/workspace/src/smap/smap_core/timers/object_estimator/tim_estimate_confidence.txt" ) },
         tim_transform { std::string( "/workspace/src/smap/smap_core/timers/object_estimator/tim_transform.txt" ) },
         tim_3D_AAB { std::string( "/workspace/src/smap/smap_core/timers/object_estimator/tim_3D_AAB.txt" ) };
+
+    count_points box_pc { std::string( "/workspace/src/smap/smap_core/vals/object_estimator/box_filter.txt" ) },
+        roi_pc { std::string( "/workspace/src/smap/smap_core/vals/object_estimator/roi_filter.txt" ) },
+        voxelization_pc { std::string( "/workspace/src/smap/smap_core/vals/object_estimator/voxelization.txt" ) },
+        sof_pc { std::string( "/workspace/src/smap/smap_core/vals/object_estimator/sof_filter.txt" ) },
+        clustering_pc { std::string( "/workspace/src/smap/smap_core/vals/object_estimator/clustering_filter.txt" ) };
     // TODO: COMPLETE EXPORTS
 
   public:
@@ -193,13 +199,13 @@ class object_estimator : public rclcpp::Node
     std::shared_ptr< std::pair< float, float > > pcl_lims =
         std::make_shared< std::pair< float, float > >( 0.3, 1.6 );  // TODO: Create parameter
 
-    float leaf_size        = 0.03f;                               // 0.00 <= leaf_size <= 0.05 | 0.03
+    float leaf_size        = 0.03f;                                 // 0.00 <= leaf_size <= 0.05 | 0.03
 
     int mean_k             = 8;
     float mu               = 0.3f;
 
     float ClusterTolerance = 0.065f;
-    int minClusterSize     = 100;
+    int minClusterSize     = 50;
     int maxClusterSize     = 10000;
 
     bool roi_filt = true, voxelization = true, sof = true, euclidean_clust = true, pcl_lock = false;
