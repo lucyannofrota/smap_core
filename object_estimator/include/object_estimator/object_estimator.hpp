@@ -125,7 +125,7 @@ class object_estimator : public rclcpp::Node
 {
   private:
 
-    const size_t max_threads = 8;  // Should be grater then 1 because of the function "__compute_timeout"
+    const size_t max_threads = 1;  // Should be grater then 1 because of the function "__compute_timeout"
 
     rclcpp::Subscription< smap_interfaces::msg::SmapDetections >::SharedPtr smap_detections_sub =
         this->create_subscription< smap_interfaces::msg::SmapDetections >(
@@ -191,16 +191,16 @@ class object_estimator : public rclcpp::Node
 
     // TODO: move to private
     std::shared_ptr< std::pair< float, float > > pcl_lims =
-        std::make_shared< std::pair< float, float > >( 0.4, 4 );  // TODO: Create parameter
+        std::make_shared< std::pair< float, float > >( 0.3, 1.6 );  // TODO: Create parameter
 
-    float leaf_size        = 0.02f;                               // 0.00 <= leaf_size <= 0.05 | 0.03
+    float leaf_size        = 0.03f;                               // 0.00 <= leaf_size <= 0.05 | 0.03
 
-    int mean_k             = 10;
+    int mean_k             = 8;
     float mu               = 0.3f;
 
-    float ClusterTolerance = 0.021f;
+    float ClusterTolerance = 0.065f;
     int minClusterSize     = 100;
-    int maxClusterSize     = 25000;
+    int maxClusterSize     = 10000;
 
     bool roi_filt = true, voxelization = true, sof = true, euclidean_clust = true, pcl_lock = false;
 
