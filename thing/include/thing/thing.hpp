@@ -37,7 +37,7 @@ enum thing_state_t
 {
     NONE,
     ABSENT,
-		PARTIALLY_OCCLUDED,
+    PARTIALLY_OCCLUDED,
     OCCLUDED,
     VALID
 };
@@ -144,6 +144,8 @@ class thing
         double distance, double angle, const detector_t& detector );
 
     void decay_confidence( const double prob_decay_factor, const double& distance, const double& factor );
+
+    void decay( const double& distance, const double& angle, const double& base_decay, const double& decay_factor );
     // {
     //     // current_likelihood - is a map containing a vector of probabilities that represents the probability of
     //     beeing

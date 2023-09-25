@@ -150,8 +150,8 @@ void thing::decay_confidence( const double prob_decay_factor, const double& dist
     float pre_sum = 0, sum = 0;
     for( auto& class_likelihood: this->class_probabilities )
     {
-        float mod = ( ( 1 + factor ) / ( 1 + ( distance / 4 ) ) )
-                  * ( 1 - ( this->observations->get_histogram_ratio() / 4 ) );
+        float mod =
+            ( ( 1 + factor ) / ( 1 + ( distance / 4 ) ) ) * ( 1 - ( this->observations->get_histogram_ratio() / 4 ) );
         // 0 <= mod <= 2
         float p_value = 0.5 - prob_decay_factor * ( mod / 4.0 );
         // 0 < pvalue <= 0.5
@@ -164,6 +164,14 @@ void thing::decay_confidence( const double prob_decay_factor, const double& dist
     }
     RCLCPP_INFO( this->logger, "sum: %f, pre_sum: %f", sum, pre_sum );
     assert( sum <= pre_sum );
+}
+
+void thing::decay( const double& distance, const double& angle, const double& base_decay, const double& decay_factor )
+{
+    // Decay observation histogram
+    this->observations->register_obs( distance, angle, false );
+    // Decay confidence
+    this->decay_confidence( base_decay, distance, decay_factor );
 }
 
 bool thing::is_valid( const double confidence_threshold ) const

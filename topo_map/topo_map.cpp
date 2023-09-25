@@ -269,8 +269,9 @@ std::numeric_limits< double >::infinity() },
 
                 // 2.3. Classify the object as occluded or non-occluded and update
                 size_t cells_total = cells_before + cells_in + cells_after;
+                double decay_value = 0;
                 if( cells_total == 0 ) return;
-                double base_decay = ( cells_before + cells_after ) * 1.0 / ( cells_total * 1.0 );
+                double cell_decay_factor = ( cells_before + cells_after ) * 1.0 / ( cells_total * 1.0 );
                 // 2.3.1 Check for occluded objects
                 // 2.3.1-1 Most of collisions happens before the object [Occluded - case 1]
                 RCLCPP_DEBUG(
@@ -278,26 +279,30 @@ std::numeric_limits< double >::infinity() },
                     cells_before, cells_in, cells_after, cells_total );
                 if( cells_before > cells_in + cells_after )
                 {
-                    this->occlusion_transaction(
-                        object, distance_camera_to_object, msg, cells_total, cells_before, cells_in, cells_after,
-                        std::string( "[OCC] Occluded case 1 | factor: %f " ),
-                        base_decay * DEFAULT_OCCLUSION_DECAY_PENALTY );
+                    decay_value = cell_decay_factor * DEFAULT_OCCLUSION_DECAY_PENALTY;
+                    RCLCPP_DEBUG( this->get_logger(), "[OCC] Occluded case 1 | factor: %f ", decay_value );
+                    object.decay(
+                        distance_camera_to_object, this->compute_corner_direction( msg->camera_pose, object.pos ),
+                        this->get_parameter( "Object_Prob_Decay" ).as_double(), decay_value );
                     object.state = thing_state_t::OCCLUDED;
                     continue;
                 }
                 // 2.3.1-2 Most of collisions happens at the object [VALID - case 2]
                 if( cells_in > cells_before + cells_after )
                 {
-                    RCLCPP_DEBUG( this->get_logger(), "[OCC] Valid case 2 | factor: 0" );
+                    decay_value = 0;
+                    RCLCPP_DEBUG( this->get_logger(), "[OCC] Occluded case 2 | factor: %f ", decay_value );
                     object.state = thing_state_t::VALID;
                     continue;
                 }
                 // 2.3.1-3 Most of collisions happens after the object [ABSENT - case 3]
                 if( cells_after > cells_before + cells_in )
                 {
-                    this->occlusion_transaction(
-                        object, distance_camera_to_object, msg, cells_total, cells_before, cells_in, cells_after,
-                        std::string( "[OCC] Absent case 3 | factor: %f" ), base_decay );
+                    decay_value = cell_decay_factor;
+                    RCLCPP_DEBUG( this->get_logger(), "[OCC] Absent case 3 | factor: %f", decay_value );
+                    object.decay(
+                        distance_camera_to_object, this->compute_corner_direction( msg->camera_pose, object.pos ),
+                        this->get_parameter( "Object_Prob_Decay" ).as_double(), decay_value );
                     object.state = thing_state_t::ABSENT;
                     continue;
                 }
@@ -306,10 +311,11 @@ std::numeric_limits< double >::infinity() },
                 if( ( cells_before / ( cells_total * 1.0 ) )
                     > this->get_parameter( "Occlusion_Max_Percentage" ).as_double() )
                 {
-                    this->occlusion_transaction(
-                        object, distance_camera_to_object, msg, cells_total, cells_before, cells_in, cells_after,
-                        std::string( "[OCC] Occluded case 4 | factor: %f" ),
-                        base_decay * DEFAULT_OCCLUSION_DECAY_PENALTY * 0.8 );
+                    decay_value = cell_decay_factor * DEFAULT_OCCLUSION_DECAY_PENALTY * 0.8;
+                    RCLCPP_DEBUG( this->get_logger(), "[OCC] Occluded case 4 | factor: %f", decay_value );
+                    object.decay(
+                        distance_camera_to_object, this->compute_corner_direction( msg->camera_pose, object.pos ),
+                        this->get_parameter( "Object_Prob_Decay" ).as_double(), decay_value );
                     object.state = thing_state_t::OCCLUDED;
                     continue;
                 }
@@ -324,20 +330,24 @@ std::numeric_limits< double >::infinity() },
                 switch( d_max_cells )
                 {
                 case 0:
-                    this->occlusion_transaction(
-                        object, distance_camera_to_object, msg, cells_total, cells_before, cells_in, cells_after,
-                        std::string( "[OCC] Occluded case 5.1 | factor: %f" ),
-                        base_decay * DEFAULT_OCCLUSION_DECAY_PENALTY * 0.5 );
+                    decay_value = cell_decay_factor * DEFAULT_OCCLUSION_DECAY_PENALTY * 0.5;
+                    RCLCPP_DEBUG( this->get_logger(), "[OCC] Occluded case 5.1 | factor: %f", decay_value );
+                    object.decay(
+                        distance_camera_to_object, this->compute_corner_direction( msg->camera_pose, object.pos ),
+                        this->get_parameter( "Object_Prob_Decay" ).as_double(), decay_value );
                     object.state = thing_state_t::OCCLUDED;
                     break;
                 case 1:
-                    RCLCPP_DEBUG( this->get_logger(), "[OCC] Valid case 5.2 | factor: 0" );
+                    decay_value = 0;
+                    RCLCPP_DEBUG( this->get_logger(), "[OCC] Valid case 5.2 | factor: %f", decay_value );
                     object.state = thing_state_t::VALID;
                     break;
                 case 2:
-                    this->occlusion_transaction(
-                        object, distance_camera_to_object, msg, cells_total, cells_before, cells_in, cells_after,
-                        std::string( "[OCC] Absent case 5.3 | factor: %f" ), base_decay * 0.5 );
+                    decay_value = cell_decay_factor * 0.5;
+                    RCLCPP_DEBUG( this->get_logger(), "[OCC] Absent case 5.3 | factor: %f", decay_value );
+                    object.decay(
+                        distance_camera_to_object, this->compute_corner_direction( msg->camera_pose, object.pos ),
+                        this->get_parameter( "Object_Prob_Decay" ).as_double(), decay_value );
                     object.state = thing_state_t::ABSENT;
                     break;
                 }

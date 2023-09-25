@@ -396,9 +396,7 @@ class topo_map : public rclcpp::Node
 
     inline void occlusion_transaction(
         thing& object, const double& distance_camera_to_object,
-        const std::shared_ptr< smap_interfaces::msg::DepthMap >& msg, const size_t& cells_total,
-        const size_t& cells_before, const size_t& cells_in, const size_t& cells_after, const std::string& format,
-        double decay )
+        const std::shared_ptr< smap_interfaces::msg::DepthMap >& msg, const std::string& format, double decay )
     {
         RCLCPP_DEBUG( this->get_logger(), format, decay );
         object.observations->register_obs(
