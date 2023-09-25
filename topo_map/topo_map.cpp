@@ -270,6 +270,7 @@ std::numeric_limits< double >::infinity() },
                 // 2.3. Classify the object as occluded or non-occluded and update
                 size_t cells_total = cells_before + cells_in + cells_after;
                 if( cells_total == 0 ) return;
+                double base_decay = ( cells_before + cells_after ) * 1.0 / ( cells_total * 1.0 );
                 // 2.3.1 Check for occluded objects
                 // 2.3.1-1 Most of collisions happens before the object [Occluded - case 1]
                 RCLCPP_DEBUG(
@@ -277,41 +278,27 @@ std::numeric_limits< double >::infinity() },
                     cells_before, cells_in, cells_after, cells_total );
                 if( cells_before > cells_in + cells_after )
                 {
-                    RCLCPP_DEBUG(
-                        this->get_logger(), "[OCC] Occluded case 1 | factor: %f",
-                        ( ( cells_before + cells_after ) * 1.0 / ( cells_total * 1.0 ) ) / 4.0 );
-                    object.observations->register_obs(
-                        distance_camera_to_object, this->compute_corner_direction( msg->camera_pose, object.pos ),
-                        false );
-                    object.decay_confidence(
-                        this->get_parameter( "Object_Prob_Decay" ).as_double(), distance_camera_to_object,
-                        ( ( cells_before + cells_after ) * 1.0 / ( cells_total * 1.0 ) ) / 4.0 );
+                    this->occlusion_transaction(
+                        object, distance_camera_to_object, msg, cells_total, cells_before, cells_in, cells_after,
+                        std::string( "[OCC] Occluded case 1 | factor: %f " ),
+                        base_decay * DEFAULT_OCCLUSION_DECAY_PENALTY );
+                    object.state = thing_state_t::OCCLUDED;
                     continue;
                 }
-                // 2.3.1-2 Most of collisions happens at the object [Non-Occluded - case 2]
+                // 2.3.1-2 Most of collisions happens at the object [VALID - case 2]
                 if( cells_in > cells_before + cells_after )
                 {
-                    RCLCPP_DEBUG( this->get_logger(), "[OCC] Non-Occluded case 2 | factor: 0" );
-                    // object.observations->register_obs(
-                    //     distance_camera_to_object, this->compute_corner_direction( msg->camera_pose, object.pos ),
-                    //     false );
-                    // object.decay_confidence(
-                    //     this->get_parameter( "Object_Prob_Decay" ).as_double(), distance_camera_to_object,
-                    //     ( ( cells_before + cells_after ) * 1.0 / ( cells_total * 1.0 ) ) / 4 );
+                    RCLCPP_DEBUG( this->get_logger(), "[OCC] Valid case 2 | factor: 0" );
+                    object.state = thing_state_t::VALID;
                     continue;
                 }
-                // 2.3.1-3 Most of collisions happens after the object [Non-Occluded - case 3]
+                // 2.3.1-3 Most of collisions happens after the object [ABSENT - case 3]
                 if( cells_after > cells_before + cells_in )
                 {
-                    RCLCPP_DEBUG(
-                        this->get_logger(), "[OCC] Non-Occluded case 3 | factor: %f",
-                        ( ( cells_before + cells_after ) * 1.0 / ( cells_total * 1.0 ) ) );
-                    object.observations->register_obs(
-                        distance_camera_to_object, this->compute_corner_direction( msg->camera_pose, object.pos ),
-                        false );
-                    object.decay_confidence(
-                        this->get_parameter( "Object_Prob_Decay" ).as_double(), distance_camera_to_object,
-                        ( ( cells_before + cells_after ) * 1.0 / ( cells_total * 1.0 ) ) );
+                    this->occlusion_transaction(
+                        object, distance_camera_to_object, msg, cells_total, cells_before, cells_in, cells_after,
+                        std::string( "[OCC] Absent case 3 | factor: %f" ), base_decay );
+                    object.state = thing_state_t::ABSENT;
                     continue;
                 }
 
@@ -319,15 +306,11 @@ std::numeric_limits< double >::infinity() },
                 if( ( cells_before / ( cells_total * 1.0 ) )
                     > this->get_parameter( "Occlusion_Max_Percentage" ).as_double() )
                 {
-                    RCLCPP_DEBUG(
-                        this->get_logger(), "[OCC] Occluded case 4 | factor: %f",
-                        ( ( cells_before + cells_after ) * 1.0 / ( cells_total * 1.0 ) ) / 4.0 );
-                    object.observations->register_obs(
-                        distance_camera_to_object, this->compute_corner_direction( msg->camera_pose, object.pos ),
-                        false );
-                    object.decay_confidence(
-                        this->get_parameter( "Object_Prob_Decay" ).as_double(), distance_camera_to_object,
-                        ( ( cells_before + cells_after ) * 1.0 / ( cells_total * 1.0 ) ) / 4.0 );
+                    this->occlusion_transaction(
+                        object, distance_camera_to_object, msg, cells_total, cells_before, cells_in, cells_after,
+                        std::string( "[OCC] Occluded case 4 | factor: %f" ),
+                        base_decay * DEFAULT_OCCLUSION_DECAY_PENALTY * 0.8 );
+                    object.state = thing_state_t::OCCLUDED;
                     continue;
                 }
 
@@ -341,29 +324,21 @@ std::numeric_limits< double >::infinity() },
                 switch( d_max_cells )
                 {
                 case 0:
-                    RCLCPP_DEBUG(
-                        this->get_logger(), "[OCC] Occluded case 5.1 | factor: %f",
-                        ( ( ( cells_before + cells_after ) * 1.0 / ( cells_total * 1.0 ) ) / 4.0 ) * 0.5 );
-                    object.observations->register_obs(
-                        distance_camera_to_object, this->compute_corner_direction( msg->camera_pose, object.pos ),
-                        false );
-                    object.decay_confidence(
-                        this->get_parameter( "Object_Prob_Decay" ).as_double(), distance_camera_to_object,
-                        ( ( ( cells_before + cells_after ) * 1.0 / ( cells_total * 1.0 ) ) / 4.0 ) * 0.5 );
+                    this->occlusion_transaction(
+                        object, distance_camera_to_object, msg, cells_total, cells_before, cells_in, cells_after,
+                        std::string( "[OCC] Occluded case 5.1 | factor: %f" ),
+                        base_decay * DEFAULT_OCCLUSION_DECAY_PENALTY * 0.5 );
+                    object.state = thing_state_t::OCCLUDED;
                     break;
                 case 1:
-                    RCLCPP_DEBUG( this->get_logger(), "[OCC] Non-Occluded case 5.2 | factor: 0" );
+                    RCLCPP_DEBUG( this->get_logger(), "[OCC] Valid case 5.2 | factor: 0" );
+                    object.state = thing_state_t::VALID;
                     break;
                 case 2:
-                    RCLCPP_DEBUG(
-                        this->get_logger(), "[OCC] Non-Occluded case 5.3 | factor: %f",
-                        ( ( cells_before + cells_after ) * 1.0 / ( cells_total * 1.0 ) ) * 0.5 );
-                    object.observations->register_obs(
-                        distance_camera_to_object, this->compute_corner_direction( msg->camera_pose, object.pos ),
-                        false );
-                    object.decay_confidence(
-                        this->get_parameter( "Object_Prob_Decay" ).as_double(), distance_camera_to_object,
-                        ( ( cells_before + cells_after ) * 1.0 / ( cells_total * 1.0 ) ) * 0.5 );
+                    this->occlusion_transaction(
+                        object, distance_camera_to_object, msg, cells_total, cells_before, cells_in, cells_after,
+                        std::string( "[OCC] Absent case 5.3 | factor: %f" ), base_decay * 0.5 );
+                    object.state = thing_state_t::ABSENT;
                     break;
                 }
             }

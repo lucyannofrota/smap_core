@@ -29,17 +29,6 @@ void object_estimator::object_estimation_thread(
 {
     if( !point_cloud || !transform || !pose || !obj ) return;
 
-    // printf("POS [%i,%i]\n",
-    //   obj->bb_2d.keypoint_1[0],
-    //   obj->bb_2d.keypoint_1[1]
-    // );
-    // if(
-    //   ! ((obj->bb_2d.keypoint_1[0] > 180) &&
-    //   (obj->bb_2d.keypoint_1[0] < 300))
-    // ) return;
-
-    // if(obj->confidence <= 70) return;
-
     this->tim_object_estimation_thread.start();
 
     try
@@ -266,6 +255,10 @@ void object_estimator::detections_callback( const smap_interfaces::msg::SmapDete
             continue;                    // TODO: Remove DEBUG
 
         if( obj.label != 62 ) continue;  // TODO: Remove DEBUG
+
+        if( ( obj.bb_2d.keypoint_1[ 0 ] < ( ( 672 / 2 ) - ( 672 / 6 ) ) )
+            || ( obj.bb_2d.keypoint_1[ 0 ] > ( ( 672 / 2 ) + ( 672 / 6 ) ) ) )
+            continue;  // TODO: Remove DEBUG
 
         obj.module_id = input_msg->module_id;
 

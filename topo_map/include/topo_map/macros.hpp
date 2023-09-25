@@ -36,6 +36,8 @@ namespace smap
 #define DEFAULT_OBJECT_PROB_DECAY                                                                                      \
     0.8  // It should be 0 <= value < 1. The decay will vary between OBJECT_PROB_DECAY and 2xOBJECT_PROB_DECAY
 
+#define DEFAULT_OCCLUSION_DECAY_PENALTY 1.0 / 16.0
+
 // #define DEPTH_MAP_ROWS 32  // 16
 // #define DEPTH_MAP_COLS 64  // 32
 

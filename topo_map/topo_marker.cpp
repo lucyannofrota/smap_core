@@ -246,10 +246,39 @@ void topo_marker::update_markers( const graph_t& graph, std::mutex& map_mutex, c
             // aabb label
             this->aabb_label.pose.position    = r_thing.pos + ( up_point * 0.5 );
             this->aabb_label.pose.position.z += this->aabb.scale.z / 2;
-            this->aabb_label.text             = std::string( "l:" ) + r_thing.get_label().first + std::string( "|id:" )
-                                  + std::to_string( r_thing.id ) + std::string( "|v:" )
-                                  + std::to_string( graph[ e ].index ) + std::string( "|c:" )
-                                  + std::to_string( r_thing.get_combined_confidence( confidence_threshold ) );
+            // this->aabb_label.text             = std::string( "l:" ) + r_thing.get_label().first + std::string( "|id:"
+            // )
+            //                       + std::to_string( r_thing.id ) + std::string( "|v:" )
+            //                       + std::to_string( graph[ e ].index ) + std::string( "|c:" )
+            //                       + std::to_string( r_thing.get_combined_confidence( confidence_threshold ) );
+            std::string st;
+            switch( r_thing.state )
+            {
+            case thing_state_t::VALID:
+                st = 'V';
+                break;
+            case thing_state_t::PARTIALLY_OCCLUDED:
+                st = 'P';
+                break;
+            case thing_state_t::OCCLUDED:
+                st = 'O';
+                break;
+            case thing_state_t::ABSENT:
+                st = 'A';
+                break;
+
+            default:
+                st = 'N';
+                break;
+            }
+            // this->aabb_label.
+            this->aabb_label.text = string_format(
+                "l:%s|st:%s|c:%5.3f", r_thing.get_label().first.c_str(), st.c_str(),
+                r_thing.get_combined_confidence( confidence_threshold ) );
+            printf(
+                "Text: %s, c: %f\n", this->aabb_label.text.c_str(),
+                r_thing.get_combined_confidence( confidence_threshold ) );
+
             this->aabb_label.id           = obj_id;
             this->aabb_label.header.stamp = clock->now();
             this->array.markers.push_back( this->aabb_label );
@@ -259,7 +288,7 @@ void topo_marker::update_markers( const graph_t& graph, std::mutex& map_mutex, c
         }
     }
 
-    printf( "Objects found: %i\n", i_obj );
+    // printf( "Objects found: %i\n", i_obj );
 
     this->vertex.header.stamp = clock->now();
     this->edge.header.stamp   = clock->now();

@@ -25,7 +25,7 @@ void observation_histogram::register_obs( double distance, double angle, bool po
     // int c            = this->histogram.axis().size();
     // int b            = this->histogram.size();
 
-    double add_value = HISTOGRAM_BIN_CHANGE_VALUE / ( 1 + distance );
+    double add_value = HISTOGRAM_BIN_CHANGE_VALUE / ( 1 + distance / 3 );
 
     int idx;
     // printf( "----------------\n" );

@@ -33,6 +33,15 @@ enum semantic_type_t
     LOCATION
 };
 
+enum thing_state_t
+{
+    NONE,
+    ABSENT,
+		PARTIALLY_OCCLUDED,
+    OCCLUDED,
+    VALID
+};
+
 // Can be a location or object thing
 
 class thing
@@ -52,7 +61,9 @@ class thing
 
     std::map< std::string, float > class_probabilities;
 
-    int id = -1;
+    int id              = -1;
+
+    thing_state_t state = thing_state_t::NONE;
 
     // Methods
     thing( void ) : logger( rclcpp::get_logger( "thing_misc" ) ) {}

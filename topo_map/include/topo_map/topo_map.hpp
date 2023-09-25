@@ -244,7 +244,7 @@ class topo_map : public rclcpp::Node
     }
 
     // Transform inline
-    void filter_vertices(
+    inline void filter_vertices(
         std::vector< size_t >& idxs_checked, std::vector< std::pair< size_t, std::vector< thing* > > >& candidates,
         const uint8_t& module_id, const uint8_t& label, const geometry_msgs::msg::Point& obj_pos,
         const geometry_msgs::msg::Pose& robot_pose )
@@ -392,6 +392,19 @@ class topo_map : public rclcpp::Node
                     observation->object.aabb.min.point, observation->object.aabb.max.point ),
                 observation->object.aabb.confidence, min_distance, (double) observation->direction, *det );
         }
+    }
+
+    inline void occlusion_transaction(
+        thing& object, const double& distance_camera_to_object,
+        const std::shared_ptr< smap_interfaces::msg::DepthMap >& msg, const size_t& cells_total,
+        const size_t& cells_before, const size_t& cells_in, const size_t& cells_after, const std::string& format,
+        double decay )
+    {
+        RCLCPP_DEBUG( this->get_logger(), format, decay );
+        object.observations->register_obs(
+            distance_camera_to_object, this->compute_corner_direction( msg->camera_pose, object.pos ), false );
+        object.decay_confidence(
+            this->get_parameter( "Object_Prob_Decay" ).as_double(), distance_camera_to_object, decay );
     }
 
     inline void object_combination(

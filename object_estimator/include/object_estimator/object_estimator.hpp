@@ -153,21 +153,11 @@ class object_estimator : public rclcpp::Node
         this->create_publisher< smap_interfaces::msg::DepthMap >(
             std::string( this->get_namespace() ) + std::string( "/object_estimator/depth_map" ), 2 );
 
-    // rclcpp::Publisher< visualization_msgs::msg::Marker >::SharedPtr transform_pub =
-    //     this->create_publisher< visualization_msgs::msg::Marker >(
-    //         std::string( this->get_namespace() ) + std::string( "/object_estimator/transform" ), 2 );
-
     visualization_msgs::msg::MarkerArray marker_array;
     visualization_msgs::msg::Marker box_marker;
-    // visualization_msgs::msg::Marker transform_marker;
 
     smap_interfaces::msg::DepthMap occ_map;
 
-    // std_msgs::msg::Float64MultiArray depth_map;
-
-    // rclcpp::Publisher< smap_interfaces::msg::SmapObservation >::SharedPtr object_pub =
-    //     this->create_publisher< smap_interfaces::msg::SmapObservation >(
-    //         std::string( this->get_namespace() ) + std::string( "/object_estimator/depth_map" ), 2 );
     std::mutex pcl_pub_mutex, object_bb_pub_mutex, object_pub_mutex, object_pcl_pub_mutex;
 
     std::shared_ptr< thread_queue > thread_ctl = std::make_shared< thread_queue >( thread_queue( this->max_threads ) );
@@ -197,7 +187,7 @@ class object_estimator : public rclcpp::Node
 
     // TODO: move to private
     std::shared_ptr< std::pair< float, float > > pcl_lims =
-        std::make_shared< std::pair< float, float > >( 0.3, 1.6 );  // TODO: Create parameter
+        std::make_shared< std::pair< float, float > >( 0.2, 1.6 );  // TODO: Create parameter
 
     float leaf_size        = 0.03f;                                 // 0.00 <= leaf_size <= 0.05 | 0.03
 
@@ -247,36 +237,10 @@ class object_estimator : public rclcpp::Node
         this->box_marker.lifetime.sec       = 2;
         this->box_marker.lifetime.nanosec   = 500 * 1000 * 1000;
 
-        // this->transform_marker.header.frame_id    = "map";
-        // this->transform_marker.header.stamp       = this->get_clock()->now();
-        // this->transform_marker.type               = visualization_msgs::msg::Marker::ARROW;
-        // this->transform_marker.action             = visualization_msgs::msg::Marker::ADD;
-        // this->transform_marker.pose.orientation.x = 0;
-        // this->transform_marker.pose.orientation.y = 0;
-        // this->transform_marker.pose.orientation.z = 0;
-        // this->transform_marker.pose.orientation.w = 1;
-        // this->transform_marker.color.b            = 0;
-        // this->transform_marker.color.g            = 0;
-        // this->transform_marker.color.r            = 1;
-        // this->transform_marker.color.a            = 1;
-        // this->transform_marker.ns                 = "transform";
-        // this->transform_marker.scale.x            = 1;
-        // this->transform_marker.scale.y            = 1;
-        // this->transform_marker.scale.z            = 1;
-
         this->occ_map.map.resize( DEPTH_MAP_ROWS * DEPTH_MAP_COLS * DEPTH_MAP_FIELDS );
     }
 
     inline ~object_estimator() {}
-
-    // bool estimate_object_3D_AABB(
-    //     const pcl::shared_ptr< cloud_t >& object_cloud, smap_interfaces::msg::SmapObject& obj ) const;
-
-    // bool estimate_confidence( const pcl::shared_ptr< cloud_t >& object_cloud, float& conf ) const;
-
-    // void transform_object_pcl(
-    //     smap_interfaces::msg::SmapObject& obj,
-    //     const std::shared_ptr< geometry_msgs::msg::TransformStamped >& transform ) const;
 
     inline void publish_bb( int32_t id, smap_interfaces::msg::SmapObject& obj )
     {
