@@ -20,15 +20,12 @@ observation_histogram::observation_histogram( size_t n_bins )
 
 void observation_histogram::register_obs( double distance, double angle, bool positive )
 {
-    // printf( "reg_obs\n" );
-
     // int c            = this->histogram.axis().size();
     // int b            = this->histogram.size();
 
     double add_value = HISTOGRAM_BIN_CHANGE_VALUE / ( 1 + distance / 2 );
 
     int idx;
-    // printf( "----------------\n" );
     for( int i = -int( floor( this->l / 2 ) ), j = 0; i <= int( floor( this->l / 2 ) ); i++, j++ )
     {
         // TODO: Check -= log_odds() -> This should be += log_odds()
@@ -105,7 +102,6 @@ bool observation_histogram::object_is_valid( void ) const
 
 // bool observation_histogram::object_is_valid( double current_angle ) const
 // {
-//     // printf( "object_is_valid\n" );
 //     const double upper_sat_threshold = 0.90, upper_threshold = 0.7, lower_threshold = 0.4;
 //     size_t pos_bins = 0, neg_bins = 0;
 //     int idx;

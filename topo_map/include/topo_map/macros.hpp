@@ -20,7 +20,7 @@ namespace smap
 
 #define DEFAULT_NEW_EDGE_FACTOR 0.95                                   // Must be < 1
 
-#define DEFAULT_ACTIVE_FOV_H 80.0                                     // Horizontal active FOV
+#define DEFAULT_ACTIVE_FOV_H 60.0                                     // Horizontal active FOV
 
 #define DEFAULT_OBJECT_ERROR_DISTANCE 0.2  // Max position error of an object and max distance between objects
 

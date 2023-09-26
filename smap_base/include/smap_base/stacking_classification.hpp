@@ -23,7 +23,6 @@ inline void stack_normalization( std::map< std::string, float >& prob_map )
     // Min-max feature scaling:
     //														X' = (X - X_min)/(X_max - X_min)
     float sum = 0, aux = 0 /*, bef*/;
-    // printf( "Normalization: \n" );
     for( const auto& x: prob_map ) sum += log_odds_inv( x.second );
     for( auto& x: prob_map )
     {

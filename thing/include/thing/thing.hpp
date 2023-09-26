@@ -116,11 +116,7 @@ class thing
         double t1 = ( log_odds_inv( this->class_probabilities.at( this->get_label().first ) ) * 4.0 / 6.0 );
 
         double t2 = ( log_odds_inv( this->pos_confidence ) / 6.0 );
-        // printf( "\t\tt2: %f\n", t2 );
         double t3 = ( this->observations->get_histogram_ratio() / 6.0 );
-        // TODO: Revert
-        // double t3 = ( 1 / 6.0 );
-        // printf( "\t\tt3: %f\n", t3 );
 
         if( !( ( t1 + t2 + t3 ) > confidence_threshold ) )
             RCLCPP_WARN( this->logger, "Combined conf| t1: %f, t2: %f, t3: %f", t1, t2, t3 );

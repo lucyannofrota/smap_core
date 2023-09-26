@@ -28,7 +28,6 @@ std::pair< std::string, int > thing::get_label( void ) const
     }
 
     // if( value < 0.35 ) return std::pair< std::string, int >( UNDEFINED_LABEL, -1 );
-    // printf( "get_label: %s| value: %f\n", ret.c_str(), value );
 
     return ret;
 }
@@ -40,8 +39,6 @@ bool thing::label_is_equal( const uint8_t& module_id, const uint8_t& obs_label )
     if( this->reg_classes == nullptr ) return false;
 
     // Determine the string value of the current label
-    // for( auto reg: ( **this->reg_classes ) )
-    //     printf( "reg: %s|%i|%i\n", reg.first.c_str(), reg.second.first, reg.second.second );
     std::string current_label = this->get_label().first;
     if( current_label == UNDEFINED_LABEL ) return false;
     RCLCPP_DEBUG( this->logger, "current_label: --" );
@@ -52,7 +49,6 @@ bool thing::label_is_equal( const uint8_t& module_id, const uint8_t& obs_label )
         // Compare it's value with the given one
         // 1. Get the pair of indexes
         std::pair< int, int > idxs = ( *this->reg_classes )[ current_label ];
-        // printf( "Label: %s, id1: %i, id2: %i\n", current_label.c_str(), idxs.first, idxs.second );
         // 2. Check if the values detector value matches
         return idxs.second == obs_label;
     }
@@ -102,7 +98,6 @@ geometry_msgs::msg::Point thing::update(
 {
     // TODO: Debug update changing label!
     // 1. Histogram update
-    // printf( "Update b l:%s |id:%i\n", this->get_label().first.c_str(), this->id );
     this->observations->register_obs( distance, angle, true );
 
     // 2. Position update
@@ -133,14 +128,6 @@ geometry_msgs::msg::Point thing::update(
     }
     stack_vectors( this->class_probabilities, probability_distribution, detector, OBJECT_UPDATE_FACTOR );
     assert( this->class_prob_is_valid() );
-    // printf( "Update e l:%s |id:%i\n", this->get_label().first.c_str(), this->id );
-    // test_label( this->get_label().first, "tv" );
-    // double sum = 0;
-    // for( const auto& x: this->class_probabilities ) sum += log_odds_inv( x.second );
-    // if( this->get_label().second != 75 && this->get_label().second != -1 )
-    //     printf( "\n\n\n----------------------------------------\n----------------------------------------\nthing::"
-    //             "update()\n\t label != tv\n"
-    //             "----------------------------------------\n----------------------------------------\n\n\n\n" );
     return this->pos;
 }
 
@@ -166,7 +153,7 @@ void thing::decay_confidence( const double prob_decay_factor, const double& dist
         class_likelihood.second  = clamping_log_odds_sum< float >( class_likelihood.second, p_value );
         sum                     += log_odds_inv( class_likelihood.second );
     }
-    RCLCPP_INFO( this->logger, "sum: %f, pre_sum: %f", sum, pre_sum );
+    // RCLCPP_DEBUG( this->logger, "sum: %f, pre_sum: %f", sum, pre_sum );
     assert( sum <= pre_sum );
 }
 
@@ -191,8 +178,6 @@ bool thing::is_valid( const double confidence_threshold ) const
         //             && ( this->observations->get_histogram_ratio() > 0.5 ) )
         //        && ( this->get_label().first != UNDEFINED_LABEL ) ) )
         // {
-        //     printf( " " );
-        //     printf( " " );
         // }
         // Test
         // if( !this->observations->object_is_valid() )

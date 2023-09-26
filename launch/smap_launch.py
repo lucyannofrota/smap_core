@@ -34,7 +34,7 @@ def generate_launch_description():
             # parameters=[
             #     {"my_parameter": "earth"}
             # ],
-            arguments=['--ros-args', '--log-level', 'debug'],
+            arguments=['--ros-args', '--log-level', 'info'],
     )
 
     return LaunchDescription([

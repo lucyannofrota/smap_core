@@ -158,8 +158,6 @@ void topo_marker::update_markers( const graph_t& graph, std::mutex& map_mutex, c
         if( graph[ e ].strong_vertex )
         {
 
-            // printf( "update_markers()| n_objects: %i\n", (int) graph[ e ].related_things.size() );
-
             // edge
             for( const auto& edg: boost::make_iterator_range( boost::out_edges( e, graph ) ) )
             {
@@ -192,23 +190,7 @@ void topo_marker::update_markers( const graph_t& graph, std::mutex& map_mutex, c
         double offset_theta, r;
         for( const auto& r_thing: graph[ e ].related_things )
         {
-            printf(
-                "\t%s - [%s]\n",
-                ( std::string( "l:" ) + r_thing.get_label().first + std::string( "|id:" ) + std::to_string( r_thing.id )
-                  + std::string( "|v:" ) + std::to_string( graph[ e ].index ) + std::string( "|c:" )
-                  + std::to_string( r_thing.get_combined_confidence( confidence_threshold ) ) )
-                    .c_str(),
-                ( r_thing.is_valid( confidence_threshold ) ? std::string( "Valid" ) : std::string( "Invalid" ) )
-                    .c_str() );
-            // if( !r_thing.is_valid( confidence_threshold ) ) continue;
             if( !r_thing.is_valid( confidence_threshold ) ) continue;
-            if( r_thing.get_label().second != 75 )
-                printf(
-                    "\n\n\n----------------------------------------\n----------------------------------------\nthing::"
-                    "update()\n\t label != tv\n"
-                    "----------------------------------------\n----------------------------------------\n\n\n\n" );
-            // r_thing.is_valid(confidence_threshold));
-            // if( !( r_thing.is_valid(confidence_threshold)) ) ) continue;
             // Histogram
             int j = 0;
             std_msgs::msg::ColorRGBA color;
@@ -273,9 +255,6 @@ void topo_marker::update_markers( const graph_t& graph, std::mutex& map_mutex, c
             this->aabb_label.text = string_format(
                 "l:%s|st:%s|c:%5.3f", r_thing.get_label().first.c_str(), st.c_str(),
                 r_thing.get_combined_confidence( confidence_threshold ) );
-            printf(
-                "Text: %s, c: %f\n", this->aabb_label.text.c_str(),
-                r_thing.get_combined_confidence( confidence_threshold ) );
 
             this->aabb_label.id           = obj_id;
             this->aabb_label.header.stamp = clock->now();
@@ -285,8 +264,6 @@ void topo_marker::update_markers( const graph_t& graph, std::mutex& map_mutex, c
             obj_id++;
         }
     }
-
-    // printf( "Objects found: %i\n", i_obj );
 
     this->vertex.header.stamp = clock->now();
     this->edge.header.stamp   = clock->now();

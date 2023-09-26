@@ -117,7 +117,7 @@ class count_time : counter
 
     ~count_time()
     {
-        std::string header = "Exec Times in nanonseconds [ns] | [samples:" + std::to_string( this->count ) + "]";
+        std::string header = "Exec Times in nanoseconds [ns] | [samples:" + std::to_string( this->count ) + "]";
         if( this->vals_array ) this->export_vals( header, this->file_name );
     }
 
@@ -153,8 +153,6 @@ class count_time : counter
         this->end = std::chrono::high_resolution_clock::now();
         this->append(
             ( std::chrono::duration_cast< std::chrono::nanoseconds >( this->end - this->beginning ) ).count() );
-        // this->vals_array->at( count++ ) =
-        //     ( std::chrono::duration_cast< std::chrono::nanoseconds >( this->end - this->beginning ) ).count();
     }
 
     inline void export_lines( std::ofstream& file )

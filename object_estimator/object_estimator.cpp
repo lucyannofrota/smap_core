@@ -40,17 +40,11 @@ void object_estimator::object_estimation_thread(
         obs.object     = *obj;
         obs.direction  = 0;
 
-        // RCLCPP_INFO(this->get_logger(),"Object: %i",obj->label);
-        // pcl::shared_ptr< cloud_t > point_cloud( new cloud_t );
         pcl::shared_ptr< cloud_t > segment_cloud_pcl( new cloud_t );
         pcl::shared_ptr< cloud_t > object_cloud_pcl( new cloud_t );
-        // pcl::shared_ptr<cloud_t> segment_cloud_pcl_neg(new cloud_t);
-
-        // std::shared_ptr<sensor_msgs::msg::PointCloud2> segment_cloud_ros(new sensor_msgs::msg::PointCloud2);
 
         // Cloud filtering
         count_time filter_timer;
-        // this->box_filter( point_cloud, segment_cloud_pcl, obs.object );
         count_time box_filter_timer;
         this->tim_box_filter.start();
         this->box_pc.start( point_cloud->width * point_cloud->height );
@@ -62,7 +56,6 @@ void object_estimator::object_estimation_thread(
 
         if( this->roi_filt )
         {
-            // this->roi_filter( segment_cloud_pcl );
             count_time roi_filt_timer;
             this->tim_roi_filter.start();
             this->roi_pc.start( segment_cloud_pcl->width * segment_cloud_pcl->height );
@@ -75,7 +68,6 @@ void object_estimator::object_estimation_thread(
         if( this->voxelization )
         {
 
-            // this->pcl_voxelization( segment_cloud_pcl );
             count_time pcl_vox_timer;
             this->tim_voxelization.start();
             this->voxelization_pc.start( segment_cloud_pcl->width * segment_cloud_pcl->height );
@@ -88,7 +80,6 @@ void object_estimator::object_estimation_thread(
 
         if( this->sof )
         {
-            // this->statistical_outlier_filter( segment_cloud_pcl );
             count_time statistical_outlier_filter_timer;
             this->tim_sof.start();
             this->sof_pc.start( segment_cloud_pcl->width * segment_cloud_pcl->height );
@@ -102,7 +93,6 @@ void object_estimator::object_estimation_thread(
         // Cloud Segmentation
         if( this->euclidean_clust )
         {
-            // this->euclidean_clustering( segment_cloud_pcl, segment_cloud_pcl );
             count_time euclidean_clustering_timer;
             this->tim_euclidean_clustering.start();
             this->clustering_pc.start( segment_cloud_pcl->width * segment_cloud_pcl->height );
@@ -119,28 +109,23 @@ void object_estimator::object_estimation_thread(
         // Object cloud confidence
         if( this->euclidean_clust )
         {
-            // this->estimate_confidence( segment_cloud_pcl, obs.object.aabb.confidence );
             this->tim_estimate_confidence.start();
             estimate_confidence( object_cloud_pcl, obs.object.aabb.confidence, this->pcl_lims, OBJECT_SIZE_LIM_CONF );
             this->tim_estimate_confidence.stop();
         }
         else
         {
-            // this->estimate_confidence( segment_cloud_pcl, obs.object.aabb.confidence );
             this->tim_estimate_confidence.start();
             estimate_confidence( segment_cloud_pcl, obs.object.aabb.confidence, this->pcl_lims, OBJECT_SIZE_LIM_CONF );
             this->tim_estimate_confidence.stop();
         }
 
         // Transform
-        // TODO: check the possibility to apply the transform only to the centroids
         this->tim_transform.start();
         if( this->euclidean_clust ) pcl::toROSMsg( *object_cloud_pcl, obs.object.pointcloud );
         else pcl::toROSMsg( *segment_cloud_pcl, obs.object.pointcloud );
-        // this->transform_object_pcl( obs.object, transform );
         count_time transform_timer;
         tf2::doTransform< sensor_msgs::msg::PointCloud2 >( obs.object.pointcloud, obs.object.pointcloud, *transform );
-        // transform_object_pcl( obs.object, transform );
         const char transform_str[] = "transform";
         transform_timer.get_time( this->get_logger(), transform_str, transform_plot );
 
@@ -148,7 +133,6 @@ void object_estimator::object_estimation_thread(
         count_time estimation_timer;
         pcl::fromROSMsg( obs.object.pointcloud, *segment_cloud_pcl );
         this->tim_transform.stop();
-        // if( !this->estimate_object_3D_AABB( segment_cloud_pcl, obs.object ) ) return;
         count_time timer_3D_AABB;
         this->tim_3D_AAB.start();
         if( !estimate_object_3D_AABB(
@@ -167,7 +151,6 @@ void object_estimator::object_estimation_thread(
 
         const char str_process_time[] = "pcl_process";
         timer.get_time( this->get_logger(), str_process_time, total_thread_time );
-        // plot_vec centroid_plot, boundaries_plot, total_estimation_plot;
 
         obs.object.pointcloud.header.frame_id = "map";  // TODO: Check if can be removed
 
@@ -194,7 +177,7 @@ void object_estimator::object_estimation_thread(
         const std::lock_guard< std::mutex > object_pcl_pub_lock( this->object_pcl_pub_mutex );
         if( this->object_pcl_pub->get_subscription_count() > 0 ) this->object_pcl_pub->publish( obs.object.pointcloud );
         this->tim_object_estimation_thread.stop();
-        RCLCPP_INFO( this->get_logger(), "Object Detected" );
+        RCLCPP_DEBUG( this->get_logger(), "Object Detected" );
     }
     catch( std::exception& e )
     {
@@ -295,7 +278,7 @@ void object_estimator::depth_map_thread(
         || !is_valid(
             transform->transform.rotation.x, transform->transform.rotation.y, transform->transform.rotation.z )
         || std::isnan( transform->transform.rotation.w ) || std::isinf( transform->transform.rotation.w ) )
-        printf( "\t\tInvalid transform\n" );
+        RCLCPP_DEBUG( this->get_logger(), "\t\tInvalid transform" );
 
     // Occlusion Map Initialization
     depth_map_t depth_map;

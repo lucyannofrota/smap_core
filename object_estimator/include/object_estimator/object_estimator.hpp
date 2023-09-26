@@ -55,17 +55,10 @@ inline bool timeout(
                          std::chrono::high_resolution_clock::now() - std::get< 1 >( element ) ) )
                            .count()
                        >= std::get< 2 >( element );
-        if( ret )
-        {
-            // printf("timeout (%f)|%i\n",std::get<2>(element),(std::get<0>(element)->wait_for(0ms) ==
-            // std::future_status::ready));
-            std::get< 0 >( element ).get();  // Finalize the thread
-        }
+        if( ret ) std::get< 0 >( element ).get();  // Finalize the thread
         return ret;
     }
-    // printf("\tf /timeout\n");
     return true;
-    // return false;
 }
 
 class thread_queue :
@@ -329,31 +322,6 @@ class object_estimator : public rclcpp::Node
         const std::shared_ptr< sensor_msgs::msg::PointCloud2 >& ros_pcl,
         const std::shared_ptr< geometry_msgs::msg::TransformStamped >& transform,
         const geometry_msgs::msg::PoseStamped& robot_pose );
-
-    // void validation_thread(
-    //     const std::shared_ptr< sensor_msgs::msg::PointCloud2 >& ros_pcl,
-    //     const std::shared_ptr< geometry_msgs::msg::TransformStamped >& transform )
-    // {
-    //     printf( "Validation thread\n" );
-
-    // // Launch occlusion map thread
-    // count_time timer_depth_map;
-    // depth_map_t depth_map;
-    // // std::future< void > depth_map_thread_future = std::async(
-    // //     std::launch::async, &object_estimator::depth_map_thread, this, std::ref( depth_map ),
-    // //     ros_pcl, transform );
-
-    // // Processing
-    // printf( "Validation processing\n" );
-    // // Processing
-
-    // // Wait for occlusion map thread completion
-    // // depth_map_thread_future.wait();
-    // timer_depth_map.print_time( "depth_map_thread" );
-    // printf( "Validation end\n" );
-    // //
-    // //
-    // };
 
   private:
 };

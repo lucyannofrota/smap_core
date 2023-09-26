@@ -61,20 +61,15 @@ void topo_map::observation_callback( const smap_interfaces::msg::SmapObservation
     bool valid_transaction;
     this->vertex_transaction( observation, candidates, det, closest, valid_transaction );
     if( !valid_transaction ) return;
-    printf( "l: %s|vid:%i\n", closest.second->get_label().first.c_str(), (int_least16_t) closest.first );
 
     // Object combination
     // TODO: Check this method
     this->object_combination( candidates, closest, closest_valid );
 
     // If necessary, move the object to another vertex
-    // this->object_vert_move( valid_idxs, closest );
+    this->object_vert_move( valid_idxs, closest );
 
     this->tim_observation_callback.stop();
-    // if( closest.second->get_label().second != 75 && closest.second->get_label().second != -1 )
-    //     printf( "\n\n\n----------------------------------------\n----------------------------------------\nthing::"
-    //             "update()\n\t label != tv\n"
-    //             "----------------------------------------\n----------------------------------------\n\n\n\n" );
 
     const char str[] = "observation_callback";
     timer.print_time( this->get_logger(), str );
@@ -108,9 +103,6 @@ void topo_map::depth_map_callback( const smap_interfaces::msg::DepthMap::SharedP
             {
                 // 2.1. Check active cone
                 RCLCPP_DEBUG( this->get_logger(), "2.1. Check active cone" );
-                // printf(
-                //     "1 : %f|2 : %f\n", rad2deg( this->compute_object_direction( object.pos, msg->camera_pose ) ),
-                //     rad2deg( this->compute_corner_direction( msg->camera_pose, object.pos ) ) );
                 if( !object.is_valid( this->get_parameter( "Confidence_Object_Valid" ).as_double() ) ) continue;
                 if( abs( rad2deg( this->compute_object_direction( object.pos, msg->camera_pose ) ) )
                     > this->get_parameter( "Active_FOV" ).as_double() )
@@ -270,7 +262,7 @@ std::numeric_limits< double >::infinity() },
 
                 // 2.3. Classify the object as occluded or non-occluded and update
                 size_t cells_total = cells_before + cells_in + cells_after;
-                double decay_value = 0, absent_mod = 2;
+                double decay_value = 0, absent_mod = 1;
                 if( cells_total == 0 ) return;
                 double cell_decay_factor = ( cells_before + cells_after ) * 1.0 / ( cells_total * 1.0 );
                 // 2.3.1 Check for occluded objects
@@ -291,9 +283,9 @@ std::numeric_limits< double >::infinity() },
                 // 2.3.1-2 Most of collisions happens at the object [VALID - case 2]
                 if( cells_in > cells_before + cells_after )
                 {
-                    decay_value = 1.0/20.0;
+                    decay_value = 1.0 / 20.0;
                     RCLCPP_DEBUG( this->get_logger(), "[OCC] Occluded case 2 | factor: %f ", decay_value );
-										object.decay(
+                    object.decay(
                         distance_camera_to_object, this->compute_corner_direction( msg->camera_pose, object.pos ),
                         this->get_parameter( "Object_Prob_Decay" ).as_double(), decay_value );
                     object.state = thing_state_t::VISIBLE;
@@ -343,9 +335,9 @@ std::numeric_limits< double >::infinity() },
                     object.state = thing_state_t::OCCLUDED;
                     break;
                 case 1:
-                    decay_value = 1.0/20.0;
+                    decay_value = 1.0 / 20.0;
                     RCLCPP_DEBUG( this->get_logger(), "[OCC] Valid case 5.2 | factor: %f", decay_value );
-										object.decay(
+                    object.decay(
                         distance_camera_to_object, this->compute_corner_direction( msg->camera_pose, object.pos ),
                         this->get_parameter( "Object_Prob_Decay" ).as_double(), decay_value );
                     object.state = thing_state_t::VISIBLE;
@@ -362,22 +354,6 @@ std::numeric_limits< double >::infinity() },
                 }
             }
         }
-
-        // for( size_t r = 0; r < msg->layout.dim[ 0 ].size; r++ )
-        // {
-        //     for( size_t c = 0; c < msg->layout.dim[ 1 ].size; c++ )
-        //     {
-        //         for( size_t lims = 0; lims < msg->layout.dim[ 2 ].size; lims++ )
-        //         {
-        //             printf( "[" );
-        //             for( size_t comps = 0; comps < msg->layout.dim[ 3 ].size; comps++ )
-        //                 printf( "%6.2f,", depth_map_indexer( *msg, r, c, lims, comps ) );
-        //             printf( "]|" );
-        //         }
-        //         printf( "]\t" );
-        //     }
-        //     printf( "\n" );
-        // }
         this->tim_depth_map_callback.stop();
     }
     catch( std::exception& e )
@@ -429,7 +405,7 @@ bool topo_map::add_edge( const size_t& previous, const size_t& current )
     for( const auto e: boost::make_iterator_range( boost::out_edges( this->_get_vertex( current ), this->graph ) ) )
         if( boost::target( e, this->graph ) == this->_get_vertex( previous ) ) return false;
     boost::add_edge( this->_get_vertex( previous ), this->_get_vertex( current ), { distance, 1 }, this->graph );
-    RCLCPP_INFO(
+    RCLCPP_DEBUG(
         this->get_logger(), "Edge added %i->%i [ % 4.1f, % 4.1f, % 4.1f ] -> [ % 4.1f, % 4.1f, % 4.1f ] ", previous,
         current, prev.pos.x, prev.pos.y, prev.pos.z, cur.pos.x, cur.pos.y, cur.pos.z );
     return true;

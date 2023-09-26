@@ -60,7 +60,7 @@ class perception_server : public rclcpp::Node
     rclcpp::TimerBase::SharedPtr timer_t_ = this->create_wall_timer( 2s, [ this ]() {
         for( int i = 0; i < 3; i++ )
         {
-            RCLCPP_INFO( this->get_logger(), "Reboot Request" );
+            RCLCPP_WARN( this->get_logger(), "Reboot Request" );
             this->reset_detectors_pub->publish( std_msgs::msg::Empty() );  // Request the reboot of all detectors
         }
         this->timer_t_->cancel();
@@ -80,18 +80,6 @@ class perception_server : public rclcpp::Node
         // for( int i = 0; i < 3; i++ )
         //     this->reset_detectors_pub->publish( std_msgs::msg::Empty() );  // Request the reboot of all detectors
     }
-
-    // inline void reboot_request_cb( void )
-    // {
-    //     RCLCPP_INFO( this->get_logger(), "Reboot Request" );
-    //     this->reset_detectors_pub->publish( std_msgs::msg::Empty() );  // Request the reboot of all detectors
-    //     this->timer_t_->cancel();
-    // }
-
-    // inline perception_server( const rclcpp::NodeOptions& options ) : Node( "perception_server", options )
-    // {
-    //     RCLCPP_INFO( this->get_logger(), "Initializing perception_server" );
-    // }
 
     inline ~perception_server() {}
 
