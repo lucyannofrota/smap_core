@@ -97,7 +97,7 @@ topo_marker::topo_marker( void )
     this->aabb_label.color.g          = 0.0;
     this->aabb_label.color.b          = 1.0;
     this->aabb_label.color.a          = 1.0;
-    this->aabb_label.scale.z          = 0.125;
+    this->aabb_label.scale.z          = 0.1;
     this->aabb_label.lifetime.sec     = 1;
     this->aabb_label.lifetime.nanosec = 500 * 1000 * 1000;
 

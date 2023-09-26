@@ -136,7 +136,10 @@ void thing::decay_confidence( const double prob_decay_factor, const double& dist
     // current_likelihood - is a map containing a vector of probabilities that represents the probability of beeing
     // each class
     if( !( factor > 0 && factor < 1 ) )
+    {
         RCLCPP_ERROR( this->logger, "Decay confidence error. Factor: %f. It should be ( factor > 0 && factor < 1 )" );
+        return;
+    }
     assert( factor < distance );
     float pre_sum = 0, sum = 0;
     for( auto& class_likelihood: this->class_probabilities )
@@ -160,6 +163,7 @@ void thing::decay_confidence( const double prob_decay_factor, const double& dist
 void thing::decay( const double& distance, const double& angle, const double& base_decay, const double& decay_factor )
 {
     double factor = ( decay_factor < 1 ) ? decay_factor : 1;
+    factor        = ( factor > 0 ) ? factor : 0.001;
     // Decay observation histogram
     this->observations->register_obs( distance, angle, false );
     // Decay confidence
