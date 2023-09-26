@@ -22,7 +22,7 @@ def generate_launch_description():
             # parameters=[
             #     {"my_parameter": "earth"}
             # ],
-            arguments=['--ros-args', '--log-level', 'debug'],
+            arguments=['--ros-args', '--log-level', 'info'],
     )
 
     object_estimator_node = launch_ros.actions.Node(

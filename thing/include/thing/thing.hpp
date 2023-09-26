@@ -105,11 +105,11 @@ class thing
         return log_odds_inv( this->pos_confidence );
     }
 
-    double get_combined_confidence( const double confidence_threshold ) const
+    double get_combined_confidence() const
     {
         if( this->get_label().first == UNDEFINED_LABEL )
         {
-            RCLCPP_WARN( this->logger, "undefined label" );
+            // RCLCPP_WARN( this->logger, "undefined label" );
             return 0.0;
         }
 
@@ -118,8 +118,8 @@ class thing
         double t2 = ( log_odds_inv( this->pos_confidence ) / 6.0 );
         double t3 = ( this->observations->get_histogram_ratio() / 6.0 );
 
-        if( !( ( t1 + t2 + t3 ) > confidence_threshold ) )
-            RCLCPP_WARN( this->logger, "Combined conf| t1: %f, t2: %f, t3: %f", t1, t2, t3 );
+        // if( !( ( t1 + t2 + t3 ) > confidence_threshold ) )
+        //     RCLCPP_WARN( this->logger, "Combined conf| t1: %f, t2: %f, t3: %f", t1, t2, t3 );
 
         return t1 + t2 + t3;
     }

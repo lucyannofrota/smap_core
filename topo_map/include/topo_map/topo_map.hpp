@@ -181,7 +181,8 @@ class topo_map : public rclcpp::Node
             std::list< smap::thing >(), strong_vertex };
         size_t ret = boost::add_vertex( vert, this->graph );
 
-        RCLCPP_DEBUG( this->get_logger(), "Vertex added (%li) [%4.1f,%4.1f,%4.1f]", this->v_index, pos.x, pos.y, pos.z );
+        RCLCPP_DEBUG(
+            this->get_logger(), "Vertex added (%li) [%4.1f,%4.1f,%4.1f]", this->v_index, pos.x, pos.y, pos.z );
         return ret;
     }
 
@@ -427,7 +428,7 @@ class topo_map : public rclcpp::Node
         if( ( min_distance_valid < this->get_parameter( "Object_Error_Distance" ).as_double() * 0.8 )
             && closest_valid.second->id != closest.second->id )
         {
-					RCLCPP_DEBUG( this->get_logger(), "Object Combination" );
+            RCLCPP_DEBUG( this->get_logger(), "Object Combination" );
             int pred_obj_idx =
                 ( closest.second->id < closest_valid.second->id ? closest.second->id : closest_valid.second->id );
             if( closest.first == closest_valid.first )
@@ -470,7 +471,7 @@ class topo_map : public rclcpp::Node
         }
         if( min_vertex.second < this->_calc_distance( closest.second->pos, this->graph[ closest.first ].pos ) )
         {
-					RCLCPP_DEBUG( this->get_logger(), "Object move" );
+            RCLCPP_DEBUG( this->get_logger(), "Object move" );
             thing aux   = *closest.second;
             size_t size = this->graph[ closest.first ].related_things.size();
             this->graph[ closest.first ].related_things.remove_if(

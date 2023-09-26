@@ -254,7 +254,7 @@ void topo_marker::update_markers( const graph_t& graph, std::mutex& map_mutex, c
             // this->aabb_label.
             this->aabb_label.text = string_format(
                 "l:%s|st:%s|c:%5.3f", r_thing.get_label().first.c_str(), st.c_str(),
-                r_thing.get_combined_confidence( confidence_threshold ) );
+                r_thing.get_combined_confidence() );
 
             this->aabb_label.id           = obj_id;
             this->aabb_label.header.stamp = clock->now();

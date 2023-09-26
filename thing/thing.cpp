@@ -185,12 +185,12 @@ bool thing::is_valid( const double confidence_threshold ) const
         //     RCLCPP_WARN( this->logger, "observations->object_is_valid invalid\n" );
         //     return false;
         // }
-        if( !( this->get_combined_confidence( confidence_threshold ) > confidence_threshold ) )
+        if( !( this->get_combined_confidence() > confidence_threshold ) )
         {  // Cond 3
 
-            RCLCPP_WARN(
-                this->logger,
-                "( this->get_combined_confidence(confidence_threshold) > confidence_threshold ) invalid\n" );
+            // RCLCPP_WARN(
+            //     this->logger,
+            //     "( this->get_combined_confidence(confidence_threshold) > confidence_threshold ) invalid\n" );
             return false;
         }
         // if( !( log_odds_inv( this->pos_confidence ) > 0.3 ) )
@@ -207,10 +207,10 @@ bool thing::is_valid( const double confidence_threshold ) const
         // }
         if( !( this->get_label().first != UNDEFINED_LABEL ) )
         {  // Cond 6
-            RCLCPP_WARN( this->logger, "( this->get_label().first != UNDEFINED_LABEL ) invalid\n" );
+            // RCLCPP_WARN( this->logger, "( this->get_label().first != UNDEFINED_LABEL ) invalid\n" );
             return false;
         }
-        RCLCPP_WARN( this->logger, "Cond Pass\n" );
+        // RCLCPP_WARN( this->logger, "Cond Pass\n" );
         return true;
         // return (
         //     this->observations->object_is_valid() && this->class_prob_is_valid()
