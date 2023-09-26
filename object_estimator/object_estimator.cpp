@@ -252,7 +252,7 @@ void object_estimator::detections_callback( const smap_interfaces::msg::SmapDete
     for( auto& obj: input_msg->objects )
     {
         if( obj.confidence < this->get_parameter( "Minimum_Object_Confidence" ).as_double() )
-            continue;                    // TODO: Remove DEBUG
+            continue;  // TODO: Remove DEBUG
 
         // if( obj.label != 62 ) continue;  // TODO: Remove DEBUG
 
