@@ -143,6 +143,7 @@ std::numeric_limits< double >::infinity() },
                 };
                 for( const auto& corner: AABB | boost::adaptors::indexed( 0 ) )
                 {
+                    // TODO implement subsectors to reduce the number of cells to ve checked
                     // 2.2.2.1 Compute the angle from the camera to the corner
                     double camera_to_corner_angle = this->compute_corner_direction( msg->camera_pose, corner.value() );
                     // 2.2.2.2 Loop through cells of the depth_map
@@ -199,9 +200,9 @@ std::numeric_limits< double >::infinity() },
                 {
                     this->panels_maker.id = 0;
                     this->panels_maker_array.markers.clear();
-                    for( long occ_row = mins[ 0 ]; occ_row < maxs[ 0 ]; occ_row++ )
+                    for( long occ_row = mins[ 0 ]; occ_row <= maxs[ 0 ]; occ_row++ )
                     {
-                        for( long occ_col = mins[ 1 ]; occ_col < maxs[ 1 ]; occ_col++ )
+                        for( long occ_col = mins[ 1 ]; occ_col <= maxs[ 1 ]; occ_col++ )
                         {
                             if( !is_valid( depth_map[ occ_row ][ occ_col ][ 0 ] )
                                 || !is_valid( depth_map[ occ_row ][ occ_col ][ 1 ] )
@@ -224,9 +225,9 @@ std::numeric_limits< double >::infinity() },
                 // 2.2.3.2 Compute the number of cells in occlusion
                 size_t cells_before = 0, cells_in = 0, cells_after = 0;
                 double distance_camera_to_object = gPoint_distance( msg->camera_pose.position, object.pos );
-                for( long occ_row = mins[ 0 ]; occ_row < maxs[ 0 ]; occ_row++ )
+                for( long occ_row = mins[ 0 ]; occ_row <= maxs[ 0 ]; occ_row++ )
                 {
-                    for( long occ_col = mins[ 1 ]; occ_col < maxs[ 1 ]; occ_col++ )
+                    for( long occ_col = mins[ 1 ]; occ_col <= maxs[ 1 ]; occ_col++ )
                     {
                         if( !is_valid( depth_map[ occ_row ][ occ_col ][ 0 ] )
                             || !is_valid( depth_map[ occ_row ][ occ_col ][ 1 ] )
@@ -346,7 +347,7 @@ std::numeric_limits< double >::infinity() },
                 case 2:
                     decay_value = cell_decay_factor * absent_mod * 0.5;
                     decay_value = ( decay_value > 1 ) ? 1 : decay_value;
-                    RCLCPP_DEBUG( this->get_logger(), "[OCC] Absent case 5.3 | factor: %f", decay_value );
+                    RCLCPP_DEBUG( this->get_logger(), "[OCC] Absent case 5.3", decay_value );
                     object.decay(
                         distance_camera_to_object, this->compute_corner_direction( msg->camera_pose, object.pos ),
                         this->get_parameter( "Object_Prob_Decay" ).as_double(), decay_value );

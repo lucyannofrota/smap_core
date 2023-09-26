@@ -258,9 +258,6 @@ void topo_marker::update_markers( const graph_t& graph, std::mutex& map_mutex, c
             case thing_state_t::VALID:
                 st = 'V';
                 break;
-            case thing_state_t::PARTIALLY_OCCLUDED:
-                st = 'P';
-                break;
             case thing_state_t::OCCLUDED:
                 st = 'O';
                 break;

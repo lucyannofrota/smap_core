@@ -11,8 +11,8 @@
 #include "smap_interfaces/msg/depth_map.hpp"
 
 #define DEPTH_MAP_FIELDS 3
-#define DEPTH_MAP_ROWS 32  // 16
-#define DEPTH_MAP_COLS 64  // 32
+#define DEPTH_MAP_ROWS 16  // 32
+#define DEPTH_MAP_COLS 24  // 64
 
 namespace smap
 {

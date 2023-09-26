@@ -37,7 +37,6 @@ enum thing_state_t
 {
     NONE,
     ABSENT,
-    PARTIALLY_OCCLUDED,
     OCCLUDED,
     VALID
 };
