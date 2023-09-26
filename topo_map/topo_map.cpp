@@ -269,7 +269,7 @@ std::numeric_limits< double >::infinity() },
 
                 // 2.3. Classify the object as occluded or non-occluded and update
                 size_t cells_total = cells_before + cells_in + cells_after;
-                double decay_value = 0;
+                double decay_value = 0, absent_mod = 3;
                 if( cells_total == 0 ) return;
                 double cell_decay_factor = ( cells_before + cells_after ) * 1.0 / ( cells_total * 1.0 );
                 // 2.3.1 Check for occluded objects
@@ -298,7 +298,8 @@ std::numeric_limits< double >::infinity() },
                 // 2.3.1-3 Most of collisions happens after the object [ABSENT - case 3]
                 if( cells_after > cells_before + cells_in )
                 {
-                    decay_value = cell_decay_factor;
+                    decay_value = cell_decay_factor * absent_mod;
+                    decay_value = ( decay_value > 1 ) ? 1 : decay_value;
                     RCLCPP_DEBUG( this->get_logger(), "[OCC] Absent case 3 | factor: %f", decay_value );
                     object.decay(
                         distance_camera_to_object, this->compute_corner_direction( msg->camera_pose, object.pos ),
@@ -343,7 +344,8 @@ std::numeric_limits< double >::infinity() },
                     object.state = thing_state_t::VALID;
                     break;
                 case 2:
-                    decay_value = cell_decay_factor * 0.5;
+                    decay_value = cell_decay_factor * absent_mod * 0.5;
+                    decay_value = ( decay_value > 1 ) ? 1 : decay_value;
                     RCLCPP_DEBUG( this->get_logger(), "[OCC] Absent case 5.3 | factor: %f", decay_value );
                     object.decay(
                         distance_camera_to_object, this->compute_corner_direction( msg->camera_pose, object.pos ),

@@ -31,6 +31,7 @@
 #include "macros.hpp"
 #include "pcl_processing/pcl_processing.hpp"
 #include "smap_base/counters.hpp"
+#include "smap_base/macros.hpp"
 #include "smap_interfaces/msg/bounding_box2_d.hpp"
 #include "smap_interfaces/msg/depth_map.hpp"
 #include "smap_interfaces/msg/smap_detections.hpp"
@@ -219,7 +220,7 @@ class object_estimator : public rclcpp::Node
         this->declare_parameter(
             "Max_Occlusion_Cell_Volume_Factor", DEFAULT_MAX_OCCLUSION_CELL_VOLUME_FACTOR, param_desc );
         param_desc.description = "Minimum confidence for an object to be considered";
-        this->declare_parameter( "Minimum_Object_Confidence", 0.60, param_desc );
+        this->declare_parameter( "Minimum_Object_Confidence", DEFAULT_CONFIDENCE_OBJECT_VALID, param_desc );
 
         this->box_marker.header.frame_id    = "map";
         this->box_marker.header.stamp       = this->get_clock()->now();

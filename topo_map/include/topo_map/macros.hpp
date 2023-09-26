@@ -38,39 +38,6 @@ namespace smap
 
 #define DEFAULT_OCCLUSION_DECAY_PENALTY 1.0 / 16.0
 
-// #define DEPTH_MAP_ROWS 32  // 16
-// #define DEPTH_MAP_COLS 64  // 32
-
-// #define HISTOGRAM_BINS 36  // Number of bins of the polar histogram
-
-// #define HISTOGRAM_BIN_CHANGE_VALUE 2.5
-
-// #define MAX_POS_PROB 0.85
-
-// #define LOG_ODDS_CLAMPING 10  // log_odds(0.9999) == -log_odds(0.0001) == 9.2102
-
-// #define DEBUG_MODE 1
-
-// #define DEFAULT_FILE_NAME "Sem_Map.smp"
-
-// #define SAVE_LOAD_PATH std::string( "src/smap/smap_core/maps/" )  // Save/Load path
-
-// #define ROI_FILTER_METHOD 1                // 0 - Precise, 1 - Fast
-
-// #define DEFAULT_OBJECT_TRACKING_TOLERANCE DEFAULT_OBJECT_ERROR_DISTANCE* DEFAULT_OBJECT_TRACKING_FACTOR
-
-// #define UNDEFINED_LABEL std::string( "unknown" )
-
-// #define OBJECT_SIZE_LIM_CONF 0.2  // Objects with size under this value will suffer no confidence penalty
-
-// #define DEFAULT_MAX_OCCLUSION_CELL_VOLUME 0.25
-// #define DEFAULT_MAX_OCCLUSION_CELL_VOLUME_FACTOR std::cbrt( DEFAULT_MAX_OCCLUSION_CELL_VOLUME )
-
-// #define DEFAULT_CONFIDENCE_OBJECT_VALID 0.6
-
-// #define OBSERVATION_HISTOGRAM_MAX_RATIO 3.0
-
-// #define USE_MEDIANS 0
 
 }  // namespace smap
 

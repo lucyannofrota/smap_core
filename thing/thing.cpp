@@ -27,7 +27,7 @@ std::pair< std::string, int > thing::get_label( void ) const
         i++;
     }
 
-    if( value < 0.35 ) return std::pair< std::string, int >( UNDEFINED_LABEL, -1 );
+    // if( value < 0.35 ) return std::pair< std::string, int >( UNDEFINED_LABEL, -1 );
     // printf( "get_label: %s| value: %f\n", ret.c_str(), value );
 
     return ret;
@@ -43,6 +43,7 @@ bool thing::label_is_equal( const uint8_t& module_id, const uint8_t& obs_label )
     // for( auto reg: ( **this->reg_classes ) )
     //     printf( "reg: %s|%i|%i\n", reg.first.c_str(), reg.second.first, reg.second.second );
     std::string current_label = this->get_label().first;
+    if( current_label == UNDEFINED_LABEL ) return false;
     RCLCPP_DEBUG( this->logger, "current_label: --" );
     RCLCPP_DEBUG( this->logger, "current_label: %s", current_label.c_str() );
 
@@ -84,7 +85,10 @@ void thing::set(
     int i   = 0;
     auto it = probability_distribution.begin();
     for( i = 0; it != probability_distribution.end(); ++it, i++ )
-        this->class_probabilities[ detector.classes.at( i ) ] = log_odds( *it );
+    {
+        float p_value = ( ( ( *it ) - 0.5 ) * OBJECT_UPDATE_FACTOR ) + 0.5;  // Gain factor
+        this->class_probabilities[ detector.classes.at( i ) ] = log_odds( p_value );
+    }
     stack_normalization( this->class_probabilities );
     assert( this->class_prob_is_valid() );
     assert( this->get_label().second == 75 || this->get_label().second == -1 );  // TODO: Remove
@@ -127,7 +131,7 @@ geometry_msgs::msg::Point thing::update(
                 this->class_probabilities[ c.first ] = 0;
         }
     }
-    stack_vectors( this->class_probabilities, probability_distribution, detector );
+    stack_vectors( this->class_probabilities, probability_distribution, detector, OBJECT_UPDATE_FACTOR );
     assert( this->class_prob_is_valid() );
     // printf( "Update e l:%s |id:%i\n", this->get_label().first.c_str(), this->id );
     // test_label( this->get_label().first, "tv" );
@@ -168,10 +172,11 @@ void thing::decay_confidence( const double prob_decay_factor, const double& dist
 
 void thing::decay( const double& distance, const double& angle, const double& base_decay, const double& decay_factor )
 {
+    double factor = ( decay_factor < 1 ) ? decay_factor : 1;
     // Decay observation histogram
     this->observations->register_obs( distance, angle, false );
     // Decay confidence
-    this->decay_confidence( base_decay, distance, decay_factor );
+    this->decay_confidence( base_decay, distance, factor );
 }
 
 bool thing::is_valid( const double confidence_threshold ) const

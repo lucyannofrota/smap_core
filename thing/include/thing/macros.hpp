@@ -16,6 +16,8 @@ namespace smap
 
 #define MAX_POS_PROB 0.85
 
+#define OBJECT_UPDATE_FACTOR 1.0 / 5.0
+
 }  // namespace smap
 
 #endif  // THING__MACROS_HPP_

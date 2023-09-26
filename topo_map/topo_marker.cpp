@@ -200,6 +200,7 @@ void topo_marker::update_markers( const graph_t& graph, std::mutex& map_mutex, c
                     .c_str(),
                 ( r_thing.is_valid( confidence_threshold ) ? std::string( "Valid" ) : std::string( "Invalid" ) )
                     .c_str() );
+            // if( !r_thing.is_valid( confidence_threshold ) ) continue;
             if( !r_thing.is_valid( confidence_threshold ) ) continue;
             if( r_thing.get_label().second != 75 )
                 printf(

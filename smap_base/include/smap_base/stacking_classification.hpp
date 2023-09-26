@@ -37,7 +37,8 @@ inline void stack_normalization( std::map< std::string, float >& prob_map )
 }
 
 inline void stack_vectors(
-    std::map< std::string, float >& current_likelihood, const std::vector< float >& new_vector, const detector_t& det )
+    std::map< std::string, float >& current_likelihood, const std::vector< float >& new_vector, const detector_t& det,
+    const double factor )
 {
     // current_likelihood - is a map containing a vector of probabilities that represents the probability of beeing each
     // 											class given the current observation
@@ -48,32 +49,10 @@ inline void stack_vectors(
     // int idx_max = 0;
     for( i = 0; it != new_vector.end(); ++it, i++ )
     {
-        float p_value = ( *it );
-        if( p_value > max )
-        {
-            // idx_max = i;
-            max = p_value;
-        }
+        float p_value = ( ( ( *it ) - 0.5 ) * factor ) + 0.5;  // Gain factor
 
         current_likelihood[ det.classes.at( i ) ] =
             clamping_log_odds_sum< float >( current_likelihood[ det.classes.at( i ) ], p_value );
-
-        // if( ( p_value <= 0 ) || ( p_value <= log_odds_inv( -LOG_ODDS_CLAMPING ) )
-        //     || ( ( current_likelihood[ det.classes.at( i ) ] + log_odds( p_value ) ) < -LOG_ODDS_CLAMPING ) )
-        //     current_likelihood[ det.classes.at( i ) ] = -LOG_ODDS_CLAMPING;
-        // else
-        // {
-        //     //
-        //     if( p_value >= 1 || p_value >= log_odds_inv( +LOG_ODDS_CLAMPING )
-        //         || ( ( current_likelihood[ det.classes.at( i ) ] + log_odds( p_value ) ) > +LOG_ODDS_CLAMPING ) )
-        //         current_likelihood[ det.classes.at( i ) ] = +LOG_ODDS_CLAMPING;
-
-        // else current_likelihood[ det.classes.at( i ) ] += log_odds( p_value );
-        // }
-
-        // assert(
-        //     current_likelihood[ det.classes.at( i ) ] >= -LOG_ODDS_CLAMPING
-        //     && current_likelihood[ det.classes.at( i ) ] <= LOG_ODDS_CLAMPING );
     }
     stack_normalization( current_likelihood );
 }
