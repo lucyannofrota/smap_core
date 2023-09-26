@@ -8,6 +8,7 @@
 
 // ROS
 #include "smap_base/visibility_control.h"
+#include "std_msgs/msg/empty.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -20,6 +21,8 @@
 #include "smap_interfaces/srv/add_perception_module.hpp"
 #include "smap_interfaces/srv/smap_classes.hpp"
 #include "topo_map/topo_map.hpp"
+
+using namespace std::chrono_literals;
 
 namespace smap
 {
@@ -50,6 +53,19 @@ class perception_server : public rclcpp::Node
             std::string( this->get_namespace() ) + std::string( "/object_estimator/objects" ), 2,
             std::bind( &perception_server::observations_callback, this, std::placeholders::_1 ) );
 
+    rclcpp::Publisher< std_msgs::msg::Empty >::SharedPtr reset_detectors_pub =
+        this->create_publisher< std_msgs::msg::Empty >(
+            std::string( this->get_namespace() ) + std::string( "/perception/reboot_detectors" ), 10 );
+
+    rclcpp::TimerBase::SharedPtr timer_t_ = this->create_wall_timer( 2s, [ this ]() {
+        for( int i = 0; i < 3; i++ )
+        {
+            RCLCPP_INFO( this->get_logger(), "Reboot Request" );
+            this->reset_detectors_pub->publish( std_msgs::msg::Empty() );  // Request the reboot of all detectors
+        }
+        this->timer_t_->cancel();
+    } );
+
   public:
 
     std::shared_ptr< std::map< std::string, std::pair< int, int > > > classes =
@@ -61,7 +77,16 @@ class perception_server : public rclcpp::Node
     inline perception_server() : Node( "perception_server" )
     {
         RCLCPP_INFO( this->get_logger(), "Initializing perception_server" );
+        // for( int i = 0; i < 3; i++ )
+        //     this->reset_detectors_pub->publish( std_msgs::msg::Empty() );  // Request the reboot of all detectors
     }
+
+    // inline void reboot_request_cb( void )
+    // {
+    //     RCLCPP_INFO( this->get_logger(), "Reboot Request" );
+    //     this->reset_detectors_pub->publish( std_msgs::msg::Empty() );  // Request the reboot of all detectors
+    //     this->timer_t_->cancel();
+    // }
 
     // inline perception_server( const rclcpp::NodeOptions& options ) : Node( "perception_server", options )
     // {
