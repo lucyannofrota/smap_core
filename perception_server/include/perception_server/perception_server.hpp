@@ -81,7 +81,14 @@ class perception_server : public rclcpp::Node
         //     this->reset_detectors_pub->publish( std_msgs::msg::Empty() );  // Request the reboot of all detectors
     }
 
-    inline ~perception_server() {}
+    inline ~perception_server()
+    {
+        for( int i = 0; i < 3; i++ )
+        {
+            RCLCPP_WARN( this->get_logger(), "Reboot Request" );
+            this->reset_detectors_pub->publish( std_msgs::msg::Empty() );  // Request the reboot of all detectors
+        }
+    }
 
     std::map< std::string, std::pair< int, int > > add_detector( detector_t& new_detector );
 
