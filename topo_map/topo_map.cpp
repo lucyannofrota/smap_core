@@ -60,7 +60,11 @@ void topo_map::observation_callback( const smap_interfaces::msg::SmapObservation
     // size_t vert_idx = 0, vert_idx_valid = 0;
     bool valid_transaction;
     this->vertex_transaction( observation, candidates, det, closest, valid_transaction );
-    if( !valid_transaction ) return;
+    if( !valid_transaction )
+    {
+        this->tim_observation_callback.stop();
+        return;
+    }
 
     // Object combination
     // TODO: Check this method
