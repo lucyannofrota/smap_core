@@ -34,7 +34,7 @@ topo_marker::topo_marker( void )
     this->histogram.color.r          = 255;
     this->histogram.color.g          = 0;
     this->histogram.color.b          = 0;
-    this->histogram.color.a          = 1;
+    this->histogram.color.a          = 0.7;
     this->histogram.lifetime.sec     = 1;
     this->histogram.lifetime.nanosec = 500 * 1000 * 1000;
 
@@ -50,7 +50,7 @@ topo_marker::topo_marker( void )
     this->aabb.color.r            = 0.0;
     this->aabb.color.g            = 0.0;
     this->aabb.color.b            = 1.0;
-    this->aabb.color.a            = 0.5;
+    this->aabb.color.a            = 0.3;
     this->aabb.lifetime.sec       = 1;
     this->aabb.lifetime.nanosec   = 500 * 1000 * 1000;
 
@@ -255,7 +255,7 @@ void topo_marker::update_markers( const graph_t& graph, std::mutex& map_mutex, c
             std::string st;
             switch( r_thing.state )
             {
-            case thing_state_t::VALID:
+            case thing_state_t::VISIBLE:
                 st = 'V';
                 break;
             case thing_state_t::OCCLUDED:

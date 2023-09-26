@@ -10,9 +10,9 @@
 namespace smap
 {
 
-#define HISTOGRAM_BINS 36  // Number of bins of the polar histogram
+#define HISTOGRAM_BINS 18 //36  // Number of bins of the polar histogram
 
-#define HISTOGRAM_BIN_CHANGE_VALUE 2.5
+#define HISTOGRAM_BIN_CHANGE_VALUE 2
 
 #define MAX_POS_PROB 0.85
 

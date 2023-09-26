@@ -38,7 +38,7 @@ enum thing_state_t
     NONE,
     ABSENT,
     OCCLUDED,
-    VALID
+    VISIBLE
 };
 
 // Can be a location or object thing

@@ -71,10 +71,10 @@ void topo_map::observation_callback( const smap_interfaces::msg::SmapObservation
     // this->object_vert_move( valid_idxs, closest );
 
     this->tim_observation_callback.stop();
-    if( closest.second->get_label().second != 75 && closest.second->get_label().second != -1 )
-        printf( "\n\n\n----------------------------------------\n----------------------------------------\nthing::"
-                "update()\n\t label != tv\n"
-                "----------------------------------------\n----------------------------------------\n\n\n\n" );
+    // if( closest.second->get_label().second != 75 && closest.second->get_label().second != -1 )
+    //     printf( "\n\n\n----------------------------------------\n----------------------------------------\nthing::"
+    //             "update()\n\t label != tv\n"
+    //             "----------------------------------------\n----------------------------------------\n\n\n\n" );
 
     const char str[] = "observation_callback";
     timer.print_time( this->get_logger(), str );
@@ -270,7 +270,7 @@ std::numeric_limits< double >::infinity() },
 
                 // 2.3. Classify the object as occluded or non-occluded and update
                 size_t cells_total = cells_before + cells_in + cells_after;
-                double decay_value = 0, absent_mod = 3;
+                double decay_value = 0, absent_mod = 2;
                 if( cells_total == 0 ) return;
                 double cell_decay_factor = ( cells_before + cells_after ) * 1.0 / ( cells_total * 1.0 );
                 // 2.3.1 Check for occluded objects
@@ -291,9 +291,12 @@ std::numeric_limits< double >::infinity() },
                 // 2.3.1-2 Most of collisions happens at the object [VALID - case 2]
                 if( cells_in > cells_before + cells_after )
                 {
-                    decay_value = 0;
+                    decay_value = 1.0/20.0;
                     RCLCPP_DEBUG( this->get_logger(), "[OCC] Occluded case 2 | factor: %f ", decay_value );
-                    object.state = thing_state_t::VALID;
+										object.decay(
+                        distance_camera_to_object, this->compute_corner_direction( msg->camera_pose, object.pos ),
+                        this->get_parameter( "Object_Prob_Decay" ).as_double(), decay_value );
+                    object.state = thing_state_t::VISIBLE;
                     continue;
                 }
                 // 2.3.1-3 Most of collisions happens after the object [ABSENT - case 3]
@@ -340,9 +343,12 @@ std::numeric_limits< double >::infinity() },
                     object.state = thing_state_t::OCCLUDED;
                     break;
                 case 1:
-                    decay_value = 0;
+                    decay_value = 1.0/20.0;
                     RCLCPP_DEBUG( this->get_logger(), "[OCC] Valid case 5.2 | factor: %f", decay_value );
-                    object.state = thing_state_t::VALID;
+										object.decay(
+                        distance_camera_to_object, this->compute_corner_direction( msg->camera_pose, object.pos ),
+                        this->get_parameter( "Object_Prob_Decay" ).as_double(), decay_value );
+                    object.state = thing_state_t::VISIBLE;
                     break;
                 case 2:
                     decay_value = cell_decay_factor * absent_mod * 0.5;

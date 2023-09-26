@@ -25,7 +25,7 @@ void observation_histogram::register_obs( double distance, double angle, bool po
     // int c            = this->histogram.axis().size();
     // int b            = this->histogram.size();
 
-    double add_value = HISTOGRAM_BIN_CHANGE_VALUE / ( 1 + distance / 3 );
+    double add_value = HISTOGRAM_BIN_CHANGE_VALUE / ( 1 + distance / 2 );
 
     int idx;
     // printf( "----------------\n" );
@@ -37,26 +37,6 @@ void observation_histogram::register_obs( double distance, double angle, bool po
         double p_value = 0.5 + ( positive ? 1 : -1 ) * this->factor * this->weights[ j ] * add_value;
         assert( positive ? ( p_value >= 0.5 ) : ( p_value <= 0.5 ) );
         this->histogram[ idx ] = clamping_log_odds_sum< double >( this->histogram[ idx ], p_value );
-        // if( std::isnan( this->histogram[ idx ] ) || std::isinf( this->histogram[ idx ] ) )
-        //     this->histogram[ idx ] = log_odds( 0.5 );
-        // double p_value = 0.5;
-        // if( positive ) p_value += this->factor * this->weights[ j ] * add_value;
-        // else p_value -= this->factor * this->weights[ j ] * add_value;
-        // assert( positive ? ( p_value >= 0.5 ) : ( p_value <= 0.5 ) );
-        // // Clamping
-        // if( p_value <= 0 || p_value <= log_odds_inv( -LOG_ODDS_CLAMPING )
-        //     || ( ( this->histogram[ idx ] + log_odds( p_value ) ) < -LOG_ODDS_CLAMPING ) )
-        //     this->histogram[ idx ] = -LOG_ODDS_CLAMPING;
-        // else
-        // {
-        //     //
-        //     if( p_value >= 1 || p_value >= log_odds_inv( +LOG_ODDS_CLAMPING )
-        //         || ( ( this->histogram[ idx ] + log_odds( p_value ) ) > +LOG_ODDS_CLAMPING ) )
-        //         this->histogram[ idx ] = +LOG_ODDS_CLAMPING;
-        //     else this->histogram[ idx ] += log_odds( p_value );
-        // }
-        // // printf( "reg: [%i]: %6.2f\n", i, (double) this->histogram[ idx ] );
-        // assert( this->histogram[ idx ] >= -LOG_ODDS_CLAMPING && this->histogram[ idx ] <= LOG_ODDS_CLAMPING );
     }
 }
 

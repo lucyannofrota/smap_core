@@ -20,7 +20,7 @@ namespace smap
 
 #define DEFAULT_NEW_EDGE_FACTOR 0.95                                   // Must be < 1
 
-#define DEFAULT_ACTIVE_FOV_H 100.0                                     // Horizontal active FOV
+#define DEFAULT_ACTIVE_FOV_H 80.0                                     // Horizontal active FOV
 
 #define DEFAULT_OBJECT_ERROR_DISTANCE 0.2  // Max position error of an object and max distance between objects
 
@@ -36,7 +36,7 @@ namespace smap
 #define DEFAULT_OBJECT_PROB_DECAY                                                                                      \
     0.8  // It should be 0 <= value < 1. The decay will vary between OBJECT_PROB_DECAY and 2xOBJECT_PROB_DECAY
 
-#define DEFAULT_OCCLUSION_DECAY_PENALTY 1.0 / 20.0
+#define DEFAULT_OCCLUSION_DECAY_PENALTY 1.0 / 24.0
 
 }  // namespace smap
 

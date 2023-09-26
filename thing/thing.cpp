@@ -91,7 +91,7 @@ void thing::set(
     }
     stack_normalization( this->class_probabilities );
     assert( this->class_prob_is_valid() );
-    assert( this->get_label().second == 75 || this->get_label().second == -1 );  // TODO: Remove
+    // assert( this->get_label().second == 75 || this->get_label().second == -1 );  // TODO: Remove
     // stack_vectors( this->class_probabilities, probability_distribution, detector );
 }
 

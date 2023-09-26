@@ -20,3 +20,5 @@ pcl_test/
 samples/image_saver/
 
 samples/example_pcd.pcd
+timers/object_estimator/*
+timers/topo_map/*

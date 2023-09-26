@@ -254,11 +254,11 @@ void object_estimator::detections_callback( const smap_interfaces::msg::SmapDete
         if( obj.confidence < this->get_parameter( "Minimum_Object_Confidence" ).as_double() )
             continue;                    // TODO: Remove DEBUG
 
-        if( obj.label != 62 ) continue;  // TODO: Remove DEBUG
+        // if( obj.label != 62 ) continue;  // TODO: Remove DEBUG
 
-        if( ( obj.bb_2d.keypoint_1[ 0 ] < ( ( 672 / 2 ) - ( 672 / 6 ) ) )
-            || ( obj.bb_2d.keypoint_1[ 0 ] > ( ( 672 / 2 ) + ( 672 / 6 ) ) ) )
-            continue;  // TODO: Remove DEBUG
+        // if( ( obj.bb_2d.keypoint_1[ 0 ] < ( ( 672 / 2 ) - ( 672 / 6 ) ) )
+        //     || ( obj.bb_2d.keypoint_1[ 0 ] > ( ( 672 / 2 ) + ( 672 / 6 ) ) ) )
+        //     continue;  // TODO: Remove DEBUG
 
         obj.module_id = input_msg->module_id;
 
