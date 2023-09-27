@@ -17,6 +17,10 @@ namespace smap
 
 #define DEFAULT_CONFIDENCE_OBJECT_VALID 0.5
 
+#define DEFAULT_OBJECT_MIN_DIST 0.2
+
+#define DEFAULT_OBJECT_MAX_DIST 1.7
+
 }  // namespace smap
 
 #endif  // SMAP_BASE__MACROS_HPP_
