@@ -180,10 +180,10 @@ class object_estimator : public rclcpp::Node
   public:
 
     // TODO: move to private
-    std::shared_ptr< std::pair< float, float > > pcl_lims =
-        std::make_shared< std::pair< float, float > >( 0.2, 1.6 );  // TODO: Create parameter
+    std::shared_ptr< std::pair< float, float > > pcl_lims = std::make_shared< std::pair< float, float > >(
+        DEFAULT_OBJECT_MIN_DIST, DEFAULT_OBJECT_MAX_DIST );  // TODO: Create parameter
 
-    float leaf_size        = 0.03f;                                 // 0.00 <= leaf_size <= 0.05 | 0.03
+    float leaf_size        = 0.03f;                          // 0.00 <= leaf_size <= 0.05 | 0.03
 
     int mean_k             = 8;
     float mu               = 0.3f;

@@ -112,13 +112,17 @@ void topo_map::depth_map_callback( const smap_interfaces::msg::DepthMap::SharedP
                     > this->get_parameter( "Active_FOV" ).as_double() )
                     continue;
 
-                // 2.2. Check cell occlusion
-                RCLCPP_DEBUG( this->get_logger(), "2.2. Check occlusion" );
-                // 2.2.1. Get AABB corners
+                // 2.2. Check the distance
+                double distance_camera_to_object = gPoint_distance( msg->camera_pose.position, object.pos );
+                if( distance_camera_to_object > DEFAULT_OBJECT_MAX_DIST ) continue;
+
+                // 2.3. Check cell occlusion
+                RCLCPP_DEBUG( this->get_logger(), "2.3. Check occlusion" );
+                // 2.3.1. Get AABB corners
                 std::array< geometry_msgs::msg::Point, 8 > AABB;
                 set_AABB( AABB, object.aabb.first, object.aabb.second );
 
-                // 2.2.2. Get correspondent AABB corners in depth_map indexes
+                // 2.3.2. Get correspondent AABB corners in depth_map indexes
                 std::array< std::pair< std::array< long, 2 >, double >, 8 > object_corner_indexes = {
                     {{ { { std::numeric_limits< long >::max(), std::numeric_limits< long >::min() } },
 std::numeric_limits< double >::infinity() },
@@ -140,18 +144,18 @@ std::numeric_limits< double >::infinity() },
                 for( const auto& corner: AABB | boost::adaptors::indexed( 0 ) )
                 {
                     // TODO implement subsectors to reduce the number of cells to ve checked
-                    // 2.2.2.1 Compute the angle from the camera to the corner
+                    // 2.3.2.1 Compute the angle from the camera to the corner
                     double camera_to_corner_angle = this->compute_corner_direction( msg->camera_pose, corner.value() );
-                    // 2.2.2.2 Loop through cells of the depth_map
+                    // 2.3.2.2 Loop through cells of the depth_map
                     for( const auto& o_map_row: depth_map | boost::adaptors::indexed( 0 ) )
                     {
                         for( const auto& o_map_col: o_map_row.value() | boost::adaptors::indexed( 0 ) )
                         {
                             if( !is_valid( o_map_col.value()[ 2 ] ) ) continue;
-                            // 2.2.2.2.1 Compute the angle from the camera to the depth_map cell
+                            // 2.3.2.2.1 Compute the angle from the camera to the depth_map cell
                             double camera_to_panel_angle =
                                 this->compute_corner_direction( msg->camera_pose, o_map_col.value()[ 2 ] );
-                            // 2.2.2.2.2 Compute the difference between camera_to_corner_angle and camera_to_panel_angle
+                            // 2.3.2.2.2 Compute the difference between camera_to_corner_angle and camera_to_panel_angle
                             double angle_difference = atan2(
                                 sin( camera_to_corner_angle - camera_to_panel_angle ),
                                 cos( camera_to_corner_angle - camera_to_panel_angle ) );
@@ -167,7 +171,7 @@ std::numeric_limits< double >::infinity() },
                     }
                 }
 
-                // 2.2.3.1 Get the minimum and maximum corners in the depth_map plane
+                // 2.3.3.1 Get the minimum and maximum corners in the depth_map plane
                 std::array< long, 2 > mins = { DEPTH_MAP_ROWS, DEPTH_MAP_COLS }, maxs = { 0, 0 };
                 for( const auto& cell: object_corner_indexes )
                 {
@@ -218,9 +222,8 @@ std::numeric_limits< double >::infinity() },
                     this->selected_panels_pub->publish( this->panels_maker_array );
                 }
 
-                // 2.2.3.2 Compute the number of cells in occlusion
+                // 2.3.3.2 Compute the number of cells in occlusion
                 size_t cells_before = 0, cells_in = 0, cells_after = 0;
-                double distance_camera_to_object = gPoint_distance( msg->camera_pose.position, object.pos );
                 for( long occ_row = mins[ 0 ]; occ_row <= maxs[ 0 ]; occ_row++ )
                 {
                     for( long occ_col = mins[ 1 ]; occ_col <= maxs[ 1 ]; occ_col++ )
@@ -229,7 +232,7 @@ std::numeric_limits< double >::infinity() },
                             || !is_valid( depth_map[ occ_row ][ occ_col ][ 1 ] )
                             || !is_valid( depth_map[ occ_row ][ occ_col ][ 2 ] ) )
                             continue;
-                        // 2.2.3.2.1 Compute the the distance between cell centroids and the object centroid with
+                        // 2.3.3.2.1 Compute the the distance between cell centroids and the object centroid with
                         // tolerance distance_cell_to_object = gPoint_distance( depth_map[ occ_row ][ occ_col ][ 2 ],
                         // object.pos )
                         geometry_msgs::msg::Point aux_point = depth_map[ occ_row ][ occ_col ][ 2 ];
@@ -242,20 +245,20 @@ std::numeric_limits< double >::infinity() },
                             > this->get_parameter( "Occlusion_Object_Distance_Tolerance_Max" ).as_double() )
                             object_tolerance_radius =
                                 this->get_parameter( "Occlusion_Object_Distance_Tolerance_Max" ).as_double();
-                        // 2.2.3.2.2-1 cell before obj
+                        // 2.3.3.2.2-1 cell before obj
                         if( distance_camera_to_cell < distance_camera_to_object - object_tolerance_radius )
                         {
                             cells_before++;
                             continue;
                         }
-                        // 2.2.3.2.2-2 cell close to obj
+                        // 2.3.3.2.2-2 cell close to obj
                         if( ( distance_camera_to_cell >= distance_camera_to_object - object_tolerance_radius )
                             && ( distance_camera_to_cell <= distance_camera_to_object + object_tolerance_radius ) )
                         {
                             cells_in++;
                             continue;
                         }
-                        // 2.2.3.2.2-3 cell after obj
+                        // 2.3.3.2.2-3 cell after obj
                         if( distance_camera_to_cell > distance_camera_to_object + object_tolerance_radius )
                         {
                             cells_after++;
