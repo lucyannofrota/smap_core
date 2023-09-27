@@ -140,6 +140,7 @@ void object_estimator::object_estimation_thread(
                 obs.object.aabb.max.point ) )
         {
             this->tim_3D_AAB.stop();
+            this->tim_object_estimation_thread.stop();
             return;
         }
         this->tim_3D_AAB.stop();
@@ -181,6 +182,7 @@ void object_estimator::object_estimation_thread(
     }
     catch( std::exception& e )
     {
+        this->tim_object_estimation_thread.stop();
         std::cout << "object_estimation_thread error!" << std::endl;
         std::cout << e.what() << std::endl;
     }
