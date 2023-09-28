@@ -30,12 +30,13 @@ find_package(pcl_processing REQUIRED)
 find_package(perception_server REQUIRED)
 find_package(topo_map REQUIRED)
 find_package(thing REQUIRED)
+find_package(map_exporter REQUIRED)
 
 find_package(Boost REQUIRED system serialization) 
 
 # find_package(geometry_msgs REQUIRED)
 # find_package(sensor_msgs REQUIRED)
-# find_package(tf2 REQUIRED)
+find_package(nav_msgs REQUIRED)
 # find_package(tf2_ros REQUIRED)
 # find_package(tf2_geometry_msgs REQUIRED)
 # find_package(PCL 1.1 REQUIRED)
@@ -115,6 +116,7 @@ target_link_libraries(
   perception_server::perception_server
   topo_map::topo_map
   thing::thing
+  map_exporter::map_exporter
 )
 
 # target_link_libraries(

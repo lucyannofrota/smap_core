@@ -14,6 +14,7 @@ project(perception_server)
         find_package(visualization_msgs REQUIRED)
         find_package(tf2 REQUIRED)
         find_package(tf2_geometry_msgs REQUIRED)
+        find_package(nav_msgs REQUIRED)
     # smap
         find_package(smap_interfaces REQUIRED)
         find_package(smap_base REQUIRED)

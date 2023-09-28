@@ -11,6 +11,8 @@
   <!-- <buildtool_depend>ament_cmake_ros</buildtool_depend>
   <buildtool_depend>ament_cmake_python</buildtool_depend> -->
 
+  <depend>nav_msgs</depend>
+
 
   <depend>rclcpp</depend>
   <depend>boost</depend>
@@ -21,6 +23,7 @@
   <depend>perception_server</depend>
   <depend>topo_map</depend>
   <depend>thing</depend>
+  <depend>map_exporter</depend>
   <!-- <depend>thing</depend> -->
 
 
@@ -47,7 +50,7 @@
   <test_depend>ament_lint_cmake</test_depend>
   <test_depend>ament_xmllint</test_depend>
   <test_depend>ament_flake8</test_depend>
-  <test_depend>ament_pep257</test_depend>
+  
 
   <export>
     <build_type>ament_cmake</build_type>

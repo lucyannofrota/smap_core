@@ -1,0 +1,28 @@
+{
+  "configurations": [
+    {
+      "browse": {
+        "databaseFilename": "${default}",
+        "limitSymbolsToIncludedHeaders": false
+      },
+      "includePath": [
+        "/workspace/install/include/**",
+        "/opt/ros/foxy/include/**",
+        "/workspace/src/smap/smap_core/object_estimator/include/**",
+        "/workspace/src/smap/smap_core/pcl_processing/include/**",
+        "/workspace/src/smap/smap_core/perception_server/include/**",
+        "/workspace/src/smap/smap_core/smap_base/include/**",
+        "/workspace/src/smap/smap_core/thing/include/**",
+        "/workspace/src/smap/smap_core/topo_map/include/**",
+        "/workspace/src/smap/smap_interfaces/include/**",
+        "/usr/include/**"
+      ],
+      "name": "ROS",
+      "intelliSenseMode": "gcc-x64",
+      "compilerPath": "/usr/bin/gcc",
+      "cStandard": "gnu11",
+      "cppStandard": "c++14"
+    }
+  ],
+  "version": 4
+}

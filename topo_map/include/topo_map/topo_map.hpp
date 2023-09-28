@@ -2,9 +2,14 @@
 #define SMAP_CORE__TOPO_MAP_HPP_
 
 // STL
+#include <chrono>
 #include <cmath>
+#include <functional>
 #include <limits>
+#include <memory>
 #include <mutex>
+#include <string>
+#include <thread>
 
 // BOOST
 #include <boost/graph/graph_utility.hpp>
@@ -20,6 +25,7 @@
 #include "smap_base/visibility_control.h"
 
 #include <geometry_msgs/msg/pose_stamped.hpp>
+// #include <nav_msgs/msg/occupancy_grid.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <tf2/convert.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
@@ -103,6 +109,10 @@ class topo_map : public rclcpp::Node
         this->create_publisher< visualization_msgs::msg::Marker >(
             std::string( this->get_namespace() ) + std::string( "/topo_map/selected_face" ), 2 );
 
+    // rclcpp::Subscription< nav_msgs::msg::OccupancyGrid >::SharedPtr og_sub =
+    //     this->create_subscription< nav_msgs::msg::OccupancyGrid >(
+    //         std::string( "/map" ), 2, std::bind( &topo_map::export_maps, this, std::placeholders::_1 ) );
+
     // Threads
     // std::thread marker_thread;
     topo_marker markers;
@@ -113,6 +123,8 @@ class topo_map : public rclcpp::Node
 
     // Mutex
     std::mutex map_mutex;
+
+    bool map_exported = false, ending = false;
 
     // topo_marker markers;
 
@@ -584,7 +596,33 @@ class topo_map : public rclcpp::Node
         this->face_marker.lifetime.nanosec    = 500 * 1000 * 1000;
     }
 
-    ~topo_map( void ) { this->export_graph( "TopoGraph" ); }
+    ~topo_map( void )
+    {
+        // RCLCPP_WARN( this->get_logger(), "DESTRUCTOR" );
+
+        // og_sub = this->create_subscription< nav_msgs::msg::OccupancyGrid >(
+        //     std::string( "/map" ), 2, std::bind( &topo_map::export_maps, this, std::placeholders::_1 ) );
+
+        // while( !this->map_exported )
+        // {
+        //     RCLCPP_WARN( this->get_logger(), "EXPORTING MAP" );
+        //     this->ending = true;
+        //     std::this_thread::yield();
+        // }
+        // RCLCPP_WARN( this->get_logger(), "TOPO-" );
+        this->export_graph( "TopoGraph" );
+
+        //
+    }
+
+    // inline void export_maps( const nav_msgs::msg::OccupancyGrid::SharedPtr og )
+    // {
+    //     (void) og;
+    //     RCLCPP_WARN( this->get_logger(), "OG CB" );
+    //     if( !this->ending ) return;
+    //     RCLCPP_WARN( this->get_logger(), "OG CB END" );
+    //     this->map_exported = true;
+    // }
 
     inline void print_vertex( const std::string& prefix, const size_t& idx )
     {

@@ -11,6 +11,7 @@
 // #include "smap_object_estimator/object_estimator.hpp"
 
 // SMAP
+#include "map_exporter/map_exporter.hpp"
 #include "object_estimator/object_estimator.hpp"
 #include "perception_server/perception_server.hpp"
 #include "smap_interfaces/msg/smap_data.hpp"
@@ -31,6 +32,7 @@ int main( int argc, char** argv )
     rclcpp::init( argc, argv );
     std::shared_ptr< smap::topo_map > _topo_map_node                   = std::make_shared< smap::topo_map >();
     std::shared_ptr< smap::perception_server > _perception_server_node = std::make_shared< smap::perception_server >();
+    std::shared_ptr< smap::map_exporter > _map_exporter_node           = std::make_shared< smap::map_exporter >();
 
     _topo_map_node->define_reg_classes( _perception_server_node->classes );
     _topo_map_node->define_reg_detectors( _perception_server_node->detectors );
@@ -40,6 +42,8 @@ int main( int argc, char** argv )
     executor.add_node( _topo_map_node );
 
     executor.add_node( _perception_server_node );
+
+    executor.add_node( _map_exporter_node );
 
     while( rclcpp::ok() )
     {

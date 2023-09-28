@@ -145,6 +145,7 @@ ament_target_dependencies(
   smap_interfaces
   visualization_msgs
   std_msgs
+  #   nav_msgs
 )
 
 # Causes the visibility macros to use dllexport rather than dllimport,
