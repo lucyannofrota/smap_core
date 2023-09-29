@@ -5,9 +5,10 @@
 #include <cstdio>
 
 // STL
+#include <algorithm>
+#include <array>
 #include <memory>
 #include <vector>
-
 // BOOST
 
 // ROS
@@ -15,11 +16,12 @@
 #include <nav_msgs/msg/occupancy_grid.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <tf2/LinearMath/Matrix3x3.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
 // SMAP
 
 // compute linear index for given map coords
-#define MAP_IDX( width, r, c ) ( ( width ) * ( r ) + ( c ) )
+// #define MAP_IDX( width, r, c ) ( ( width ) * ( r ) + ( c ) )
 
 namespace smap
 {
@@ -74,189 +76,110 @@ class map_exporter : public rclcpp::Node
         //
     }
 
-    void og_callback( const nav_msgs::msg::OccupancyGrid::SharedPtr og )
+    // template< typename Functor >
+    // void bresenham( const Functor out, const double x1, const double y1, const double x2, const double y2 ) const
+    // {
+    //     // https://www.geeksforgeeks.org/bresenhams-line-generation-algorithm/
+    //     int m_new           = 2 * ( y2 - y1 );
+    //     int slope_error_new = m_new - ( x2 - x1 );
+    //     for( int x = x1, y = y1; x <= x2; x++ )
+    //     {
+    //         out( x, y );
+
+    // // Add slope to increment angle formed
+    // slope_error_new += m_new;
+
+    // // Slope error reached limit, time to
+    // // increment y and update slope error.
+    // if( slope_error_new >= 0 )
+    // {
+    //     y++;
+    //     slope_error_new -= 2 * ( x2 - x1 );
+    // }
+    // }
+    // }
+
+    template< typename Functor >
+    void bresenham_low( const Functor out, const int x0, const int y0, const int x1, const int y1 ) const
     {
-        // Copy Map
-        std::vector< signed char > map, aux;
-        map.resize( og->info.height * og->info.width );
-        aux.resize( og->info.height * og->info.width );
-
-        nav_msgs::msg::OccupancyGrid occupancy_grid_msg = nav_msgs::msg::OccupancyGrid();
-        occupancy_grid_msg.header                       = og->header;
-        occupancy_grid_msg.info                         = og->info;
-        occupancy_grid_msg.data.resize( og->info.width * og->info.height );
-
-        for( unsigned int y = 0; y < og->info.height; y++ )
+        int dx = x1 - x0;
+        int dy = y1 - y0;
+        int yi = 1;
+        if( dy < 0 )
         {
-            for( unsigned int x = 0; x < og->info.width; x++ )
-            {
-                unsigned int i = x + ( og->info.height - y - 1 ) * og->info.width;
-                map[ i ]       = og->data[ i ];
-            }
+            yi = -1;
+            dy = -dy;
         }
-
-        const std::string path_name = std::string( "/workspace/src/smap/smap_core/maps/" );
-
-        // Publish occupancy_grid
-        std::string file_name = path_name + std::string( "og_map" );
-        this->save_map( file_name, map, og->info, occupancy_grid_msg );
-        og_pub->publish( occupancy_grid_msg );
-
-        // Publish occupancy_grid_center
-        for( unsigned int y = 0; y < og->info.height; y++ )
+        int D = ( 2 * dy ) - dx;
+        int y = y0;
+        for( int x = x0; x <= x1; x++ )
         {
-            for( unsigned int x = 0; x < og->info.width; x++ )
+            // printf( "[%i,%i]\n", x, y );
+            out( x, y );
+            if( D > 0 )
             {
-                //
-                unsigned int i = x + ( og->info.height - y - 1 ) * og->info.width;
+                y = y + yi;
+                D = D + ( 2 * ( dy - dx ) );
             }
+            else { D = D + 2 * dy; }
         }
-
-        file_name = path_name + std::string( "og_center" );
-        this->save_map( file_name, map, og->info, occupancy_grid_msg );
-        og_center_pub->publish( occupancy_grid_msg );
     }
 
-    // void save_og_cell(
-    //     const std::vector< signed char >& map, const unsigned int& x, const unsigned int& y, const unsigned int& i,
-    //     FILE* output ) const
-    // {
-    //     (void) x;
-    //     (void) y;
-    //     if( map[ i ] >= 0 && map[ i ] <= 25 )
-    //     {  // Unknown
-    //         fputc( 254, output );
-    //     }
-    //     else if( map[ i ] >= 25 )
-    //     {  // (occ,255] Object
-    //         fputc( 000, output );
-    //     }
-    //     else
-    //     {  // occ [0.25,0.65] Free
-    //         fputc( 205, output );
-    //     }
-    // }
+    template< typename Functor >
+    void bresenham_high( const Functor out, const int x0, const int y0, const int x1, const int y1 ) const
+    {
+        int dx = x1 - x0;
+        int dy = y1 - y0;
+        int xi = 1;
+        if( dx < 0 )
+        {
+            xi = -1;
+            dx = -dx;
+        }
+        int D = ( 2 * dx ) - dy;
+        int x = x0;
+        for( int y = y0; y <= y1; y++ )
+        {
+            // printf( "[%i,%i]\n", x, y );
+            out( x, y );
+            if( D > 0 )
+            {
+                x = x + xi;
+                D = D + ( 2 * ( dx - dy ) );
+            }
+            else { D = D + 2 * dx; }
+        }
+    }
 
-    // void save_c_origin_cell(
-    //     const std::vector< signed char >& map, const unsigned int& x, const unsigned int& y, const unsigned int& i,
-    //     FILE* output, const nav_msgs::msg::MapMetaData& metadata ) const
-    // {
-    //     (void) x;
-    //     (void) y;
-    //     if( map[ i ] >= 0 && map[ i ] <= 25 )
-    //     {  //
-    //         fputc( 254, output );
-    //     }
-    //     else if( map[ i ] >= 25 )
-    //     {  // (occ,255]
-    //         fputc( 000, output );
-    //     }
-    //     else
-    //     {  // occ [0.25,0.65]
-    //         fputc( 205, output );
-    //     }
-    // }
+    template< typename Functor >
+    void bresenham( const Functor out, const int x0, const int y0, const int x1, const int y1 ) const
+    {
+        if( abs( y1 - y0 ) < abs( x1 - x0 ) )
+        {
+            //
+            if( x0 > x1 ) bresenham_low( out, x1, y1, x0, y0 );
+            else bresenham_low( out, x0, y0, x1, y1 );
+        }
+        else
+        {
+            if( y0 > y1 ) bresenham_high( out, x1, y1, x0, y0 );
+            else bresenham_high( out, x0, y0, x1, y1 );
+        }
+    }
+
+    void draw_rectangle(
+        std::vector< signed char >& map, const nav_msgs::msg::MapMetaData& metadata,
+        const std::array< std::array< float, 2 >, 4 >& corners ) const;
+
+    void mark_rectangle(
+        std::vector< signed char >& map, const nav_msgs::msg::MapMetaData& metadata,
+        std::array< std::array< float, 2 >, 4 > corners ) const;
+
+    void og_callback( const nav_msgs::msg::OccupancyGrid::SharedPtr og );
 
     void save_map(
         const std::string& file_name, std::vector< signed char >& map, const nav_msgs::msg::MapMetaData& metadata,
-        nav_msgs::msg::OccupancyGrid& occupancy_grid_msg )
-
-    {
-        // https://github.com/ros-planning/navigation/blob/noetic-devel/map_server/src/map_saver.cpp
-        // Map
-        std::string _file_name = file_name + std::string( ".pgm" );
-        FILE* output           = fopen( _file_name.c_str(), "w" );
-        if( !output )
-        {
-            RCLCPP_ERROR( this->get_logger(), "Couldn't save map [%s]", _file_name.c_str() );
-            return;
-        }
-        fprintf(
-            output, "P5\n# CREATOR: map_exporter.cpp %.3f m/pix\n%d %d\n255\n", metadata.resolution, metadata.width,
-            metadata.height );
-        for( unsigned int y = 0; y < metadata.height; y++ )
-        {
-            for( unsigned int x = 0; x < metadata.width; x++ )
-            {
-                unsigned int i = x + ( metadata.height - y - 1 ) * metadata.width;
-                if( map[ i ] >= 0 && map[ i ] <= 25 )
-                {  // Unknown
-                    fputc( 254, output );
-                    occupancy_grid_msg.data[ i ] = map[ i ];
-                }
-                else if( map[ i ] >= 25 )
-                {  // (occ,255] Object
-                    fputc( 000, output );
-                    occupancy_grid_msg.data[ i ] = map[ i ];
-                }
-                else
-                {  // occ [0.25,0.65] Free
-                    fputc( 205, output );
-                    occupancy_grid_msg.data[ i ] = map[ i ];
-                }
-            }
-        }
-        fclose( output );
-
-        // Metadata
-        _file_name = file_name + std::string( ".yaml" );
-        output     = fopen( _file_name.c_str(), "w" );
-        if( !output )
-        {
-            RCLCPP_ERROR( this->get_logger(), "Couldn't save map metadata [%s]", _file_name.c_str() );
-            return;
-        }
-        geometry_msgs::msg::Quaternion orientation = metadata.origin.orientation;
-        tf2::Matrix3x3 mat( tf2::Quaternion( orientation.x, orientation.y, orientation.z, orientation.w ) );
-        double yaw, pitch, roll;
-        mat.getEulerYPR( yaw, pitch, roll );
-
-        fprintf(
-            output,
-            "image: %s\nresolution: %f\norigin: [%f, %f, %f]\nnegate: 0\noccupied_thresh: 0.65\nfree_thresh: 0.196\n\n",
-            _file_name.c_str(), metadata.resolution, metadata.origin.position.x, metadata.origin.position.y, yaw );
-
-        fclose( output );
-    }
-
-    // void _save_metadata( const std::string& file_name, const nav_msgs::msg::MapMetaData& metadata )
-    // {
-    //     FILE* output = fopen( file_name.c_str(), "w" );
-    //     if( !output )
-    //     {
-    //         RCLCPP_ERROR( this->get_logger(), "Couldn't save map metadata [%s]", file_name.c_str() );
-    //         return;
-    //     }
-    //     geometry_msgs::msg::Quaternion orientation = metadata.origin.orientation;
-    //     tf2::Matrix3x3 mat( tf2::Quaternion( orientation.x, orientation.y, orientation.z, orientation.w ) );
-    //     double yaw, pitch, roll;
-    //     mat.getEulerYPR( yaw, pitch, roll );
-
-    // fprintf(
-    //     output,
-    //     "image: %s\nresolution: %f\norigin: [%f, %f, %f]\nnegate: 0\noccupied_thresh: 0.65\nfree_thresh: 0.196\n\n",
-    //     file_name.c_str(), metadata.resolution, metadata.origin.position.x, metadata.origin.position.y, yaw );
-
-    // fclose( output );
-    // }
-
-    // void __save_map(
-    //     std::vector< signed char >& map, const nav_msgs::msg::MapMetaData& metadata,
-    //     nav_msgs::msg::OccupancyGrid& occupancy_grid_msg )
-    // {
-    //     // Map
-    //     const std::string file_path = std::string( "/workspace/src/smap/smap_core/maps/" );
-    //     std::string file_name       = file_path + std::string( "og_map" ) + std::string( ".pgm" );
-    //     RCLCPP_WARN( this->get_logger(), "Writing og_map to %s", file_name.c_str() );
-    //     // this->__save_map( file_name, map, metadata.width, metadata.height, metadata.resolution, occupancy_grid_msg
-    //     );
-
-    // // Metadata
-    // file_name = file_path + std::string( "og_map" ) + std::string( ".yaml" );
-    // RCLCPP_WARN( this->get_logger(), "Writing og_map to %s", file_name.c_str() );
-    // this->_save_metadata( file_name, metadata );
-    // //
-    // }
+        nav_msgs::msg::OccupancyGrid& occupancy_grid_msg );
 };
 }  // namespace smap
 
