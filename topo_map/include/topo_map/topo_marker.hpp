@@ -8,7 +8,7 @@
 #include <visualization_msgs/msg/marker_array.hpp>
 
 // SMAP
-#include "graph.hpp"
+#include "smap_base/graph.hpp"
 #include "smap_base/aux_functions.hpp"
 #include "smap_interfaces/interface_templates.hpp"
 // #include "smap_base/macros.hpp"

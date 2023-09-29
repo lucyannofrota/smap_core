@@ -7,9 +7,7 @@
 #include <functional>
 #include <limits>
 #include <memory>
-#include <mutex>
 #include <string>
-#include <thread>
 
 // BOOST
 #include <boost/graph/graph_utility.hpp>
@@ -33,12 +31,13 @@
 #include <visualization_msgs/msg/marker_array.hpp>
 
 // SMAP
-#include "graph.hpp"
 #include "label_writers.hpp"
+#include "smap_base/graph.hpp"
 // #include "perception_server/perception_server.hpp"
 #include "smap_base/aux_functions.hpp"
 #include "smap_base/counters.hpp"
 // #include "smap_base/macros.hpp"
+#include "map_exporter/map_exporter.hpp"
 #include "smap_interfaces/msg/depth_map.hpp"
 #include "smap_interfaces/msg/smap_object.hpp"
 #include "smap_interfaces/msg/smap_observation.hpp"
@@ -63,6 +62,7 @@ class topo_map : public rclcpp::Node
     friend class boost::serialization::access;
 
     // Variables
+    // std::shared_ptr< graph_t > graph_ = std::make_shared< graph_t >;
     graph_t graph;
 
     size_t previous_idx = -1;
@@ -127,6 +127,8 @@ class topo_map : public rclcpp::Node
     bool map_exported = false, ending = false;
 
     // topo_marker markers;
+
+    double confidence_threshold;
 
     count_time tim_observation_callback {
         std::string( "/workspace/src/smap/smap_core/timers/topo_map/tim_observation_callback.txt" ) },
@@ -596,9 +598,12 @@ class topo_map : public rclcpp::Node
         this->face_marker.lifetime.nanosec    = 500 * 1000 * 1000;
     }
 
+    std::shared_ptr< smap::map_exporter > map_exporter = nullptr;
+
     ~topo_map( void )
     {
-        // RCLCPP_WARN( this->get_logger(), "DESTRUCTOR" );
+        RCLCPP_WARN( this->get_logger(), "topo_map destructor" );
+        this->map_exporter->export_map( this->graph, confidence_threshold );
 
         // og_sub = this->create_subscription< nav_msgs::msg::OccupancyGrid >(
         //     std::string( "/map" ), 2, std::bind( &topo_map::export_maps, this, std::placeholders::_1 ) );

@@ -17,6 +17,7 @@
   <depend>smap_interfaces</depend>
   <depend>smap_base</depend>
   <depend>thing</depend>
+  <depend>map_exporter</depend>
   <depend>topo_map</depend>
   <depend>std_msgs</depend>
   <depend>tf2</depend>

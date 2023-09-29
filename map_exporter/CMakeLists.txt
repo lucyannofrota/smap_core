@@ -22,23 +22,21 @@ endif()
 # find dependencies
     # ament
         find_package(ament_cmake REQUIRED)
-        find_package(ament_cmake_ros REQUIRED)
+
     # standard ros pkgs
         find_package(rclcpp REQUIRED)
-        # find_package(std_msgs REQUIRED)
-        # find_package(geometry_msgs REQUIRED)
-        # find_package(visualization_msgs REQUIRED)
-        # find_package(std_srvs REQUIRED)
         # find_package(tf2 REQUIRED)
         # find_package(tf2_geometry_msgs REQUIRED)
         find_package(geometry_msgs REQUIRED)
         find_package(nav_msgs REQUIRED)
     # smap
-        # find_package(smap_interfaces REQUIRED)
-        # find_package(smap_base REQUIRED)
+        find_package(smap_interfaces REQUIRED)
+        find_package(object_estimator REQUIRED)
         # find_package(pcl_processing REQUIRED)
-        # find_package(object_estimator REQUIRED)
-        find_package(topo_map REQUIRED)
+        find_package(smap_base REQUIRED)
+        find_package(perception_server REQUIRED)
+        # find_package(topo_map REQUIRED)
+        find_package(thing REQUIRED)
 
 
 ###################
@@ -77,6 +75,12 @@ include_directories(include/map_exporter)
 #     # topo_marker
 #     # ${Boost_LIBRARIES}
 # )
+
+target_link_libraries(map_exporter 
+#   thing::thing
+  smap_base::smap_base
+    # topo_map::topo_map
+)
 
 ament_target_dependencies(
   map_exporter

@@ -20,6 +20,7 @@ project(perception_server)
         find_package(smap_base REQUIRED)
         find_package(topo_map REQUIRED)
         find_package(thing REQUIRED)
+        find_package(map_exporter REQUIRED)
 
         find_package(Boost REQUIRED system serialization) 
 

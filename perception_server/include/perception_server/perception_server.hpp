@@ -2,7 +2,9 @@
 #define SMAP_CORE__PERCEPTION_SERVER_HPP_
 
 // STL
+#include <condition_variable>
 #include <memory>
+#include <mutex>
 #include <string>
 #include <utility>
 
@@ -73,16 +75,18 @@ class perception_server : public rclcpp::Node
 
     std::shared_ptr< std::vector< detector_t > > detectors = std::make_shared< std::vector< detector_t > >();
 
+
     // Constructor/Destructor
-    inline perception_server() : Node( "perception_server" )
+    perception_server() : Node( "perception_server" )
     {
         RCLCPP_INFO( this->get_logger(), "Initializing perception_server" );
         // for( int i = 0; i < 3; i++ )
         //     this->reset_detectors_pub->publish( std_msgs::msg::Empty() );  // Request the reboot of all detectors
     }
 
-    inline ~perception_server()
+    ~perception_server()
     {
+        RCLCPP_WARN( this->get_logger(), "perception_server destructor" );
         for( int i = 0; i < 3; i++ )
         {
             RCLCPP_WARN( this->get_logger(), "Reboot Request" );

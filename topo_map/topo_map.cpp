@@ -387,9 +387,9 @@ void topo_map::cleaning_map_callback( void )
         // 		if(edge_count <= 1) // remove node
         // }
         // histogram
-        double confidence_threshold = this->get_parameter( "Confidence_Object_Valid" ).as_double();
-        graph[ e ].related_things.remove_if( [ &things_count, &confidence_threshold ]( const smap::thing& item ) {
-            if( !item.is_valid( confidence_threshold ) )
+        this->confidence_threshold = this->get_parameter( "Confidence_Object_Valid" ).as_double();
+        graph[ e ].related_things.remove_if( [ &things_count, this ]( const smap::thing& item ) {
+            if( !item.is_valid( this->confidence_threshold ) )
             {
                 things_count++;
                 return true;

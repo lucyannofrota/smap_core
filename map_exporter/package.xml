@@ -13,16 +13,17 @@
   <!-- <depend>rclcpp</depend> -->
   <!-- <depend>tf2</depend> -->
   <!-- <depend>tf2_ros</depend> -->
-  <!-- <depend>tf2</depend>
-  <depend>tf2_geometry_msgs</depend> -->
+  <depend>tf2</depend>
+  <depend>tf2_geometry_msgs</depend>
   <depend>geometry_msgs</depend>
   <depend>nav_msgs</depend>
 
   <!-- <depend>boost</depend> -->
 
   <!-- <depend>smap_interfaces</depend> -->
-  <!-- <depend>smap_base</depend> -->
-  <depend>topo_map</depend>
+  <depend>smap_base</depend>
+  <depend>thing</depend>
+  <!-- <depend>topo_map</depend> -->
   <!-- <depend>object_estimator</depend> -->
   
 

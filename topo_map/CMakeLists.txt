@@ -31,12 +31,14 @@ endif()
         find_package(std_srvs REQUIRED)
         find_package(tf2 REQUIRED)
         find_package(tf2_geometry_msgs REQUIRED)
+        find_package(nav_msgs REQUIRED)
     # smap
         find_package(smap_interfaces REQUIRED)
         find_package(smap_base REQUIRED)
         # find_package(pcl_processing REQUIRED)
         # find_package(object_estimator REQUIRED)
         find_package(thing REQUIRED)
+        find_package(map_exporter REQUIRED)
 
 
 ###################
@@ -68,6 +70,7 @@ set(Boost_USE_MULTITHREADED ON)
 
   target_link_libraries(topo_marker 
     thing::thing
+    map_exporter::map_exporter
     )
 
 target_include_directories(topo_marker PUBLIC
@@ -119,7 +122,6 @@ include_directories(include/topo_map)
 
   ## Lib ##
   add_library(topo_map
-    include/topo_map/graph.hpp
     include/topo_map/topo_map.hpp
     topo_map.cpp
     include/topo_map/label_writers.hpp
@@ -135,6 +137,7 @@ include_directories(include/topo_map)
     thing::thing
     smap_base::smap_base
     # pcl_processing::pcl_processing
+    map_exporter::map_exporter
     topo_marker
     ${Boost_LIBRARIES}
 )

@@ -23,6 +23,7 @@ set(LIB_INC
     include/smap_base/macros.hpp
     include/smap_base/stacking_classification.hpp
     include/smap_base/visibility_control.h
+    include/smap_base/graph.hpp
 )
 
 add_library(

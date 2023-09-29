@@ -24,6 +24,7 @@
   <depend>smap_interfaces</depend>
   <depend>smap_base</depend>
   <depend>thing</depend>
+  <depend>map_exporter</depend>
   <!-- <depend>object_estimator</depend> -->
   
 

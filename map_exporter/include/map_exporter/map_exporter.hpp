@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <array>
 #include <memory>
+#include <mutex>
 #include <vector>
 // BOOST
 
@@ -19,18 +20,10 @@
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
 // SMAP
-
-// compute linear index for given map coords
-// #define MAP_IDX( width, r, c ) ( ( width ) * ( r ) + ( c ) )
+#include "smap_base/graph.hpp"
 
 namespace smap
 {
-
-// template< typename Functor >
-// void save_og_cell( Functor functor )
-// {
-//     cout << functor( 10 ) << endl;
-// }
 
 class map_exporter : public rclcpp::Node
 
@@ -49,6 +42,15 @@ class map_exporter : public rclcpp::Node
         this->create_publisher< nav_msgs::msg::OccupancyGrid >(
             std::string( this->get_namespace() ) + std::string( "/map_exporter/occupancy_grid_center" ), 5 );
 
+    std::shared_ptr< std::map< std::string, std::pair< int, int > > > reg_classes;
+
+    std::vector< signed char > map;
+    nav_msgs::msg::MapMetaData metadata;
+
+    std::mutex m_gmap;
+
+    const std::string path_name = std::string( "/workspace/src/smap/smap_core/maps/g_smap/" );
+
   public:
 
     map_exporter( void ) : Node( "map_exporter" )
@@ -59,6 +61,7 @@ class map_exporter : public rclcpp::Node
 
     ~map_exporter( void )
     {
+        // if( this->reg_classes == nullptr ) return;
         RCLCPP_WARN( this->get_logger(), "Saving Maps" );
 
         // og_sub = this->create_subscription< nav_msgs::msg::OccupancyGrid >(
@@ -76,28 +79,7 @@ class map_exporter : public rclcpp::Node
         //
     }
 
-    // template< typename Functor >
-    // void bresenham( const Functor out, const double x1, const double y1, const double x2, const double y2 ) const
-    // {
-    //     // https://www.geeksforgeeks.org/bresenhams-line-generation-algorithm/
-    //     int m_new           = 2 * ( y2 - y1 );
-    //     int slope_error_new = m_new - ( x2 - x1 );
-    //     for( int x = x1, y = y1; x <= x2; x++ )
-    //     {
-    //         out( x, y );
-
-    // // Add slope to increment angle formed
-    // slope_error_new += m_new;
-
-    // // Slope error reached limit, time to
-    // // increment y and update slope error.
-    // if( slope_error_new >= 0 )
-    // {
-    //     y++;
-    //     slope_error_new -= 2 * ( x2 - x1 );
-    // }
-    // }
-    // }
+    void export_map( graph_t& graph, double confidence_threshold );
 
     template< typename Functor >
     void bresenham_low( const Functor out, const int x0, const int y0, const int x1, const int y1 ) const
@@ -167,19 +149,23 @@ class map_exporter : public rclcpp::Node
         }
     }
 
-    void draw_rectangle(
-        std::vector< signed char >& map, const nav_msgs::msg::MapMetaData& metadata,
-        const std::array< std::array< float, 2 >, 4 >& corners ) const;
+    void draw_rectangle( std::vector< signed char >& map, const std::array< std::array< double, 2 >, 4 >& corners );
 
-    void mark_rectangle(
-        std::vector< signed char >& map, const nav_msgs::msg::MapMetaData& metadata,
-        std::array< std::array< float, 2 >, 4 > corners ) const;
+    void mark_rectangle( std::vector< signed char >& map, std::array< std::array< double, 2 >, 4 > corners );
 
     void og_callback( const nav_msgs::msg::OccupancyGrid::SharedPtr og );
 
     void save_map(
-        const std::string& file_name, std::vector< signed char >& map, const nav_msgs::msg::MapMetaData& metadata,
+        const std::string& file_name, std::vector< signed char >& map,
         nav_msgs::msg::OccupancyGrid& occupancy_grid_msg );
+
+    void save_map( const std::string& file_name, std::vector< signed char >& map );
+
+    inline void define_reg_classes( std::shared_ptr< std::map< std::string, std::pair< int, int > > >& classes )
+    {
+        RCLCPP_DEBUG( this->get_logger(), "Defining reg_classes" );
+        this->reg_classes = classes;
+    }
 };
 }  // namespace smap
 
