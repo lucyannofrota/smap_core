@@ -72,13 +72,7 @@ class thing
         const rclcpp::Logger& _logger ) :
         observations( std::make_unique< observation_histogram >( HISTOGRAM_BINS ) ),
         reg_classes( class_map ), id( id ), logger( _logger )
-    // observations(std::make_unique<observation_histogram>(HISTOGRAM_BINS))
-    // o(std::make_unique<observation_histogram>(HISTOGRAM_BINS))
     {
-        // observation_histogram observations =
-        // observation_histogram( HISTOGRAM_BINS );
-        // this->observations = observation_histogram::observation_histogram( 36 );
-        // this->reg_classes = class_map;
     }
 
     thing( semantic_type_t type, int id, const rclcpp::Logger& _logger ) : logger( _logger )
@@ -141,43 +135,6 @@ class thing
     void decay_confidence( const double prob_decay_factor, const double& distance, const double& factor );
 
     void decay( const double& distance, const double& angle, const double& base_decay, const double& decay_factor );
-    // {
-    //     // current_likelihood - is a map containing a vector of probabilities that represents the probability of
-    //     beeing
-    //     // each class
-    //     if( !( factor > 0 && factor < 1 ) )
-    //     {
-    //         RCLCPP_ERROR(
-    //             this->logger, "Decay confidence error. Factor: %f. It should be ( factor > 0 && factor < 1 )" );
-    //     }
-    //     assert( factor < distance );
-    //     float pre_sum = 0, sum = 0;
-    //     for( auto& class_likelihood: this->class_probabilities )
-    //     {
-    //         float mod = ( ( 1 + factor * 3 ) / ( 1 + ( distance / 2 ) ) )
-    //                   * ( 1 - ( this->observations->get_histogram_ratio() / 2 ) );
-    //         // 0 <= mod <= 4
-    //         float p_value = 0.5 - prob_decay_factor * ( mod / 8.0 );
-    //         // 0 < pvalue <= 0.5
-    //         // RCLCPP_DEBUG(
-    //         //     this->logger, "p_value: %f, comp: %f, distance: %f, prob_decay_factor: %f",
-    //         //     0.5 - prob_decay_factor * ( 1 / 4.0 ) * ( ( 1 + 3 * factor ) / ( 1 + distance ) ),
-    //         //     abs( 0.5 - prob_decay_factor * 0.5 ), distance, prob_decay_factor );
-    //         // assert( p_value <= abs( 0.5 - prob_decay_factor * 0.5 ) );
-    //         pre_sum += log_odds_inv( class_likelihood.second );
-    //         // class_likelihood.second += log_odds( ( prob_decay_factor * ( 1 + factor ) ) / ( 1 + distance ) );
-    //         // // Clamping
-    //         // if( class_likelihood.second < -LOG_ODDS_CLAMPING ) class_likelihood.second = -LOG_ODDS_CLAMPING;
-    //         // if( class_likelihood.second > LOG_ODDS_CLAMPING ) class_likelihood.second = LOG_ODDS_CLAMPING;
-
-    // assert( p_value <= 0.5 );
-
-    // class_likelihood.second  = clamping_log_odds_sum< float >( class_likelihood.second, p_value );
-    // sum                     += log_odds_inv( class_likelihood.second );
-    // }
-    // RCLCPP_INFO( this->logger, "sum: %f, pre_sum: %f", sum, pre_sum );
-    // assert( sum <= pre_sum );
-    // }
 
     bool is_valid( const double confidence_threshold ) const;
 
@@ -205,8 +162,24 @@ class thing
     template< class Archive >
     void serialize( Archive& ar, const unsigned int version )
     {
-        (void) version;
+        ar & version;
         ar & type;
+        // pos
+        ar & pos.x;
+        ar & pos.y;
+        ar & pos.z;
+        // aabb
+        ar & aabb.first.x;
+        ar & aabb.first.y;
+        ar & aabb.first.z;
+        ar & aabb.second.x;
+        ar & aabb.second.y;
+        ar & aabb.second.z;
+        // class_probabilities
+        ar & class_probabilities;
+        // pos_confidence
+        ar & pos_confidence;
+
         // TODO: Implement
     }
 };

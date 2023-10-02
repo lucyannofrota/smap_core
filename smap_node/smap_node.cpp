@@ -1,3 +1,6 @@
+// BOOST
+#include <boost/archive/text_iarchive.hpp>
+#include <boost/archive/text_oarchive.hpp>
 
 // ROS
 #include <rclcpp/rclcpp.hpp>
@@ -56,6 +59,13 @@ int main( int argc, char** argv )
         }
     }
     rclcpp::shutdown();
+
+    std::ofstream ofs( "/workspace/src/smap/smap_core/maps/map.smap" );
+    boost::archive::text_oarchive oa( ofs );
+    oa << *_topo_map_node;
+
+    ofs.close();
+
     // printf( "---BLK---\n" );
     // std::unique_lock< std::mutex > lk( *m_perception_server );
     // cv_topo_map->wait( lk, [ f_perception_server ] { return *f_perception_server; } );

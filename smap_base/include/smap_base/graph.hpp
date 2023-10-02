@@ -2,7 +2,6 @@
 #define SMAP_CORE__GRAPH_HPP_
 
 // STL
-// #include <stdlib.h>
 #include <memory>
 
 // BOOST
@@ -36,14 +35,14 @@ struct vertex_data_t
     template< class Archive >
     void serialize( Archive& ar, const unsigned int version )
     {
-        (void) version;
+        ar & version;
         ar & index;
         ar & pos.x;
         ar & pos.y;
         ar & pos.z;
         ar & this_thing;
         // TODO: related_things serialization
-        // ar& related_things;
+        ar & related_things;
     }
 };
 

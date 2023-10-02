@@ -11,6 +11,8 @@
 // BOOST
 #include <boost/histogram/axis.hpp>
 #include <boost/histogram/make_histogram.hpp>
+#include <boost/serialization/serialization.hpp>
+#include <boost/serialization/version.hpp>
 
 namespace smap
 {
@@ -39,6 +41,20 @@ struct observation_histogram
     // bool object_is_valid( double current_angle ) const;
 
     void print( void ) const;
+
+    friend class boost::serialization::access;
+
+    template< class Archive >
+    void serialize( Archive& ar, const unsigned int version )
+    {
+        ar & version;
+        ar & histogram;
+        ar & n_bins;
+        ar & l;
+        ar & weights;
+        ar & factor;
+        ar & bin_width;
+    }
 };
 
 }  // namespace smap

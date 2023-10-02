@@ -57,7 +57,9 @@ bool thing::label_is_equal( const uint8_t& module_id, const uint8_t& obs_label )
 
 std::pair< std::string, std::string > thing::get_vertex_representation()
 {
-    return std::pair< std::string, std::string >( UNDEFINED_LABEL, std::string( "red" ) );
+    if( this->type == semantic_type_t::LOCATION )
+        return std::pair< std::string, std::string >( this->get_label().first, std::string( "red" ) );
+    return std::pair< std::string, std::string >( this->get_label().first, std::string( "blue" ) );
 }
 
 void thing::set(

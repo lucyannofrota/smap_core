@@ -15,8 +15,9 @@
 #include <boost/histogram/axis.hpp>
 #include <boost/histogram/make_histogram.hpp>
 #include <boost/serialization/access.hpp>
-#include <boost/serialization/list.hpp>
+#include <boost/serialization/map.hpp>
 #include <boost/serialization/serialization.hpp>
+#include <boost/serialization/vector.hpp>
 #include <boost/serialization/version.hpp>
 
 // ROS
@@ -143,7 +144,10 @@ class topo_map : public rclcpp::Node
     {
         (void) version;
         ar & graph;
-        ar & v_index;
+        ar & confidence_threshold;
+        ar&* reg_classes;
+        ar&* reg_detectors;
+        // ar & reg_detectors;
     }
 
     inline void timer_callback( void )
@@ -200,7 +204,7 @@ class topo_map : public rclcpp::Node
         return ret;
     }
 
-    inline size_t _get_vertex( const size_t& v_index )
+    size_t _get_vertex( const size_t& v_index )
     {
         vertex_data_t prop;
         prop.index = v_index;
@@ -593,30 +597,10 @@ class topo_map : public rclcpp::Node
     {
         RCLCPP_WARN( this->get_logger(), "topo_map destructor" );
         this->map_exporter->export_map( this->graph, confidence_threshold );
-
-        // og_sub = this->create_subscription< nav_msgs::msg::OccupancyGrid >(
-        //     std::string( "/map" ), 2, std::bind( &topo_map::export_maps, this, std::placeholders::_1 ) );
-
-        // while( !this->map_exported )
-        // {
-        //     RCLCPP_WARN( this->get_logger(), "EXPORTING MAP" );
-        //     this->ending = true;
-        //     std::this_thread::yield();
-        // }
-        // RCLCPP_WARN( this->get_logger(), "TOPO-" );
         this->export_graph( "TopoGraph" );
 
         //
     }
-
-    // inline void export_maps( const nav_msgs::msg::OccupancyGrid::SharedPtr og )
-    // {
-    //     (void) og;
-    //     RCLCPP_WARN( this->get_logger(), "OG CB" );
-    //     if( !this->ending ) return;
-    //     RCLCPP_WARN( this->get_logger(), "OG CB END" );
-    //     this->map_exported = true;
-    // }
 
     inline void print_vertex( const std::string& prefix, const size_t& idx )
     {
@@ -660,7 +644,8 @@ class topo_map : public rclcpp::Node
         write_graphviz(
             dotfile, this->graph,
             make_vertex_label_writer(
-                boost::get( &vertex_data_t::this_thing, this->graph ), boost::get( &vertex_data_t::pos, this->graph ) ),
+                boost::get( &vertex_data_t::this_thing, this->graph ), boost::get( &vertex_data_t::pos, this->graph ),
+                boost::get( &vertex_data_t::related_things, this->graph ) ),
             make_cost_label_writer(
                 boost::get( &edge_data_t::distance, this->graph ),
                 boost::get( &edge_data_t::modifier, this->graph ) ) );
@@ -704,92 +689,92 @@ class topo_map : public rclcpp::Node
         return atan2( sin( ret ), cos( ret ) );
     }
 
-    inline std::array< long, 4 > find_coplanar_cube_point_idxs(
-        const std::array< geometry_msgs::msg::Point, 8 >& AABB,
-        const std::array< std::pair< long, double >, 8 > idx_points ) const
-    {
-        // Only works for AABB's
-        std::array< long, 4 > ret;
-        // P1
-        ret[ 0 ] = 0;
-        // P2
-        ret[ 1 ] = 1;
-        // P3
-        bool P3   = false;
-        uint8_t c = 0;
-        if( AABB[ idx_points[ ret[ 0 ] ].first ].x == AABB[ idx_points[ ret[ 1 ] ].first ].x )
-        {
-            for( long idx = 2; idx < 8; idx++ )
-                if( AABB[ idx_points[ idx ].first ].x == AABB[ idx_points[ 0 ].first ].x )
-                {
-                    P3       = true;
-                    c        = 0;
-                    ret[ 2 ] = idx;
-                    break;
-                }
-        }
-        if( ( AABB[ idx_points[ ret[ 0 ] ].first ].y == AABB[ idx_points[ ret[ 1 ] ].first ].y ) && !P3 )
-        {
-            for( long idx = 2; idx < 8; idx++ )
-                if( AABB[ idx_points[ idx ].first ].y == AABB[ idx_points[ 0 ].first ].y )
-                {
-                    P3       = true;
-                    c        = 1;
-                    ret[ 2 ] = idx;
-                    break;
-                }
-        }
-        if( ( AABB[ idx_points[ ret[ 0 ] ].first ].z == AABB[ idx_points[ ret[ 1 ] ].first ].z ) && !P3 )
-        {
-            for( long idx = 2; idx < 8; idx++ )
-                if( AABB[ idx_points[ idx ].first ].z == AABB[ idx_points[ 0 ].first ].z )
-                {
-                    P3       = true;
-                    c        = 2;
-                    ret[ 2 ] = idx;
-                    break;
-                }
-        }
-        // P4
-        switch( c )
-        {
-        case 0:
-            for( long idx = 2; idx < 8; idx++ )
-            {
-                if( idx == ret[ 2 ] ) continue;
-                if( AABB[ idx_points[ idx ].first ].x == AABB[ idx_points[ 0 ].first ].x )
-                {
-                    ret[ 3 ] = idx;
-                    break;
-                }
-            }
-            break;
-        case 1:
-            for( long idx = 2; idx < 8; idx++ )
-            {
-                if( idx == ret[ 2 ] ) continue;
-                if( AABB[ idx_points[ idx ].first ].y == AABB[ idx_points[ 0 ].first ].y )
-                {
-                    ret[ 3 ] = idx;
-                    break;
-                }
-            }
-            break;
-        case 2:
-            for( long idx = 2; idx < 8; idx++ )
-            {
-                if( idx == ret[ 2 ] ) continue;
-                if( AABB[ idx_points[ idx ].first ].z == AABB[ idx_points[ 0 ].first ].z )
-                {
-                    ret[ 3 ] = idx;
-                    break;
-                }
-            }
-            break;
-        }
+    // inline std::array< long, 4 > find_coplanar_cube_point_idxs(
+    //     const std::array< geometry_msgs::msg::Point, 8 >& AABB,
+    //     const std::array< std::pair< long, double >, 8 > idx_points ) const
+    // {
+    //     // Only works for AABB's
+    //     std::array< long, 4 > ret;
+    //     // P1
+    //     ret[ 0 ] = 0;
+    //     // P2
+    //     ret[ 1 ] = 1;
+    //     // P3
+    //     bool P3   = false;
+    //     uint8_t c = 0;
+    //     if( AABB[ idx_points[ ret[ 0 ] ].first ].x == AABB[ idx_points[ ret[ 1 ] ].first ].x )
+    //     {
+    //         for( long idx = 2; idx < 8; idx++ )
+    //             if( AABB[ idx_points[ idx ].first ].x == AABB[ idx_points[ 0 ].first ].x )
+    //             {
+    //                 P3       = true;
+    //                 c        = 0;
+    //                 ret[ 2 ] = idx;
+    //                 break;
+    //             }
+    //     }
+    //     if( ( AABB[ idx_points[ ret[ 0 ] ].first ].y == AABB[ idx_points[ ret[ 1 ] ].first ].y ) && !P3 )
+    //     {
+    //         for( long idx = 2; idx < 8; idx++ )
+    //             if( AABB[ idx_points[ idx ].first ].y == AABB[ idx_points[ 0 ].first ].y )
+    //             {
+    //                 P3       = true;
+    //                 c        = 1;
+    //                 ret[ 2 ] = idx;
+    //                 break;
+    //             }
+    //     }
+    //     if( ( AABB[ idx_points[ ret[ 0 ] ].first ].z == AABB[ idx_points[ ret[ 1 ] ].first ].z ) && !P3 )
+    //     {
+    //         for( long idx = 2; idx < 8; idx++ )
+    //             if( AABB[ idx_points[ idx ].first ].z == AABB[ idx_points[ 0 ].first ].z )
+    //             {
+    //                 P3       = true;
+    //                 c        = 2;
+    //                 ret[ 2 ] = idx;
+    //                 break;
+    //             }
+    //     }
+    //     // P4
+    //     switch( c )
+    //     {
+    //     case 0:
+    //         for( long idx = 2; idx < 8; idx++ )
+    //         {
+    //             if( idx == ret[ 2 ] ) continue;
+    //             if( AABB[ idx_points[ idx ].first ].x == AABB[ idx_points[ 0 ].first ].x )
+    //             {
+    //                 ret[ 3 ] = idx;
+    //                 break;
+    //             }
+    //         }
+    //         break;
+    //     case 1:
+    //         for( long idx = 2; idx < 8; idx++ )
+    //         {
+    //             if( idx == ret[ 2 ] ) continue;
+    //             if( AABB[ idx_points[ idx ].first ].y == AABB[ idx_points[ 0 ].first ].y )
+    //             {
+    //                 ret[ 3 ] = idx;
+    //                 break;
+    //             }
+    //         }
+    //         break;
+    //     case 2:
+    //         for( long idx = 2; idx < 8; idx++ )
+    //         {
+    //             if( idx == ret[ 2 ] ) continue;
+    //             if( AABB[ idx_points[ idx ].first ].z == AABB[ idx_points[ 0 ].first ].z )
+    //             {
+    //                 ret[ 3 ] = idx;
+    //                 break;
+    //             }
+    //         }
+    //         break;
+    //     }
 
-        return ret;
-    }
+    // return ret;
+    // }
 };
 }  // namespace smap
 
