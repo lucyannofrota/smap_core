@@ -161,7 +161,7 @@ class map_exporter : public rclcpp::Node
 
     void save_map( const std::string& file_name, std::vector< signed char >& map );
 
-    inline void define_reg_classes( std::shared_ptr< std::map< std::string, std::pair< int, int > > >& classes )
+    inline void define_reg_classes( std::shared_ptr< std::map< std::string, std::pair< int, int > > > classes )
     {
         RCLCPP_DEBUG( this->get_logger(), "Defining reg_classes" );
         this->reg_classes = classes;

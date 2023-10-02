@@ -68,7 +68,7 @@ class thing
     thing( void ) : logger( rclcpp::get_logger( "thing_misc" ) ) {}
 
     thing(
-        std::shared_ptr< std::map< std::string, std::pair< int, int > > >& class_map, int id,
+        std::shared_ptr< std::map< std::string, std::pair< int, int > > > class_map, int id,
         const rclcpp::Logger& _logger ) :
         observations( std::make_unique< observation_histogram >( HISTOGRAM_BINS ) ),
         reg_classes( class_map ), id( id ), logger( _logger )

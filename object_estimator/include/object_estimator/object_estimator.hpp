@@ -257,56 +257,11 @@ class object_estimator : public rclcpp::Node
         this->object_bb_pub->publish( bbx_marker );
     }
 
-    /*inline void estimate_object_3D_OBB(const pcl::shared_ptr<cloud_t>& object_cloud,
-    smap_interfaces::msg::SmapObject::SharedPtr obj){ count_time timer; pcl::MomentOfInertiaEstimation <cloud_point_t>
-    feature_extractor; feature_extractor.setInputCloud (object_cloud); feature_extractor.compute (); cloud_point_t
-    min_point_AABB; cloud_point_t max_point_AABB; cloud_point_t min_point_OBB; cloud_point_t max_point_OBB;
-      cloud_point_t position_OBB;
-      Eigen::Matrix3f rotational_matrix_OBB;
-      feature_extractor.getAABB(min_point_AABB, max_point_AABB);
-      obj->aabb.min.x = min_point_AABB.x; obj->aabb.min.y = min_point_AABB.y; obj->aabb.min.z = min_point_AABB.z;
-      obj->aabb.max.x = max_point_AABB.x; obj->aabb.max.y = max_point_AABB.y; obj->aabb.max.z = max_point_AABB.z;
-
-      feature_extractor.getOBB (min_point_OBB, max_point_OBB, position_OBB, rotational_matrix_OBB);
-
-      obj->obb.keypoint_1[0] = min_point_OBB.x; obj->obb.keypoint_1[1] = min_point_OBB.y; obj->obb.keypoint_1[2] =
-    min_point_OBB.z; obj->obb.keypoint_2[0] = max_point_OBB.x; obj->obb.keypoint_2[1] = max_point_OBB.y;
-    obj->obb.keypoint_2[2] = max_point_OBB.z;
-
-
-      Eigen::Quaternionf quat (rotational_matrix_OBB);
-      cloud_point_t pos, pos0;
-
-
-      pos.x = position_OBB.x;
-      pos.y = position_OBB.y;
-      pos.z = position_OBB.z;
-
-      this->publish_bb(
-        0, pos, min_point_OBB, max_point_OBB, quat
-      );
-
-      pos0.x = 0;
-      pos0.y = 0;
-      pos0.z = 0;
-
-      this->publish_bb(
-        1, pos0, min_point_OBB, max_point_OBB, quat
-      );
-
-      this->publish_bb(
-        2, pos, min_point_OBB, max_point_OBB, Eigen::Quaternionf::Identity()
-      );
-
-      const char str[] = "object_parameters_estimation";
-      timer.get_time(this->get_logger(), str, this->centroid_plot);
-    }*/
-
     void object_estimation_thread(
-        const pcl::shared_ptr< cloud_t >& point_cloud,
-        const std::shared_ptr< geometry_msgs::msg::TransformStamped >& transform,
-        const std::shared_ptr< geometry_msgs::msg::PoseStamped >& pose,
-        const smap_interfaces::msg::SmapObject::SharedPtr& obj );
+        const pcl::shared_ptr< cloud_t > point_cloud,
+        const std::shared_ptr< geometry_msgs::msg::TransformStamped > transform,
+        const std::shared_ptr< geometry_msgs::msg::PoseStamped > pose,
+        const smap_interfaces::msg::SmapObject::SharedPtr obj );
 
     void detections_callback( const smap_interfaces::msg::SmapDetections::SharedPtr input_msg );
 
@@ -315,9 +270,9 @@ class object_estimator : public rclcpp::Node
     }
 
     void depth_map_thread(
-        const std::shared_ptr< sensor_msgs::msg::PointCloud2 >& ros_pcl,
-        const std::shared_ptr< geometry_msgs::msg::TransformStamped >& transform,
-        const geometry_msgs::msg::PoseStamped& robot_pose );
+        const std::shared_ptr< sensor_msgs::msg::PointCloud2 > ros_pcl,
+        const std::shared_ptr< geometry_msgs::msg::TransformStamped > transform,
+        const std::shared_ptr< geometry_msgs::msg::PoseStamped > robot_pose );
 
   private:
 };

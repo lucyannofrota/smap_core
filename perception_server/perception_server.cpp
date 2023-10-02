@@ -42,7 +42,7 @@ std::map< std::string, std::pair< int, int > > perception_server::add_detector( 
 
 void perception_server::AddPerceptionModule_callback(
     const std::shared_ptr< smap_interfaces::srv::AddPerceptionModule::Request > request,
-    std::shared_ptr< smap_interfaces::srv::AddPerceptionModule::Response > response )
+    const std::shared_ptr< smap_interfaces::srv::AddPerceptionModule::Response > response )
 {
     RCLCPP_INFO( this->get_logger(), "add_perception_module request received." );
 
@@ -142,7 +142,7 @@ void perception_server::AddPerceptionModule_callback(
 
 void perception_server::ListClasses_callback(
     const std::shared_ptr< smap_interfaces::srv::SmapClasses::Request > request,
-    std::shared_ptr< smap_interfaces::srv::SmapClasses::Response > response ) const
+    const std::shared_ptr< smap_interfaces::srv::SmapClasses::Response > response ) const
 {
     RCLCPP_INFO( this->get_logger(), "list_classes request received." );
 
@@ -227,23 +227,3 @@ void perception_server::print_server_data( void ) const
 }
 
 }  // namespace smap
-
-// int main( int argc, char** argv )
-// {
-//     rclcpp::init( argc, argv );
-
-// std::shared_ptr< smap::perception_server > node = std::make_shared< smap::perception_server >();
-
-// try
-// {
-//     rclcpp::spin( node );
-// }
-// catch( std::exception& e )
-// {
-//     std::cout << "SMAP Exception!" << std::endl;
-//     std::cout << e.what() << std::endl;
-// }
-// rclcpp::shutdown();
-
-// return 0;
-// }

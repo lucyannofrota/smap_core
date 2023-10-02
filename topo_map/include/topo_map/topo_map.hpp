@@ -409,17 +409,6 @@ class topo_map : public rclcpp::Node
         }
     }
 
-    inline void occlusion_transaction(
-        thing& object, const double& distance_camera_to_object,
-        const std::shared_ptr< smap_interfaces::msg::DepthMap >& msg, const std::string& format, double decay )
-    {
-        RCLCPP_DEBUG( this->get_logger(), format, decay );
-        object.observations->register_obs(
-            distance_camera_to_object, this->compute_corner_direction( msg->camera_pose, object.pos ), false );
-        object.decay_confidence(
-            this->get_parameter( "Object_Prob_Decay" ).as_double(), distance_camera_to_object, decay );
-    }
-
     inline void object_combination(
         const std::vector< std::pair< size_t, std::vector< thing* > > >& candidates,
         std::pair< size_t, thing* >& closest, std::pair< size_t, thing* >& closest_valid )

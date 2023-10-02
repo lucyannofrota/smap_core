@@ -22,10 +22,10 @@ namespace smap
 {
 
 void object_estimator::object_estimation_thread(
-    const pcl::shared_ptr< cloud_t >& point_cloud,
-    const std::shared_ptr< geometry_msgs::msg::TransformStamped >& transform,
-    const std::shared_ptr< geometry_msgs::msg::PoseStamped >& pose,
-    const smap_interfaces::msg::SmapObject::SharedPtr& obj )
+    const pcl::shared_ptr< cloud_t > point_cloud,
+    const std::shared_ptr< geometry_msgs::msg::TransformStamped > transform,
+    const std::shared_ptr< geometry_msgs::msg::PoseStamped > pose,
+    const smap_interfaces::msg::SmapObject::SharedPtr obj )
 {
     if( !point_cloud || !transform || !pose || !obj ) return;
 
@@ -224,26 +224,19 @@ void object_estimator::detections_callback( const smap_interfaces::msg::SmapDete
         pcl::toROSMsg( *lock_cloud, segment_cloud );
         std::async(
             std::launch::async, &object_estimator::depth_map_thread, this,
-            std::make_shared< sensor_msgs::msg::PointCloud2 >( segment_cloud ), transform, input_msg->stamped_pose );
+            std::make_shared< sensor_msgs::msg::PointCloud2 >( segment_cloud ), transform, pose );
     }
     else
     {
         std::async(
             std::launch::async, &object_estimator::depth_map_thread, this,
-            std::make_shared< sensor_msgs::msg::PointCloud2 >( input_msg->pointcloud ), transform,
-            input_msg->stamped_pose );
+            std::make_shared< sensor_msgs::msg::PointCloud2 >( input_msg->pointcloud ), transform, pose );
     }
 
     for( auto& obj: input_msg->objects )
     {
         if( obj.confidence < this->get_parameter( "Minimum_Object_Confidence" ).as_double() )
             continue;  // TODO: Remove DEBUG
-
-        // if( obj.label != 62 ) continue;  // TODO: Remove DEBUG
-
-        // if( ( obj.bb_2d.keypoint_1[ 0 ] < ( ( 672 / 2 ) - ( 672 / 6 ) ) )
-        //     || ( obj.bb_2d.keypoint_1[ 0 ] > ( ( 672 / 2 ) + ( 672 / 6 ) ) ) )
-        //     continue;  // TODO: Remove DEBUG
 
         obj.module_id = input_msg->module_id;
 
@@ -268,9 +261,9 @@ void object_estimator::detections_callback( const smap_interfaces::msg::SmapDete
 }
 
 void object_estimator::depth_map_thread(
-    const std::shared_ptr< sensor_msgs::msg::PointCloud2 >& ros_pcl,
-    const std::shared_ptr< geometry_msgs::msg::TransformStamped >& transform,
-    const geometry_msgs::msg::PoseStamped& robot_pose )
+    const std::shared_ptr< sensor_msgs::msg::PointCloud2 > ros_pcl,
+    const std::shared_ptr< geometry_msgs::msg::TransformStamped > transform,
+    const std::shared_ptr< geometry_msgs::msg::PoseStamped > robot_pose )
 {
 
     // TODO: make mutually exclusive
@@ -334,7 +327,7 @@ void object_estimator::depth_map_thread(
     if( this->depth_map_pub->get_subscription_count() > 0 )
     {
         to_msg( depth_map, this->occ_map, cell_dims );  // REVERT
-        this->occ_map.camera_pose = robot_pose.pose;    // REVERT
+        this->occ_map.camera_pose = robot_pose->pose;   // REVERT
 
         this->depth_map_pub->publish( this->occ_map );  // REVERT
     }
