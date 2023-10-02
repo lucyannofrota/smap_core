@@ -650,8 +650,8 @@ class topo_map : public rclcpp::Node
                 boost::get( &edge_data_t::distance, this->graph ),
                 boost::get( &edge_data_t::modifier, this->graph ) ) );
 
-        if( std::system( ( "dot -Tpdf " + this->get_parameter( "Map_Path" ).as_string() + f_name + ".dot > "
-                           + this->get_parameter( "Map_Path" ).as_string() + f_name + ".pdf" )
+        if( std::system( ( "dot -Grankdir=TB -Tpdf " + this->get_parameter( "Map_Path" ).as_string() + f_name
+                           + ".dot > " + this->get_parameter( "Map_Path" ).as_string() + f_name + ".pdf" )
                              .c_str() )
             == 0 )
         {
