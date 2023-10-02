@@ -650,20 +650,20 @@ class topo_map : public rclcpp::Node
                 boost::get( &edge_data_t::distance, this->graph ),
                 boost::get( &edge_data_t::modifier, this->graph ) ) );
 
-        if( std::system( ( "dot -Tpng " + this->get_parameter( "Map_Path" ).as_string() + f_name + ".dot > "
-                           + this->get_parameter( "Map_Path" ).as_string() + f_name + ".png" )
+        if( std::system( ( "dot -Tpdf " + this->get_parameter( "Map_Path" ).as_string() + f_name + ".dot > "
+                           + this->get_parameter( "Map_Path" ).as_string() + f_name + ".pdf" )
                              .c_str() )
             == 0 )
         {
-            if( std::system( ( "rm " + this->get_parameter( "Map_Path" ).as_string() + f_name + ".dot" ).c_str() )
-                == 0 )
-            {
-                // https://stackoverflow.com/questions/2616906/how-do-i-output-coloured-text-to-a-linux-terminal
-                printf(
-                    "\033[42m[Export Complete]\033[0m png file successfully "
-                    "exported to: %s.png\n",
-                    std::string( this->get_parameter( "Map_Path" ).as_string() + f_name ).c_str() );
-            }
+            // if( std::system( ( "rm " + this->get_parameter( "Map_Path" ).as_string() + f_name + ".dot" ).c_str() )
+            //     == 0 )
+            // {
+            //     // https://stackoverflow.com/questions/2616906/how-do-i-output-coloured-text-to-a-linux-terminal
+            // }
+            printf(
+                "\033[42m[Export Complete]\033[0m png file successfully "
+                "exported to: %s.png\n",
+                std::string( this->get_parameter( "Map_Path" ).as_string() + f_name ).c_str() );
         }
     }
 

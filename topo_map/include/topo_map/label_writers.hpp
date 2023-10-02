@@ -27,12 +27,14 @@ class vertex_label_writer
 
         for( auto& r_thing: relate_things_list )
         {
+            out << ";";
             std::pair< std::string, std::string > rg_pair = r_thing.get_vertex_representation();
-            out << ";\n\t" << std::to_string( count ) << std::string( "obj" ) << std::to_string( obj_count )
-                << "  [label="
-                << boost::escape_dot_string(
-                       add_pos( std::string( "\n\t\t" ), add_cout( rg_pair.first ), r_thing.pos ) )
-                << ",color=\"" + rg_pair.second + "\"]";
+            out << "\n\t" << std::string( "obj_" ) << count << std::string( "_" ) << obj_count << "  [label="
+                << boost::escape_dot_string( add_pos( std::string( "\n\t" ), add_cout( rg_pair.first ), r_thing.pos ) )
+                << ",color=\"" + rg_pair.second + "\"];";
+            out << "\n\t" << count << " -- " << std::string( "obj_" ) << count << std::string( "_" ) << obj_count
+                << " [style=dotted]";
+            obj_count++;
         }
         count++;
     }
