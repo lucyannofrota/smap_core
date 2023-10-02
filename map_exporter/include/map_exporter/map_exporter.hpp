@@ -44,6 +44,7 @@ class map_exporter : public rclcpp::Node
 
     std::shared_ptr< std::map< std::string, std::pair< int, int > > > reg_classes;
 
+    std::vector< signed char > reference_map;
     std::vector< signed char > map;
     nav_msgs::msg::MapMetaData metadata;
 

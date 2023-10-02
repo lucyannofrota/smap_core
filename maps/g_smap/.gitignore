@@ -1,2 +1,1 @@
-!.gitignore
-*
+bottle.pgm bottle.yaml no_obstacles_map.pgm no_obstacles_map.yaml occupancy_grid_map.pgm occupancy_grid_map.yaml og_map.pgm og_map.yaml tv.pgm tv.yaml

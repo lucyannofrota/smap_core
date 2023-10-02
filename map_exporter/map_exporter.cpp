@@ -11,6 +11,19 @@ namespace smap
 void map_exporter::export_map( graph_t& graph, double confidence_threshold )
 {
     if( this->reg_classes == nullptr || this->map.empty() ) return;
+
+    if( std::system( ( std::string( "bash -c \"" ) + std::string( "cd " ) + path_name + std::string( " && rm * \"" ) )
+                         .c_str() ) )
+        RCLCPP_WARN( this->get_logger(), "Path cleaned: %s", path_name.c_str() );
+
+    // Publish occupancy_grid
+    std::string file_name = path_name + std::string( "occupancy_grid_map" );
+    this->save_map( file_name, this->reference_map );
+
+    // Publish clean_grid
+    file_name = path_name + std::string( "no_obstacles_map" );
+    this->save_map( file_name, this->map );
+
     std::vector< signed char > aux;
     {
         // Copy map
@@ -44,9 +57,9 @@ void map_exporter::export_map( graph_t& graph, double confidence_threshold )
                 this->mark_rectangle( g_smap, corners );
             }
         }
-        if( map_used )
+        if( true /*map_used*/ )
         {
-            std::string file_name = path_name + class_registered.first;
+            file_name = path_name + class_registered.first;
             RCLCPP_WARN( this->get_logger(), "Saving: %s", file_name.c_str() );
             this->save_map( file_name, g_smap );
         }
@@ -114,6 +127,7 @@ void map_exporter::og_callback( const nav_msgs::msg::OccupancyGrid::SharedPtr og
         std::lock_guard< std::mutex > lk( this->m_gmap );
         // Copy Map
         map.resize( og->info.height * og->info.width );
+        reference_map.resize( og->info.height * og->info.width );
         this->metadata = og->info;
 
         // nav_msgs::msg::OccupancyGrid occupancy_grid_msg = nav_msgs::msg::OccupancyGrid();
@@ -125,8 +139,9 @@ void map_exporter::og_callback( const nav_msgs::msg::OccupancyGrid::SharedPtr og
         {
             for( unsigned int x = 0; x < og->info.width; x++ )
             {
-                unsigned int i = x + ( og->info.height - y - 1 ) * og->info.width;
-                this->map[ i ] = og->data[ i ];
+                unsigned int i           = x + ( og->info.height - y - 1 ) * og->info.width;
+                this->map[ i ]           = og->data[ i ];
+                this->reference_map[ i ] = og->data[ i ];
             }
         }
         // og_pub->publish( occupancy_grid_msg );
@@ -143,28 +158,7 @@ void map_exporter::og_callback( const nav_msgs::msg::OccupancyGrid::SharedPtr og
                 }
             }
         }
-
-        // Publish occupancy_grid
-        std::string file_name = path_name + std::string( "og_map" );
-        this->save_map( file_name, this->map );
-
-        // Publish occupancy_grid_center
     }
-    // std::array< std::array< double, 2 >, 4 > corners;
-    // corners[ 0 ][ 0 ] = 1;
-    // corners[ 0 ][ 1 ] = 0;
-    // corners[ 1 ][ 0 ] = 3;
-    // corners[ 1 ][ 1 ] = 2;
-    // corners[ 2 ][ 0 ] = 5;
-    // corners[ 2 ][ 1 ] = 0;
-    // corners[ 3 ][ 0 ] = 3;
-    // corners[ 3 ][ 1 ] = -2;
-
-    // this->mark_rectangle( aux, og->info, corners );
-
-    // file_name = path_name + std::string( "og_center" );
-    // this->save_map( file_name, aux, og->info, occupancy_grid_msg );
-    // og_center_pub->publish( occupancy_grid_msg );
 }
 
 void map_exporter::save_map(
