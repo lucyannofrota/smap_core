@@ -64,7 +64,6 @@ install(
 )
 
 file(MAKE_DIRECTORY 
-    ../SemMap 
     ../maps 
     ../timers 
     ../timers/object_estimator
@@ -75,7 +74,6 @@ install(DIRECTORY
   # ../launch
   ../scripts
   ../config
-  ../SemMap
   ../maps
   ../timers
   ../timers/object_estimator

@@ -62,7 +62,6 @@ include_directories(
 # )
 
 # file(MAKE_DIRECTORY 
-#     ../SemMap 
 #     ../maps 
 #     ../timers 
 #     ../timers/object_estimator
@@ -73,7 +72,6 @@ include_directories(
 #   ../launch
 #   ../scripts
 #   ../config
-#   ../SemMap
 #   ../maps
 #   ../timers
 #   ../timers/object_estimator
