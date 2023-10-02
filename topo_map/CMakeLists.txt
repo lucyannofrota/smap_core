@@ -11,9 +11,9 @@ if(NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 14)
 endif()
 
-# if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-#   add_compile_options(-Wall -Wextra -Wpedantic -fPIC)
-# endif()
+if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  add_compile_options(-Wall -Wextra -Wpedantic -fPIC)
+endif()
 
 if (POLICY CMP0074)
   cmake_policy(SET CMP0074 NEW)
@@ -28,18 +28,14 @@ endif()
         find_package(std_msgs REQUIRED)
         find_package(geometry_msgs REQUIRED)
         find_package(visualization_msgs REQUIRED)
-        find_package(std_srvs REQUIRED)
         find_package(tf2 REQUIRED)
         find_package(tf2_geometry_msgs REQUIRED)
         find_package(nav_msgs REQUIRED)
     # smap
         find_package(smap_interfaces REQUIRED)
         find_package(smap_base REQUIRED)
-        # find_package(pcl_processing REQUIRED)
-        # find_package(object_estimator REQUIRED)
         find_package(thing REQUIRED)
         find_package(map_exporter REQUIRED)
-
 
 ###################
 ## ADD BOOST LIB ##
@@ -58,6 +54,22 @@ set(Boost_USE_MULTITHREADED ON)
 ## /ADD BOOST LIB ##
 ####################
 
+set(DEPENDENCIES
+    rclcpp
+    std_msgs
+    geometry_msgs
+    visualization_msgs
+    tf2
+    tf2_geometry_msgs
+    geometry_msgs
+    nav_msgs
+    smap_interfaces
+    smap_base
+    thing
+    map_exporter
+    Boost
+)
+
 #################
 ## topo_marker ##
 #################
@@ -71,7 +83,7 @@ set(Boost_USE_MULTITHREADED ON)
   target_link_libraries(topo_marker 
     thing::thing
     map_exporter::map_exporter
-    )
+  )
 
 target_include_directories(topo_marker PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -104,14 +116,6 @@ install(
 ## /topo_marker ##
 ##################
 
-# add_library(graph
-#     include/topo_map/graph.hpp
-#   )
-
-# target_link_libraries(graph
-#   thing::thing
-#   ${Boost_LIBRARIES}
-# )
 
 
 ##############
@@ -136,7 +140,6 @@ include_directories(include/topo_map)
   target_link_libraries(topo_map
     thing::thing
     smap_base::smap_base
-    # pcl_processing::pcl_processing
     map_exporter::map_exporter
     topo_marker
     ${Boost_LIBRARIES}
@@ -144,11 +147,7 @@ include_directories(include/topo_map)
 
 ament_target_dependencies(
   topo_map
-  geometry_msgs
-  smap_interfaces
-  visualization_msgs
-  std_msgs
-  #   nav_msgs
+  ${DEPENDENCIES}
 )
 
 # Causes the visibility macros to use dllexport rather than dllimport,
@@ -164,6 +163,7 @@ install(
 )
     
 ament_export_targets(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
+ament_export_dependencies(${DEPENDENCIES})
 
 install(
   DIRECTORY include/topo_map

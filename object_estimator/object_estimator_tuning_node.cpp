@@ -13,8 +13,6 @@
 #include <SDL2/SDL_opengl.h>
 
 // SMAP
-// #include "../pcl_processing/include/pcl_processing.hpp"
-// #include "pcl_processing/pcl_processing.hpp"
 #include "pcl_processing/depth_map.hpp"
 #include "smap_base/aux_functions.hpp"
 

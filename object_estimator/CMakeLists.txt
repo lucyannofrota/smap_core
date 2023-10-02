@@ -7,7 +7,6 @@ endif()
 
 # find dependencies
     # PCL
-        find_package(PCL 1.1 REQUIRED)
         find_package(pcl_conversions REQUIRED)
     # ament
         find_package(ament_cmake REQUIRED)
@@ -18,9 +17,6 @@ endif()
         find_package(tf2 REQUIRED)
         find_package(tf2_ros REQUIRED)
         find_package(visualization_msgs REQUIRED)
-        find_package(std_msgs REQUIRED)
-        # find_package(std_srvs REQUIRED)
-        # find_package(rmw_implementation_cmake REQUIRED)
     # smap
         find_package(smap_interfaces REQUIRED)
         find_package(pcl_processing REQUIRED)
@@ -37,14 +33,16 @@ set(SRC
     
     
 set(DEPENDENCIES
-    rclcpp
     pcl_conversions
-    smap_interfaces
+    pcl_processing
+    rclcpp
     visualization_msgs
+    smap_interfaces
     tf2
+    tf2_ros
     tf2_geometry_msgs
-    tf2_sensor_msgs
-    std_msgs
+    sensor_msgs
+    geometry_msgs
 )
 
 # ######################
@@ -132,6 +130,9 @@ add_definitions(${PCL_DEFINITIONS})
         DIRECTORY include/object_estimator
         DESTINATION include
     )
+
+    install(TARGETS object_estimator
+        DESTINATION lib/${PROJECT_NAME}/)
 
     # install(TARGETS object_estimator
     #   DESTINATION lib/

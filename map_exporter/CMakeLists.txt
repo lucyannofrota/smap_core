@@ -25,26 +25,26 @@ endif()
 
     # standard ros pkgs
         find_package(rclcpp REQUIRED)
-        # find_package(tf2 REQUIRED)
-        # find_package(tf2_geometry_msgs REQUIRED)
         find_package(geometry_msgs REQUIRED)
         find_package(nav_msgs REQUIRED)
     # smap
-        find_package(smap_interfaces REQUIRED)
-        # find_package(object_estimator REQUIRED)
-        # find_package(pcl_processing REQUIRED)
         find_package(smap_base REQUIRED)
-        # find_package(perception_server REQUIRED)
-        # find_package(topo_map REQUIRED)
         find_package(thing REQUIRED)
 
+
+set(DEPENDENCIES
+    rclcpp
+    thing
+    geometry_msgs
+    nav_msgs
+)
 
 ###################
 ## ADD BOOST LIB ##
 ###################
 
-find_package(Boost REQUIRED system serialization) 
-set(Boost_USE_MULTITHREADED ON)  
+# find_package(Boost REQUIRED system serialization) 
+# set(Boost_USE_MULTITHREADED ON)  
 
 ####################
 ## /ADD BOOST LIB ##
@@ -67,28 +67,14 @@ include_directories(include/map_exporter)
   $<INSTALL_INTERFACE:include>
       ${Boost_INCLUDE_DIRS}
   )
-#   pcl_processing
-#   target_link_libraries(map_exporter
-#     # thing::thing
-#     # smap_base::smap_base
-#     # pcl_processing::pcl_processing
-#     # topo_marker
-#     # ${Boost_LIBRARIES}
-# )
 
 target_link_libraries(map_exporter 
-#   thing::thing
   smap_base::smap_base
-    # topo_map::topo_map
 )
 
 ament_target_dependencies(
   map_exporter
-#   geometry_msgs
-#   smap_interfaces
-#   visualization_msgs
-  nav_msgs
-#   std_msgs
+  ${DEPENDENCIES}
 )
 
 # Causes the visibility macros to use dllexport rather than dllimport,
@@ -104,6 +90,7 @@ install(
 )
     
 ament_export_targets(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
+ament_export_dependencies(${DEPENDENCIES})
 
 install(
   DIRECTORY include/map_exporter

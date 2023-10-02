@@ -11,7 +11,7 @@
 
 // SMAP
 #include "map_exporter/map_exporter.hpp"
-#include "object_estimator/object_estimator.hpp"
+// #include "object_estimator/object_estimator.hpp"
 #include "perception_server/perception_server.hpp"
 #include "smap_interfaces/msg/smap_data.hpp"
 #include "thing/thing.hpp"

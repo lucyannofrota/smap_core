@@ -7,23 +7,14 @@ project(perception_server)
         # find_package(ament_cmake_ros REQUIRED)
     # standard ros pkgs
         find_package(rclcpp REQUIRED)
-        # find_package(std_msgs REQUIRED)
-        # find_package(sensor_msgs REQUIRED)
-        # find_package(geometry_msgs REQUIRED)
-        # find_package(std_srvs REQUIRED)
-        find_package(visualization_msgs REQUIRED)
-        find_package(tf2 REQUIRED)
-        find_package(tf2_geometry_msgs REQUIRED)
-        find_package(nav_msgs REQUIRED)
     # smap
         find_package(smap_interfaces REQUIRED)
         find_package(smap_base REQUIRED)
         find_package(topo_map REQUIRED)
-        find_package(thing REQUIRED)
-        find_package(map_exporter REQUIRED)
+        # find_package(thing REQUIRED)
+        # find_package(map_exporter REQUIRED)
 
         find_package(Boost REQUIRED system serialization) 
-
 
 #######################
 ## perception_server ##

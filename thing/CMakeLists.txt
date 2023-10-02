@@ -26,8 +26,6 @@ endif()
     # standard ros pkgs
         find_package(rclcpp REQUIRED)
         find_package(geometry_msgs REQUIRED)
-        find_package(tf2 REQUIRED)
-        find_package(tf2_geometry_msgs REQUIRED)
     # smap
         find_package(smap_interfaces REQUIRED)
         find_package(smap_base REQUIRED)
@@ -45,40 +43,13 @@ set(Boost_USE_MULTITHREADED ON)
 ## /ADD BOOST LIB ##
 ####################
 
-# ###########
-# ## thing ##
-# ###########
+set(DEPENDENCIES
+    rclcpp
+    geometry_msgs
+    sensor_msgs
+    smap_interfaces
+)
 
-# add_library(thing thing.cpp)
-# target_include_directories(thing PUBLIC
-#   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-#   $<INSTALL_INTERFACE:include>)
-
-# ament_target_dependencies(
-#   thing
-#   rclcpp
-#   geometry_msgs
-#   tf2
-#   tf2_geometry_msgs
-#   sensor_msgs
-#   smap_interfaces
-# )
-
-# # Causes the visibility macros to use dllexp<depend>smap_interfaces</depend>ort rather than dllimport,
-# # which is appropriate when building the dll but not consuming it.
-# target_compile_definitions(thing PRIVATE "SMAP_BUILDING_LIBRARY")
-
-# install(
-#   TARGETS thing
-#   EXPORT export_${PROJECT_NAME}
-#   ARCHIVE DESTINATION lib
-#   LIBRARY DESTINATION lib
-#   RUNTIME DESTINATION bin
-# )
-
-# ############
-# ## /thing ##
-# ############
 
 include_directories(include/thing)
 
@@ -127,21 +98,13 @@ target_include_directories(thing PUBLIC
 
 target_link_libraries(
     thing
-    # topo_map_node 
-    # topo_marker
     observation_histogram
-    # ${Boost_LIBRARIES}
     smap_base::smap_base
 )
 
 ament_target_dependencies(
   thing
-  rclcpp
-  geometry_msgs
-  tf2
-  tf2_geometry_msgs
-  sensor_msgs
-  smap_interfaces
+  ${DEPENDENCIES}
 )
 
 # Causes the visibility macros to use dllexp<depend>smap_interfaces</depend>ort rather than dllimport,
@@ -157,6 +120,7 @@ install(
 )
 
 ament_export_targets(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
+ament_export_dependencies(${DEPENDENCIES})
 
 install(
   DIRECTORY include/thing
@@ -176,69 +140,5 @@ install(
 ## /thing ##
 ############
 
-##############
-## topo_map ##
-##############
-
-#   ## Lib ##
-#   add_library(topo_map topo_map.cpp )
-#   target_link_libraries(topo_map thing topo_marker ${Boost_LIBRARIES})
-# target_include_directories(topo_map PUBLIC
-#   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-#   $<INSTALL_INTERFACE:include>
-#       ${Boost_INCLUDE_DIRS}
-#   )
-
-# ament_target_dependencies(
-#   topo_map
-#   geometry_msgs
-#   smap_interfaces
-#   visualization_msgs
-# )
-
-# # Causes the visibility macros to use dllexport rather than dllimport,
-# # which is appropriate when building the dll but not consuming it.
-# target_compile_definitions(topo_map PRIVATE "SMAP_BUILDING_LIBRARY")
-
-# install(
-#   TARGETS topo_map
-#   EXPORT export_${PROJECT_NAME}
-#   ARCHIVE DESTINATION lib
-#   LIBRARY DESTINATION lib
-#   RUNTIME DESTINATION bin
-# )
-
-# ## /Lib ##
-
-# ## Node ##
-
-#   add_executable(
-#       topo_map_node
-#       topo_map.cpp
-#   )
-
-#   target_include_directories(topo_map_node PUBLIC
-#         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-#         $<INSTALL_INTERFACE:include>
-#         ${Boost_INCLUDE_DIRS}   
-#   )
-
-#   ament_target_dependencies(
-#       topo_map_node
-#       rclcpp
-#       geometry_msgs
-#       smap_interfaces
-#       visualization_msgs
-#   )
-
-#   install(TARGETS topo_map_node
-#       DESTINATION lib/${PROJECT_NAME}
-#   )
-
-## Node ##
-
-###############
-## /topo_map ##
-###############
 
 ament_package()

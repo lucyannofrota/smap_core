@@ -19,7 +19,6 @@ set(LIB_INC
     src/aux_functions.cpp
     include/smap_base/counters.hpp
     include/smap_base/detector_descriptor.hpp
-    # include/smap_base/interface_templates.hpp
     include/smap_base/macros.hpp
     include/smap_base/stacking_classification.hpp
     include/smap_base/visibility_control.h

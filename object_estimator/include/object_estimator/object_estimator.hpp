@@ -14,8 +14,6 @@
 #include "smap_base/visibility_control.h"
 
 #include <rclcpp/rclcpp.hpp>
-#include <std_msgs/msg/float64_multi_array.hpp>
-#include <std_msgs/msg/multi_array_dimension.hpp>
 #include <tf2/convert.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <tf2_sensor_msgs/tf2_sensor_msgs.h>
@@ -37,8 +35,6 @@
 #include "smap_interfaces/msg/smap_detections.hpp"
 #include "smap_interfaces/msg/smap_object.hpp"
 #include "smap_interfaces/msg/smap_observation.hpp"
-
-// #include "pcl_processing/include/pcl_processing.hpp"
 
 // using namespace std::chrono_literals;
 
