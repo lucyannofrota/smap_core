@@ -68,7 +68,7 @@ void map_exporter::draw_rectangle(
     int max_elements         = metadata.height * metadata.width;
     const auto outp_function = [ &map, this, &max_elements ]( const unsigned int& x, const unsigned int& y ) {
         unsigned int index = ( (unsigned int) ( x + y * this->metadata.width ) );
-        if( x >= this->metadata.width || x < 0 || y >= this->metadata.height || y < 0 ) return;
+        if( x >= this->metadata.width || y >= this->metadata.height ) return;
         map[ index ] = 100;
     };
     bresenham(
@@ -296,22 +296,22 @@ void map_exporter::save_map( const std::string& file_name, std::vector< signed c
 
 }  // namespace smap
 
-int main( int argc, char** argv )
-{
-    rclcpp::init( argc, argv );
+// int main( int argc, char** argv )
+// {
+//     rclcpp::init( argc, argv );
 
-    std::shared_ptr< smap::map_exporter > node = std::make_shared< smap::map_exporter >();
+// std::shared_ptr< smap::map_exporter > node = std::make_shared< smap::map_exporter >();
 
-    try
-    {
-        rclcpp::spin( node );
-    }
-    catch( std::exception& e )
-    {
-        std::cout << "SMAP Exception!" << std::endl;
-        std::cout << e.what() << std::endl;
-    }
-    rclcpp::shutdown();
+// try
+// {
+//     rclcpp::spin( node );
+// }
+// catch( std::exception& e )
+// {
+//     std::cout << "SMAP Exception!" << std::endl;
+//     std::cout << e.what() << std::endl;
+// }
+// rclcpp::shutdown();
 
-    return 0;
-}
+// return 0;
+// }
