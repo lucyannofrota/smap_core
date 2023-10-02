@@ -11,20 +11,12 @@ namespace smap
 void map_exporter::export_map( graph_t& graph, double confidence_threshold )
 {
     if( this->reg_classes == nullptr || this->map.empty() ) return;
-    printf( "MAP_EXP B\n" );
     std::vector< signed char > aux;
     {
         // Copy map
         std::lock_guard< std::mutex > lk( this->m_gmap );
         aux.assign( map.begin(), map.end() );  // Copy
     }
-    // for( const auto& class_register: *this->reg_classes )
-    // {
-    //     //
-    //     //
-
-    // }
-    printf( "MAP_EXP C\n" );
     std::vector< signed char > g_smap;
     bool map_used = true;
     for( const auto& class_registered: *this->reg_classes )
@@ -55,11 +47,10 @@ void map_exporter::export_map( graph_t& graph, double confidence_threshold )
         if( map_used )
         {
             std::string file_name = path_name + class_registered.first;
-            RCLCPP_WARN( this->get_logger(), "Saving: %s", file_name );
+            RCLCPP_WARN( this->get_logger(), "Saving: %s", file_name.c_str() );
             this->save_map( file_name, g_smap );
         }
     }
-    printf( "MAP_EXP E\n" );
 }
 
 void map_exporter::draw_rectangle(
