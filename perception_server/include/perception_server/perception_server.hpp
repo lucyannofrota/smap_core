@@ -59,14 +59,14 @@ class perception_server : public rclcpp::Node
         this->create_publisher< std_msgs::msg::Empty >(
             std::string( this->get_namespace() ) + std::string( "/perception/reboot_detectors" ), 10 );
 
-    rclcpp::TimerBase::SharedPtr timer_t_ = this->create_wall_timer( 2s, [ this ]() {
-        for( int i = 0; i < 3; i++ )
-        {
-            RCLCPP_WARN( this->get_logger(), "Reboot Request" );
-            this->reset_detectors_pub->publish( std_msgs::msg::Empty() );  // Request the reboot of all detectors
-        }
-        this->timer_t_->cancel();
-    } );
+    // rclcpp::TimerBase::SharedPtr timer_t_ = this->create_wall_timer( 2s, [ this ]() {
+    //     for( int i = 0; i < 3; i++ )
+    //     {
+    //         RCLCPP_WARN( this->get_logger(), "Reboot Request" );
+    //         this->reset_detectors_pub->publish( std_msgs::msg::Empty() );  // Request the reboot of all detectors
+    //     }
+    //     this->timer_t_->cancel();
+    // } );
 
   public:
 
@@ -75,11 +75,14 @@ class perception_server : public rclcpp::Node
 
     std::shared_ptr< std::vector< detector_t > > detectors = std::make_shared< std::vector< detector_t > >();
 
-
     // Constructor/Destructor
     perception_server() : Node( "perception_server" )
     {
         RCLCPP_INFO( this->get_logger(), "Initializing perception_server" );
+        (void) std::system( ( std::string( "bash -c " )
+                              + std::string( "\"source /workspace/install/setup.sh && ros2 topic pub "
+                                             "/smap/perception/reboot_detectors -1 std_msgs/msg/Empty {} \"" ) )
+                                .c_str() );
         // for( int i = 0; i < 3; i++ )
         //     this->reset_detectors_pub->publish( std_msgs::msg::Empty() );  // Request the reboot of all detectors
     }
@@ -87,11 +90,20 @@ class perception_server : public rclcpp::Node
     ~perception_server()
     {
         RCLCPP_WARN( this->get_logger(), "perception_server destructor" );
-        for( int i = 0; i < 3; i++ )
-        {
-            RCLCPP_WARN( this->get_logger(), "Reboot Request" );
-            this->reset_detectors_pub->publish( std_msgs::msg::Empty() );  // Request the reboot of all detectors
-        }
+        // for( int i = 0; i < 3; i++ )
+        // {
+        //     RCLCPP_WARN( this->get_logger(), "Reboot Request" );
+        //     this->reset_detectors_pub->publish( std_msgs::msg::Empty() );  // Request the reboot of all detectors
+        // }
+        RCLCPP_WARN( this->get_logger(), "Reboot Request" );
+        // (void) std::system( ( std::string( "bash -c " )
+        //                       + std::string( "\"source /workspace/install/setup.sh && ros2 topic pub "
+        //                                      "/smap/perception/reboot_detectors -1 std_msgs/msg/Empty {} \"" ) )
+        //                         .c_str() );
+        (void) std::system( ( std::string( "bash -c " )
+                              + std::string( "\"source /workspace/install/setup.sh && ros2 topic pub "
+                                             "/smap/perception/reboot_detectors -1 std_msgs/msg/Empty {} &\"" ) )
+                                .c_str() );
     }
 
     std::map< std::string, std::pair< int, int > > add_detector( detector_t& new_detector );
