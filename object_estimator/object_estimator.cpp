@@ -134,16 +134,16 @@ void object_estimator::object_estimation_thread(
         pcl::fromROSMsg( obs.object.pointcloud, *segment_cloud_pcl );
         this->tim_transform.stop();
         count_time timer_3D_AABB;
-        this->tim_3D_AAB.start();
+        this->tim_3D_AABB.start();
         if( !estimate_object_3D_AABB(
                 segment_cloud_pcl, obs.object.pose.pose.position, obs.object.aabb.min.point,
                 obs.object.aabb.max.point ) )
         {
-            this->tim_3D_AAB.stop();
+            this->tim_3D_AABB.stop();
             this->tim_object_estimation_thread.stop();
             return;
         }
-        this->tim_3D_AAB.stop();
+        this->tim_3D_AABB.stop();
         const char AABB_str[] = "3D_AABB";
         timer_3D_AABB.get_time( this->get_logger(), AABB_str, centroid_plot );
 

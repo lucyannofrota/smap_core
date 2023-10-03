@@ -164,7 +164,7 @@ class object_estimator : public rclcpp::Node
         tim_estimate_confidence {
             std::string( "/workspace/src/smap/smap_core/timers/object_estimator/tim_estimate_confidence.txt" ) },
         tim_transform { std::string( "/workspace/src/smap/smap_core/timers/object_estimator/tim_transform.txt" ) },
-        tim_3D_AAB { std::string( "/workspace/src/smap/smap_core/timers/object_estimator/tim_3D_AAB.txt" ) };
+        tim_3D_AABB { std::string( "/workspace/src/smap/smap_core/timers/object_estimator/tim_3D_AABB.txt" ) };
 
     count_points box_pc { std::string( "/workspace/src/smap/smap_core/vals/object_estimator/box_filter.txt" ) },
         roi_pc { std::string( "/workspace/src/smap/smap_core/vals/object_estimator/roi_filter.txt" ) },
