@@ -97,7 +97,7 @@ void object_estimator::object_estimation_thread(
             this->tim_euclidean_clustering.start();
             this->clustering_pc.start( segment_cloud_pcl->width * segment_cloud_pcl->height );
             euclidean_clustering( segment_cloud_pcl, object_cloud_pcl, this->ClusterTolerance );
-            this->clustering_pc.stop( segment_cloud_pcl->width * segment_cloud_pcl->height );
+            this->clustering_pc.stop( object_cloud_pcl->width * segment_cloud_pcl->height );
             this->tim_euclidean_clustering.stop();
             const char euc_clust_str[] = "euclidean_clustering";
             euclidean_clustering_timer.get_time( this->get_logger(), euc_clust_str, euclidean_clustering_plot );
