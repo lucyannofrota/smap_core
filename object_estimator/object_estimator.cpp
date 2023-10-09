@@ -265,9 +265,13 @@ void object_estimator::depth_map_thread(
     const std::shared_ptr< geometry_msgs::msg::TransformStamped > transform,
     const std::shared_ptr< geometry_msgs::msg::PoseStamped > robot_pose )
 {
+    this->tim_depth_map_thread.start();
+    if( ros_pcl->data.empty() )
+    {
+        this->tim_depth_map_thread.stop();
+        return;
+    }
 
-    // TODO: make mutually exclusive
-    if( ros_pcl->data.empty() ) return;
     if( !is_valid(
             transform->transform.translation.x, transform->transform.translation.y, transform->transform.translation.z )
         || !is_valid(
@@ -331,6 +335,8 @@ void object_estimator::depth_map_thread(
 
         this->depth_map_pub->publish( this->occ_map );  // REVERT
     }
+
+    this->tim_depth_map_thread.stop();
 }
 
 }  // namespace smap
